@@ -12,6 +12,9 @@ public class ConsumerGroupInfo {
     private String groupId;
     private String state;
     private String protocolType;
+    private int coordinatorId;
+    private String coordinatorHost;
+    private int coordinatorPort;
     private List<MemberInfo> members;
     private Map<TopicPartition, OffsetAndMetadata> offsets;
     private Map<TopicPartition, Long> lag;
@@ -74,6 +77,30 @@ public class ConsumerGroupInfo {
 
     public void setLag(Map<TopicPartition, Long> lag) {
         this.lag = lag;
+    }
+
+    public int getCoordinatorId() {
+        return coordinatorId;
+    }
+
+    public void setCoordinatorId(int coordinatorId) {
+        this.coordinatorId = coordinatorId;
+    }
+
+    public String getCoordinatorHost() {
+        return coordinatorHost;
+    }
+
+    public void setCoordinatorHost(String coordinatorHost) {
+        this.coordinatorHost = coordinatorHost;
+    }
+
+    public int getCoordinatorPort() {
+        return coordinatorPort;
+    }
+
+    public void setCoordinatorPort(int coordinatorPort) {
+        this.coordinatorPort = coordinatorPort;
     }
 
     /**

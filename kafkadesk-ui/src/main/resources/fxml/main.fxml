@@ -9,41 +9,46 @@
             fx:controller="com.kafkadesk.ui.controller.MainController"
             prefHeight="800.0" prefWidth="1200.0">
 
-    <!-- 顶部：菜单栏 -->
+    <!-- Top: Menu Bar -->
     <top>
         <VBox>
-            <MenuBar>
-                <Menu text="文件">
-                    <MenuItem text="添加集群" onAction="#handleAddCluster"/>
+            <MenuBar fx:id="menuBar">
+                <Menu fx:id="menuFile">
+                    <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
                     <SeparatorMenuItem/>
-                    <MenuItem text="退出" onAction="#handleExit"/>
+                    <MenuItem fx:id="menuItemExit" onAction="#handleExit"/>
                 </Menu>
-                <Menu text="视图">
-                    <MenuItem text="刷新主题列表" onAction="#handleRefreshTopics"/>
+                <Menu fx:id="menuView">
+                    <MenuItem fx:id="menuItemRefresh" onAction="#handleRefreshTopics"/>
                 </Menu>
-                <Menu text="帮助">
-                    <MenuItem text="关于" onAction="#handleAbout"/>
+                <Menu fx:id="menuTools">
+                    <MenuItem fx:id="menuItemSettings" onAction="#handleSettings"/>
+                </Menu>
+                <Menu fx:id="menuHelp">
+                    <MenuItem fx:id="menuItemAbout" onAction="#handleAbout"/>
                 </Menu>
             </MenuBar>
             
-            <!-- 工具栏 -->
+            <!-- Toolbar -->
             <ToolBar>
-                <Button text="添加集群" onAction="#handleAddCluster"/>
+                <Button fx:id="btnAddCluster" onAction="#handleAddCluster"/>
                 <Separator orientation="VERTICAL"/>
-                <Button text="刷新" onAction="#handleRefreshTopics"/>
+                <Button fx:id="btnRefresh" onAction="#handleRefreshTopics"/>
+                <Separator orientation="VERTICAL"/>
+                <Button fx:id="btnSettings" onAction="#handleSettings"/>
             </ToolBar>
         </VBox>
     </top>
 
-    <!-- 中间：主工作区 -->
+    <!-- Center: Main Work Area -->
     <center>
         <SplitPane dividerPositions="0.25">
-            <!-- 左侧：集群树 -->
+            <!-- Left: Cluster Tree -->
             <VBox>
                 <padding>
                     <Insets top="10" right="10" bottom="10" left="10"/>
                 </padding>
-                <Label text="Kafka 集群" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <Label fx:id="lblClusterList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
                 <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS">
                     <VBox.margin>
                         <Insets top="10"/>
@@ -51,23 +56,23 @@
                 </TreeView>
             </VBox>
 
-            <!-- 右侧：主工作区 -->
+            <!-- Right: Main Work Area -->
             <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
                 
-                <!-- 主题管理标签页 -->
-                <Tab fx:id="topicTab" text="主题管理">
+                <!-- Topic Management Tab -->
+                <Tab fx:id="topicTab">
                     <SplitPane orientation="VERTICAL" dividerPositions="0.6">
-                        <!-- 主题列表 -->
+                        <!-- Topic List -->
                         <VBox>
                             <padding>
                                 <Insets top="10" right="10" bottom="10" left="10"/>
                             </padding>
-                            <Label text="主题列表" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblTopicList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
                             <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS">
                                 <columns>
-                                    <TableColumn fx:id="topicNameColumn" text="主题名称" prefWidth="300"/>
-                                    <TableColumn fx:id="topicPartitionsColumn" text="分区数" prefWidth="100"/>
-                                    <TableColumn fx:id="topicReplicationColumn" text="副本因子" prefWidth="100"/>
+                                    <TableColumn fx:id="topicNameColumn" prefWidth="300"/>
+                                    <TableColumn fx:id="topicPartitionsColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="topicReplicationColumn" prefWidth="100"/>
                                 </columns>
                                 <VBox.margin>
                                     <Insets top="10"/>
@@ -75,12 +80,12 @@
                             </TableView>
                         </VBox>
 
-                        <!-- 主题详情 -->
+                        <!-- Topic Details -->
                         <VBox>
                             <padding>
                                 <Insets top="10" right="10" bottom="10" left="10"/>
                             </padding>
-                            <Label text="主题详情" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblTopicDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
                             <TextArea fx:id="topicDetailsTextArea" editable="false" VBox.vgrow="ALWAYS">
                                 <VBox.margin>
                                     <Insets top="10"/>
@@ -90,66 +95,93 @@
                     </SplitPane>
                 </Tab>
 
-                <!-- 消息生产标签页 -->
-                <Tab fx:id="producerTab" text="消息生产">
+                <!-- Message Producer Tab -->
+                <Tab fx:id="producerTab">
                     <VBox spacing="10">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
 
-                        <Label text="发送消息到 Kafka" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblProducerTitle" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
 
                         <HBox spacing="10" alignment="CENTER_LEFT">
-                            <Label text="主题:"/>
-                            <TextField fx:id="producerTopicField" promptText="输入主题名称" HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblProducerTopic"/>
+                            <TextField fx:id="producerTopicField" HBox.hgrow="ALWAYS"/>
                         </HBox>
 
                         <HBox spacing="10" alignment="CENTER_LEFT">
-                            <Label text="Key:"/>
-                            <TextField fx:id="producerKeyField" promptText="消息 Key (可选)" HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblProducerKey"/>
+                            <TextField fx:id="producerKeyField" HBox.hgrow="ALWAYS"/>
                         </HBox>
 
-                        <Label text="消息内容:"/>
+                        <Label fx:id="lblProducerValue"/>
                         <TextArea fx:id="producerMessageTextArea" 
-                                  promptText="输入消息内容..." 
                                   VBox.vgrow="ALWAYS"
                                   wrapText="true"/>
 
                         <HBox spacing="10" alignment="CENTER_RIGHT">
-                            <Button fx:id="sendMessageButton" text="发送消息" 
-                                    style="-fx-font-size: 14px; -fx-padding: 10 20;"/>
+                            <Button fx:id="btnSendMessage" 
+                                    style="-fx-font-size: 14px; -fx-padding: 10 20;"
+                                    onAction="#handleSendMessage"/>
                         </HBox>
                     </VBox>
                 </Tab>
 
-                <!-- 消息消费标签页 -->
-                <Tab fx:id="consumerTab" text="消息消费">
+                <!-- Message Query Tab -->
+                <Tab fx:id="queryTab">
                     <SplitPane orientation="VERTICAL" dividerPositions="0.6">
-                        <!-- 消息列表 -->
+                        <!-- Query Form and Results -->
                         <VBox>
                             <padding>
                                 <Insets top="10" right="10" bottom="10" left="10"/>
                             </padding>
 
+                            <!-- Query Controls -->
+                            <GridPane hgap="10" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="15"/>
+                                    <ColumnConstraints percentWidth="35"/>
+                                    <ColumnConstraints percentWidth="15"/>
+                                    <ColumnConstraints percentWidth="35"/>
+                                </columnConstraints>
+
+                                <Label fx:id="lblQueryTopic" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <ComboBox fx:id="queryTopicComboBox" GridPane.columnIndex="1" GridPane.rowIndex="0" maxWidth="Infinity"/>
+
+                                <Label fx:id="lblQueryPartition" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                <ComboBox fx:id="queryPartitionComboBox" GridPane.columnIndex="3" GridPane.rowIndex="0" maxWidth="Infinity"/>
+
+                                <Label fx:id="lblQueryOffsetFrom" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                <TextField fx:id="queryOffsetFromField" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="0"/>
+
+                                <Label fx:id="lblQueryOffsetTo" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                <TextField fx:id="queryOffsetToField" GridPane.columnIndex="3" GridPane.rowIndex="1" promptText="-1"/>
+
+                                <Label fx:id="lblQueryMaxRecords" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                <TextField fx:id="queryMaxRecordsField" GridPane.columnIndex="1" GridPane.rowIndex="2" text="100"/>
+                            </GridPane>
+
                             <HBox spacing="10" alignment="CENTER_LEFT">
-                                <Label text="选择主题:"/>
-                                <ComboBox fx:id="consumerTopicComboBox" promptText="选择主题" HBox.hgrow="ALWAYS"/>
-                                <Button text="开始消费"/>
-                                <Button text="停止"/>
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                                <Button fx:id="btnQuerySearch" onAction="#handleQueryMessages"/>
+                                <Button fx:id="btnQueryClear" onAction="#handleClearQuery"/>
+                                <Button fx:id="btnQueryExport" onAction="#handleExportQuery"/>
                             </HBox>
 
-                            <Label text="消息列表" style="-fx-font-size: 14px; -fx-font-weight: bold;">
+                            <Label fx:id="lblQueryResults" style="-fx-font-size: 14px; -fx-font-weight: bold;">
                                 <VBox.margin>
                                     <Insets top="10"/>
                                 </VBox.margin>
                             </Label>
 
-                            <TableView fx:id="consumerTableView" VBox.vgrow="ALWAYS">
+                            <TableView fx:id="queryTableView" VBox.vgrow="ALWAYS">
                                 <columns>
-                                    <TableColumn fx:id="offsetColumn" text="Offset" prefWidth="100"/>
-                                    <TableColumn fx:id="keyColumn" text="Key" prefWidth="150"/>
-                                    <TableColumn fx:id="valueColumn" text="Value" prefWidth="400"/>
-                                    <TableColumn fx:id="timestampColumn" text="Timestamp" prefWidth="180"/>
+                                    <TableColumn fx:id="queryOffsetColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="queryKeyColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="queryValueColumn" prefWidth="400"/>
+                                    <TableColumn fx:id="queryTimestampColumn" prefWidth="180"/>
                                 </columns>
                                 <VBox.margin>
                                     <Insets top="10"/>
@@ -157,13 +189,13 @@
                             </TableView>
                         </VBox>
 
-                        <!-- 消息详情 -->
+                        <!-- Message Details -->
                         <VBox>
                             <padding>
                                 <Insets top="10" right="10" bottom="10" left="10"/>
                             </padding>
-                            <Label text="消息详情" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
-                            <TextArea fx:id="consumerDetailsTextArea" editable="false" VBox.vgrow="ALWAYS">
+                            <Label fx:id="lblQueryDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <TextArea fx:id="queryDetailsTextArea" editable="false" VBox.vgrow="ALWAYS">
                                 <VBox.margin>
                                     <Insets top="10"/>
                                 </VBox.margin>
@@ -171,14 +203,82 @@
                         </VBox>
                     </SplitPane>
                 </Tab>
+
+                <!-- Consumer Groups Tab -->
+                <Tab fx:id="consumerGroupsTab">
+                    <SplitPane dividerPositions="0.4">
+                        <!-- Consumer Group List -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblConsumerGroupList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <TableView fx:id="consumerGroupTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="consumerGroupIdColumn" prefWidth="200"/>
+                                    <TableColumn fx:id="consumerGroupStateColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="consumerGroupCoordinatorColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="consumerGroupMembersColumn" prefWidth="80"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Consumer Group Details -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblConsumerGroupDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            
+                            <!-- Group Members Table -->
+                            <Label text="Members:" style="-fx-font-weight: bold;">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </Label>
+                            <TableView fx:id="consumerGroupMembersTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="memberIdColumn" prefWidth="200"/>
+                                    <TableColumn fx:id="memberClientIdColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="memberHostColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="memberAssignmentsColumn" prefWidth="200"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="5"/>
+                                </VBox.margin>
+                            </TableView>
+
+                            <!-- Offset/Lag Information -->
+                            <Label text="Offsets & Lag:" style="-fx-font-weight: bold;">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </Label>
+                            <TableView fx:id="consumerGroupLagTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="lagTopicColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="lagPartitionColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="lagOffsetColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="lagValueColumn" prefWidth="100"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="5"/>
+                                </VBox.margin>
+                            </TableView>
+                        </VBox>
+                    </SplitPane>
+                </Tab>
             </TabPane>
         </SplitPane>
     </center>
 
-    <!-- 底部：状态栏 -->
+    <!-- Bottom: Status Bar -->
     <bottom>
         <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #f0f0f0; -fx-padding: 5;">
-            <Label fx:id="statusLabel" text="就绪"/>
+            <Label fx:id="statusLabel"/>
         </HBox>
     </bottom>
 </BorderPane>
