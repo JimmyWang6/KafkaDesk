@@ -4,6 +4,7 @@ module com.kafkadesk.core {
     requires kafka.clients;
     requires org.slf4j;
     requires ch.qos.logback.classic;
+    requires com.fasterxml.jackson.databind;
     
     exports com.kafkadesk.core.config;
     exports com.kafkadesk.core.service;
