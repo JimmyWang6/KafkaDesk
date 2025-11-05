@@ -22,6 +22,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -236,12 +237,27 @@ public class MainController implements Initializable {
 
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
         for (ClusterConfig cluster : clusters) {
-            TreeItem<String> clusterItem = new TreeItem<>(cluster.getName());
+            String displayName = cluster.getName() + " (" + cluster.getBootstrapServers() + ")";
+            TreeItem<String> clusterItem = new TreeItem<>(displayName);
+            clusterItem.setExpanded(false);
             rootItem.getChildren().add(clusterItem);
         }
 
         clusterTreeView.setRoot(rootItem);
         clusterTreeView.setShowRoot(true);
+
+        // Add context menu for cluster items
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem deleteItem = new MenuItem(I18nUtil.get("common.delete"));
+        deleteItem.setOnAction(e -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && selectedItem.getParent() == rootItem) {
+                handleDeleteCluster(selectedItem.getValue());
+            }
+        });
+        contextMenu.getItems().add(deleteItem);
+
+        clusterTreeView.setContextMenu(contextMenu);
 
         clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && newVal.getParent() != null && newVal.getParent() == rootItem) {
@@ -250,12 +266,19 @@ public class MainController implements Initializable {
         });
     }
 
-    private void onClusterSelected(String clusterName) {
-        logger.info("Cluster selected: {}", clusterName);
+    private void onClusterSelected(String displayName) {
+        logger.info("Cluster selected: {}", displayName);
+        
+        // Parse cluster name from display name (format: "name (servers)")
+        String clusterName = displayName;
+        if (displayName.contains(" (")) {
+            clusterName = displayName.substring(0, displayName.indexOf(" ("));
+        }
         
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
+        final String finalClusterName = clusterName;
         Optional<ClusterConfig> cluster = clusters.stream()
-                .filter(c -> c.getName().equals(clusterName))
+                .filter(c -> c.getName().equals(finalClusterName))
                 .findFirst();
 
         if (cluster.isPresent()) {
@@ -273,13 +296,14 @@ public class MainController implements Initializable {
             Platform.runLater(() -> {
                 if (connected) {
                     updateStatus(I18nUtil.get("cluster.connected", config.getName()));
+                    showInfo(I18nUtil.get("common.success"), I18nUtil.get("cluster.connected", config.getName()));
                     loadTopics();
                     loadConsumerGroups();
                     updateQueryTopicList();
                 } else {
                     updateStatus(I18nUtil.get("cluster.failed", config.getName()));
                     showError(I18nUtil.get("dialog.error.title"), 
-                            I18nUtil.get("error.connectionFailed"));
+                            I18nUtil.get("cluster.failed", config.getName()));
                 }
             });
         }).start();
@@ -291,6 +315,7 @@ public class MainController implements Initializable {
         topicReplicationColumn.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
 
         topicTableView.setItems(topicList);
+        topicTableView.setPlaceholder(new Label(I18nUtil.get("placeholder.noTopics")));
 
         topicTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -412,6 +437,7 @@ public class MainController implements Initializable {
         queryTimestampColumn.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
 
         queryTableView.setItems(messageList);
+        queryTableView.setPlaceholder(new Label(I18nUtil.get("placeholder.noMessages")));
         
         queryTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -579,6 +605,7 @@ public class MainController implements Initializable {
         consumerGroupMembersColumn.setCellValueFactory(new PropertyValueFactory<>("memberCount"));
 
         consumerGroupTableView.setItems(consumerGroupList);
+        consumerGroupTableView.setPlaceholder(new Label(I18nUtil.get("placeholder.noConsumerGroups")));
 
         memberIdColumn.setCellValueFactory(new PropertyValueFactory<>("memberId"));
         memberClientIdColumn.setCellValueFactory(new PropertyValueFactory<>("clientId"));
@@ -586,6 +613,7 @@ public class MainController implements Initializable {
         memberAssignmentsColumn.setCellValueFactory(new PropertyValueFactory<>("assignments"));
 
         consumerGroupMembersTableView.setItems(memberList);
+        consumerGroupMembersTableView.setPlaceholder(new Label(I18nUtil.get("placeholder.noData")));
 
         lagTopicColumn.setCellValueFactory(new PropertyValueFactory<>("topic"));
         lagPartitionColumn.setCellValueFactory(new PropertyValueFactory<>("partition"));
@@ -593,6 +621,7 @@ public class MainController implements Initializable {
         lagValueColumn.setCellValueFactory(new PropertyValueFactory<>("lag"));
 
         consumerGroupLagTableView.setItems(lagList);
+        consumerGroupLagTableView.setPlaceholder(new Label(I18nUtil.get("placeholder.noData")));
 
         consumerGroupTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -711,6 +740,44 @@ public class MainController implements Initializable {
                 showInfo(I18nUtil.get("common.success"), I18nUtil.get("cluster.add.success", name));
             });
         });
+    }
+
+    private void handleDeleteCluster(String displayName) {
+        // Parse cluster name from display name
+        String clusterName = displayName;
+        if (displayName.contains(" (")) {
+            clusterName = displayName.substring(0, displayName.indexOf(" ("));
+        }
+        
+        // Show confirmation dialog
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(I18nUtil.get("cluster.delete.title"));
+        alert.setHeaderText(I18nUtil.get("cluster.delete.confirm", clusterName));
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Find and delete the cluster
+            List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
+            final String finalClusterName = clusterName;
+            Optional<ClusterConfig> cluster = clusters.stream()
+                    .filter(c -> c.getName().equals(finalClusterName))
+                    .findFirst();
+            
+            if (cluster.isPresent()) {
+                ConfigManager.getInstance().deleteCluster(cluster.get().getId());
+                
+                // Clear current cluster if it was deleted
+                if (currentCluster != null && currentCluster.getId().equals(cluster.get().getId())) {
+                    currentCluster = null;
+                    topicList.clear();
+                    consumerGroupList.clear();
+                    messageList.clear();
+                }
+                
+                initializeClusterTree();
+                showInfo(I18nUtil.get("common.success"), I18nUtil.get("cluster.delete.success", finalClusterName));
+            }
+        }
     }
 
     @FXML
