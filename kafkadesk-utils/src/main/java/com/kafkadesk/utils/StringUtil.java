@@ -1,33 +1,33 @@
 package com.kafkadesk.utils;
 
 /**
- * 字符串工具类
+ * String utility class
  */
 public class StringUtil {
 
     /**
-     * 检查字符串是否为空
+     * Check if string is empty
      */
     public static boolean isEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }
 
     /**
-     * 检查字符串是否不为空
+     * Check if string is not empty
      */
     public static boolean isNotEmpty(String str) {
         return !isEmpty(str);
     }
 
     /**
-     * 如果字符串为空，返回默认值
+     * Return default value if string is empty
      */
     public static String defaultIfEmpty(String str, String defaultValue) {
         return isEmpty(str) ? defaultValue : str;
     }
 
     /**
-     * 截断字符串
+     * Truncate string
      */
     public static String truncate(String str, int maxLength) {
         if (str == null) {
@@ -40,7 +40,7 @@ public class StringUtil {
     }
 
     /**
-     * 首字母大写
+     * Capitalize first letter
      */
     public static String capitalize(String str) {
         if (isEmpty(str)) {
@@ -50,14 +50,14 @@ public class StringUtil {
     }
 
     /**
-     * 安全的 trim
+     * Safe trim
      */
     public static String safeTrim(String str) {
         return str == null ? null : str.trim();
     }
 
     /**
-     * 检查字符串是否包含中文
+     * Check if string contains Chinese
      */
     public static boolean containsChinese(String str) {
         if (isEmpty(str)) {
@@ -67,7 +67,7 @@ public class StringUtil {
     }
 
     /**
-     * 字节数组转十六进制字符串
+     * Convert byte array to hex string
      */
     public static String bytesToHex(byte[] bytes) {
         if (bytes == null) {
@@ -81,7 +81,7 @@ public class StringUtil {
     }
 
     /**
-     * 重复字符串
+     * Repeat string
      */
     public static String repeat(String str, int count) {
         if (str == null || count <= 0) {

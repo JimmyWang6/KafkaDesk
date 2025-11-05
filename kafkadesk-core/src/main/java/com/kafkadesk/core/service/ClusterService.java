@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 集群服务
+ * Cluster service
  */
 public class ClusterService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterService.class);
@@ -34,7 +34,7 @@ public class ClusterService {
     }
 
     /**
-     * 连接到集群
+     * Connect to cluster
      */
     public boolean connect(ClusterConfig config) {
         try {
@@ -58,7 +58,7 @@ public class ClusterService {
 
             Admin admin = Admin.create(props);
             
-            // 测试连接
+            // Test connection
             admin.describeCluster().clusterId().get(10, TimeUnit.SECONDS);
             
             // 关闭旧连接
@@ -74,7 +74,7 @@ public class ClusterService {
     }
 
     /**
-     * 测试连接
+     * Test connection
      */
     public boolean testConnection(ClusterConfig config) {
         try {
@@ -93,7 +93,7 @@ public class ClusterService {
     }
 
     /**
-     * 关闭连接
+     * Close connection
      */
     public void closeConnection(String clusterId) {
         Admin admin = adminClients.remove(clusterId);
@@ -108,7 +108,7 @@ public class ClusterService {
     }
 
     /**
-     * 关闭所有连接
+     * Close all connections
      */
     public void closeAllConnections() {
         adminClients.forEach((id, admin) -> {
@@ -122,21 +122,21 @@ public class ClusterService {
     }
 
     /**
-     * 获取 Admin 客户端
+     * Get Admin client
      */
     public Admin getAdminClient(String clusterId) {
         return adminClients.get(clusterId);
     }
 
     /**
-     * 检查是否已连接
+     * Check if connected
      */
     public boolean isConnected(String clusterId) {
         return adminClients.containsKey(clusterId);
     }
 
     /**
-     * 获取集群信息
+     * Get cluster information
      */
     public Map<String, Object> getClusterInfo(String clusterId) {
         Admin admin = adminClients.get(clusterId);

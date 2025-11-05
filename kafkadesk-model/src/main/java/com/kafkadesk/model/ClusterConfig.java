@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * 集群配置模型
+ * Cluster configuration model
  */
 public class ClusterConfig {
     private String id;

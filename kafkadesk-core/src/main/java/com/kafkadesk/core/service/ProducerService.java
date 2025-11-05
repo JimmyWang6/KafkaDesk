@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 /**
- * 消息生产服务
+ * Message producer service
  */
 public class ProducerService {
     private static final Logger logger = LoggerFactory.getLogger(ProducerService.class);
@@ -35,7 +35,7 @@ public class ProducerService {
     }
 
     /**
-     * 获取或创建 Producer
+     * Get or create Producer
      */
     private KafkaProducer<String, String> getProducer(String bootstrapServers) {
         return producers.computeIfAbsent(bootstrapServers, servers -> {
@@ -52,7 +52,7 @@ public class ProducerService {
     }
 
     /**
-     * 发送消息
+     * Send message
      */
     public RecordMetadata sendMessage(String bootstrapServers, Message message) throws Exception {
         KafkaProducer<String, String> producer = getProducer(bootstrapServers);
@@ -85,7 +85,7 @@ public class ProducerService {
     }
 
     /**
-     * 发送消息（带回调）
+     * Send message（With callback）
      */
     public void sendMessage(String bootstrapServers, Message message, Callback callback) {
         KafkaProducer<String, String> producer = getProducer(bootstrapServers);
@@ -109,7 +109,7 @@ public class ProducerService {
     }
 
     /**
-     * 批量发送消息
+     * 批量Send message
      */
     public List<RecordMetadata> sendMessages(String bootstrapServers, List<Message> messages) throws Exception {
         List<RecordMetadata> metadataList = new ArrayList<>();
@@ -121,7 +121,7 @@ public class ProducerService {
     }
 
     /**
-     * 关闭生产者
+     * Close producer
      */
     public void closeProducer(String bootstrapServers) {
         KafkaProducer<String, String> producer = producers.remove(bootstrapServers);
@@ -136,7 +136,7 @@ public class ProducerService {
     }
 
     /**
-     * 关闭所有生产者
+     * Close all producers
      */
     public void closeAllProducers() {
         producers.forEach((servers, producer) -> {

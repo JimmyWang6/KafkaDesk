@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 消费者组信息模型
+ * Consumer group information model
  */
 public class ConsumerGroupInfo {
     private String groupId;
@@ -104,7 +104,7 @@ public class ConsumerGroupInfo {
     }
 
     /**
-     * 消费者组成员信息
+     * Consumer group member information
      */
     public static class MemberInfo {
         private String memberId;
@@ -150,7 +150,7 @@ public class ConsumerGroupInfo {
     }
 
     /**
-     * 主题分区
+     * Topic partition
      */
     public static class TopicPartition {
         private String topic;
@@ -187,7 +187,7 @@ public class ConsumerGroupInfo {
     }
 
     /**
-     * Offset 和元数据
+     * Offset and metadata
      */
     public static class OffsetAndMetadata {
         private long offset;

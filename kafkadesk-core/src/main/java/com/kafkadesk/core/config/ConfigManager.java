@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 配置管理器
+ * Configuration manager
  */
 public class ConfigManager {
     private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
@@ -38,7 +38,7 @@ public class ConfigManager {
     }
 
     /**
-     * 加载配置
+     * Load configuration
      */
     private void loadConfig() {
         try {
@@ -67,7 +67,7 @@ public class ConfigManager {
     }
 
     /**
-     * 保存配置
+     * Save configuration
      */
     public void saveConfig() {
         try {
@@ -82,14 +82,14 @@ public class ConfigManager {
     }
 
     /**
-     * 获取所有集群配置
+     * Get all cluster configurations
      */
     public List<ClusterConfig> getClusters() {
         return config.getClusters();
     }
 
     /**
-     * 添加集群配置
+     * Add cluster configuration
      */
     public void addCluster(ClusterConfig cluster) {
         config.getClusters().add(cluster);
@@ -97,7 +97,7 @@ public class ConfigManager {
     }
 
     /**
-     * 更新集群配置
+     * Update cluster configuration
      */
     public void updateCluster(ClusterConfig cluster) {
         List<ClusterConfig> clusters = config.getClusters();
@@ -111,7 +111,7 @@ public class ConfigManager {
     }
 
     /**
-     * 删除集群配置
+     * Delete cluster configuration
      */
     public void deleteCluster(String clusterId) {
         config.getClusters().removeIf(c -> c.getId().equals(clusterId));
@@ -119,7 +119,7 @@ public class ConfigManager {
     }
 
     /**
-     * 根据 ID 获取集群配置
+     * Get cluster configuration by ID
      */
     public ClusterConfig getClusterById(String clusterId) {
         return config.getClusters().stream()
@@ -129,14 +129,14 @@ public class ConfigManager {
     }
 
     /**
-     * 获取应用配置
+     * Get application configuration
      */
     public AppConfig getConfig() {
         return config;
     }
 
     /**
-     * 应用配置类
+     * Application configuration class
      */
     public static class AppConfig {
         private String version = "1.0";
@@ -178,7 +178,7 @@ public class ConfigManager {
     }
 
     /**
-     * 用户偏好设置
+     * User preferences
      */
     public static class Preferences {
         private String theme = "light";
@@ -220,7 +220,7 @@ public class ConfigManager {
     }
 
     /**
-     * 窗口配置
+     * Window configuration
      */
     public static class WindowConfig {
         private double width = 1200;

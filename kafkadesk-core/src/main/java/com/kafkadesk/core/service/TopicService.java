@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * 主题服务
+ * Topic service
  */
 public class TopicService {
     private static final Logger logger = LoggerFactory.getLogger(TopicService.class);
@@ -29,7 +29,7 @@ public class TopicService {
     }
 
     /**
-     * 列出所有主题
+     * List all topics
      */
     public List<String> listTopics(String clusterId) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
@@ -49,7 +49,7 @@ public class TopicService {
     }
 
     /**
-     * 获取主题详情
+     * Get topic details
      */
     public TopicInfo getTopicInfo(String clusterId, String topicName) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
@@ -74,7 +74,7 @@ public class TopicService {
                 topicInfo.setReplicationFactor(description.partitions().get(0).replicas().size());
             }
 
-            // 转换分区信息
+            // Convert partition information
             List<TopicInfo.PartitionInfo> partitionInfos = description.partitions().stream()
                     .map(this::convertPartitionInfo)
                     .collect(Collectors.toList());
@@ -103,7 +103,7 @@ public class TopicService {
     }
 
     /**
-     * 创建主题
+     * Create topic
      */
     public boolean createTopic(String clusterId, String topicName, int partitions, short replicationFactor) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
@@ -124,7 +124,7 @@ public class TopicService {
     }
 
     /**
-     * 删除主题
+     * Delete topic
      */
     public boolean deleteTopic(String clusterId, String topicName) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
@@ -144,7 +144,7 @@ public class TopicService {
     }
 
     /**
-     * 转换分区信息
+     * Convert partition information
      */
     private TopicInfo.PartitionInfo convertPartitionInfo(TopicPartitionInfo kafkaPartitionInfo) {
         TopicInfo.PartitionInfo partitionInfo = new TopicInfo.PartitionInfo();
@@ -168,7 +168,7 @@ public class TopicService {
     }
 
     /**
-     * 转换节点信息
+     * Convert node information
      */
     private TopicInfo.Node convertNode(org.apache.kafka.common.Node kafkaNode) {
         return new TopicInfo.Node(kafkaNode.id(), kafkaNode.host(), kafkaNode.port());

@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * KafkaDesk JavaFX 主应用程序
+ * KafkaDesk JavaFX main application
  */
 public class KafkaDeskApplication extends Application {
     private static final Logger logger = LoggerFactory.getLogger(KafkaDeskApplication.class);
@@ -26,15 +26,15 @@ public class KafkaDeskApplication extends Application {
         try {
             logger.info("Starting KafkaDesk application...");
 
-            // 加载主界面
+            // Load main interface
             FXMLLoader loader = new FXMLLoader(getClass().getResource(MAIN_FXML));
             Scene scene = new Scene(loader.load());
 
-            // 加载 CSS 样式
+            // Load CSS styles
             String css = getClass().getResource("/css/light-theme.css").toExternalForm();
             scene.getStylesheets().add(css);
 
-            // 设置窗口属性
+            // Set window properties
             ConfigManager.WindowConfig windowConfig = ConfigManager.getInstance()
                     .getConfig()
                     .getWindow();
@@ -45,7 +45,7 @@ public class KafkaDeskApplication extends Application {
             primaryStage.setHeight(windowConfig.getHeight());
             primaryStage.setMaximized(windowConfig.isMaximized());
 
-            // 设置窗口图标（如果有的话）
+            // Set window icon (if available)
             try {
                 Image icon = new Image(getClass().getResourceAsStream("/images/icons/app-icon.png"));
                 primaryStage.getIcons().add(icon);
@@ -53,11 +53,11 @@ public class KafkaDeskApplication extends Application {
                 logger.warn("Failed to load application icon", e);
             }
 
-            // 获取控制器并设置 stage
+            // Get controller and set stage
             MainController controller = loader.getController();
             controller.setStage(primaryStage);
 
-            // 窗口关闭事件
+            // Window close event
             primaryStage.setOnCloseRequest(event -> {
                 onApplicationClose(primaryStage);
             });
@@ -72,13 +72,13 @@ public class KafkaDeskApplication extends Application {
     }
 
     /**
-     * 应用程序关闭时的清理工作
+     * Cleanup work when application closes
      */
     private void onApplicationClose(Stage stage) {
         logger.info("Closing KafkaDesk application...");
 
         try {
-            // 保存窗口配置
+            // Save window configuration
             ConfigManager.WindowConfig windowConfig = ConfigManager.getInstance()
                     .getConfig()
                     .getWindow();
@@ -87,7 +87,7 @@ public class KafkaDeskApplication extends Application {
             windowConfig.setMaximized(stage.isMaximized());
             ConfigManager.getInstance().saveConfig();
 
-            // 关闭所有连接
+            // Close all connections
             ClusterService.getInstance().closeAllConnections();
             ProducerService.getInstance().closeAllProducers();
             ConsumerService.getInstance().closeAllConsumers();

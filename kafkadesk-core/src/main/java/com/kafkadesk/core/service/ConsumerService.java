@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 消息消费服务
+ * Message consumer service
  */
 public class ConsumerService {
     private static final Logger logger = LoggerFactory.getLogger(ConsumerService.class);
@@ -35,7 +35,7 @@ public class ConsumerService {
     }
 
     /**
-     * 创建消费者
+     * Create consumer
      */
     public KafkaConsumer<String, String> createConsumer(String bootstrapServers, String groupId) {
         Properties props = new Properties();
@@ -55,7 +55,7 @@ public class ConsumerService {
     }
 
     /**
-     * 订阅主题
+     * Subscribe to topic
      */
     public void subscribe(KafkaConsumer<String, String> consumer, String topic) {
         consumer.subscribe(Collections.singletonList(topic));
@@ -63,7 +63,7 @@ public class ConsumerService {
     }
 
     /**
-     * 订阅指定分区
+     * Subscribe to specific partitions
      */
     public void assignPartitions(KafkaConsumer<String, String> consumer, String topic, List<Integer> partitions) {
         List<TopicPartition> topicPartitions = new ArrayList<>();
@@ -75,7 +75,7 @@ public class ConsumerService {
     }
 
     /**
-     * 从最早位置开始消费
+     * Consume from earliest position
      */
     public void seekToBeginning(KafkaConsumer<String, String> consumer) {
         Set<TopicPartition> assignments = consumer.assignment();
@@ -86,7 +86,7 @@ public class ConsumerService {
     }
 
     /**
-     * 从最新位置开始消费
+     * Consume from latest position
      */
     public void seekToEnd(KafkaConsumer<String, String> consumer) {
         Set<TopicPartition> assignments = consumer.assignment();
@@ -97,7 +97,7 @@ public class ConsumerService {
     }
 
     /**
-     * 从指定 offset 开始消费
+     * Consume from specific offset
      */
     public void seek(KafkaConsumer<String, String> consumer, String topic, int partition, long offset) {
         TopicPartition topicPartition = new TopicPartition(topic, partition);
@@ -106,7 +106,7 @@ public class ConsumerService {
     }
 
     /**
-     * 轮询消息
+     * Poll messages
      */
     public List<Message> poll(KafkaConsumer<String, String> consumer, long timeoutMs) {
         try {
@@ -126,7 +126,7 @@ public class ConsumerService {
     }
 
     /**
-     * 转换消息
+     * Convert message
      */
     private Message convertToMessage(ConsumerRecord<String, String> record) {
         Message message = new Message();
@@ -147,7 +147,7 @@ public class ConsumerService {
     }
 
     /**
-     * 提交 offset
+     * Commit offset
      */
     public void commitSync(KafkaConsumer<String, String> consumer) {
         try {
@@ -159,7 +159,7 @@ public class ConsumerService {
     }
 
     /**
-     * 关闭消费者
+     * Close consumer
      */
     public void closeConsumer(KafkaConsumer<String, String> consumer) {
         if (consumer != null) {
@@ -173,7 +173,7 @@ public class ConsumerService {
     }
 
     /**
-     * 关闭所有消费者
+     * Close all consumers
      */
     public void closeAllConsumers() {
         consumers.values().forEach(consumer -> {

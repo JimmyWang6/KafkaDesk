@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 主题信息模型
+ * Topic information model
  */
 public class TopicInfo {
     private String name;
@@ -92,7 +92,7 @@ public class TopicInfo {
     }
 
     /**
-     * 分区信息
+     * Partition information
      */
     public static class PartitionInfo {
         private int partition;
@@ -139,7 +139,7 @@ public class TopicInfo {
     }
 
     /**
-     * 节点信息
+     * Node information
      */
     public static class Node {
         private int id;

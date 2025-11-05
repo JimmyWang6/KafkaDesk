@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * JSON 工具类
+ * JSON utility class
  */
 public class JsonUtil {
     private static final Logger logger = LoggerFactory.getLogger(JsonUtil.class);
@@ -25,7 +25,7 @@ public class JsonUtil {
     }
 
     /**
-     * 对象转 JSON 字符串
+     * Convert object to JSON string
      */
     public static String toJson(Object obj) {
         try {
@@ -37,7 +37,7 @@ public class JsonUtil {
     }
 
     /**
-     * JSON 字符串转对象
+     * Convert JSON string to object
      */
     public static <T> T fromJson(String json, Class<T> clazz) {
         try {
@@ -49,7 +49,7 @@ public class JsonUtil {
     }
 
     /**
-     * 从输入流读取 JSON
+     * Read JSON from input stream
      */
     public static <T> T fromJson(InputStream inputStream, Class<T> clazz) {
         try {
@@ -61,7 +61,7 @@ public class JsonUtil {
     }
 
     /**
-     * 写 JSON 到输出流
+     * Write JSON to output stream
      */
     public static void writeJson(OutputStream outputStream, Object obj) {
         try {
@@ -72,7 +72,7 @@ public class JsonUtil {
     }
 
     /**
-     * 美化 JSON 字符串
+     * Prettify JSON string
      */
     public static String prettify(String json) {
         try {
@@ -85,7 +85,7 @@ public class JsonUtil {
     }
 
     /**
-     * 验证 JSON 字符串是否有效
+     * Validate if JSON string is valid
      */
     public static boolean isValidJson(String json) {
         try {

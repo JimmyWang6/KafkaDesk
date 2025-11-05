@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
- * 国际化工具类
+ * Internationalization utility class
  */
 public class I18nUtil {
     private static final String BUNDLE_NAME = "i18n.messages";
@@ -13,12 +13,12 @@ public class I18nUtil {
     private static Locale currentLocale;
 
     static {
-        // 默认使用系统语言
+        // Use system language by default
         setLocale(Locale.getDefault());
     }
 
     /**
-     * 设置语言
+     * Set locale
      */
     public static void setLocale(Locale locale) {
         currentLocale = locale;
@@ -26,7 +26,7 @@ public class I18nUtil {
     }
 
     /**
-     * 设置语言（根据语言代码）
+     * Set locale（By language code）
      */
     public static void setLocale(String languageTag) {
         Locale locale;
@@ -44,14 +44,14 @@ public class I18nUtil {
     }
 
     /**
-     * 获取当前语言
+     * Get current locale
      */
     public static Locale getCurrentLocale() {
         return currentLocale;
     }
 
     /**
-     * 获取国际化消息
+     * Get internationalized message
      */
     public static String get(String key) {
         try {
@@ -62,7 +62,7 @@ public class I18nUtil {
     }
 
     /**
-     * 获取国际化消息（带参数）
+     * Get internationalized message（With parameters）
      */
     public static String get(String key, Object... args) {
         try {
@@ -74,7 +74,7 @@ public class I18nUtil {
     }
 
     /**
-     * 获取所有支持的语言
+     * Get all supported locales
      */
     public static Locale[] getSupportedLocales() {
         return new Locale[]{
@@ -84,7 +84,7 @@ public class I18nUtil {
     }
 
     /**
-     * 获取语言显示名称
+     * Get language display name
      */
     public static String getLanguageDisplayName(Locale locale) {
         if (locale.equals(Locale.SIMPLIFIED_CHINESE)) {

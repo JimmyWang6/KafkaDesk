@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 消息模型
+ * Message model
  */
 public class Message {
     private String topic;
@@ -105,7 +105,7 @@ public class Message {
     }
 
     /**
-     * 消息格式枚举
+     * Message format enumeration
      */
     public enum MessageFormat {
         JSON("JSON"),

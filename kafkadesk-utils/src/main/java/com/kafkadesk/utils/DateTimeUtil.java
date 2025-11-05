@@ -6,7 +6,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 日期时间工具类
+ * Date and time utility class
  */
 public class DateTimeUtil {
     private static final DateTimeFormatter DEFAULT_FORMATTER = 
@@ -16,7 +16,7 @@ public class DateTimeUtil {
             DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     /**
-     * 格式化 LocalDateTime
+     * Format LocalDateTime
      */
     public static String format(LocalDateTime dateTime) {
         if (dateTime == null) {
@@ -26,7 +26,7 @@ public class DateTimeUtil {
     }
 
     /**
-     * 格式化 LocalDateTime (自定义格式)
+     * Format LocalDateTime (Custom format)
      */
     public static String format(LocalDateTime dateTime, String pattern) {
         if (dateTime == null) {
@@ -36,7 +36,7 @@ public class DateTimeUtil {
     }
 
     /**
-     * 时间戳转 LocalDateTime
+     * Convert timestamp to LocalDateTime
      */
     public static LocalDateTime fromTimestamp(long timestamp) {
         return LocalDateTime.ofInstant(
@@ -46,21 +46,21 @@ public class DateTimeUtil {
     }
 
     /**
-     * LocalDateTime 转时间戳
+     * Convert LocalDateTime to timestamp
      */
     public static long toTimestamp(LocalDateTime dateTime) {
         return dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     /**
-     * 格式化时间戳
+     * Format timestamp
      */
     public static String formatTimestamp(long timestamp) {
         return format(fromTimestamp(timestamp));
     }
 
     /**
-     * 解析字符串为 LocalDateTime
+     * Parse string to LocalDateTime
      */
     public static LocalDateTime parse(String dateTimeStr) {
         if (dateTimeStr == null || dateTimeStr.isEmpty()) {
@@ -70,7 +70,7 @@ public class DateTimeUtil {
     }
 
     /**
-     * 获取当前时间字符串
+     * Get current time string
      */
     public static String now() {
         return format(LocalDateTime.now());

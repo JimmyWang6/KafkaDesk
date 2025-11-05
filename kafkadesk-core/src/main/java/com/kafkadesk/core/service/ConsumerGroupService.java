@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * 消费者组服务
+ * Consumer group service
  */
 public class ConsumerGroupService {
     private static final Logger logger = LoggerFactory.getLogger(ConsumerGroupService.class);
@@ -29,7 +29,7 @@ public class ConsumerGroupService {
     }
 
     /**
-     * 列出所有消费者组
+     * List all consumer groups
      */
     public List<String> listConsumerGroups(String clusterId) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
@@ -51,7 +51,7 @@ public class ConsumerGroupService {
     }
 
     /**
-     * 获取消费者组详情
+     * Get consumer group details
      */
     public ConsumerGroupInfo getConsumerGroupInfo(String clusterId, String groupId) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
@@ -104,7 +104,7 @@ public class ConsumerGroupService {
             });
             info.setOffsets(offsetMap);
 
-            // 计算 lag
+            // Calculate lag
             Map<ConsumerGroupInfo.TopicPartition, Long> lagMap = calculateLag(admin, offsets);
             info.setLag(lagMap);
 
@@ -116,7 +116,7 @@ public class ConsumerGroupService {
     }
 
     /**
-     * 转换成员描述
+     * Convert member description
      */
     private ConsumerGroupInfo.MemberInfo convertMemberDescription(MemberDescription member) {
         ConsumerGroupInfo.MemberInfo info = new ConsumerGroupInfo.MemberInfo();
@@ -135,7 +135,7 @@ public class ConsumerGroupService {
     }
 
     /**
-     * 计算 lag
+     * Calculate lag
      */
     private Map<ConsumerGroupInfo.TopicPartition, Long> calculateLag(
             Admin admin, 
@@ -174,7 +174,7 @@ public class ConsumerGroupService {
     }
 
     /**
-     * 删除消费者组
+     * Delete consumer group
      */
     public boolean deleteConsumerGroup(String clusterId, String groupId) {
         Admin admin = ClusterService.getInstance().getAdminClient(clusterId);
