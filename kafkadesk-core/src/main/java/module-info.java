@@ -7,4 +7,6 @@ module com.kafkadesk.core {
     
     exports com.kafkadesk.core.config;
     exports com.kafkadesk.core.service;
+    
+    opens com.kafkadesk.core.config to com.fasterxml.jackson.databind;
 }
