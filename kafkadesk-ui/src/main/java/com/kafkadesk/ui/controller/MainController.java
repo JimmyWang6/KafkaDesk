@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -142,6 +143,7 @@ public class MainController implements Initializable {
         initializeProducerView();
         initializeQueryView();
         initializeConsumerGroupView();
+        initializeTabListeners();
         
         updateStatus(I18nUtil.get("status.ready"));
     }
@@ -326,9 +328,20 @@ public class MainController implements Initializable {
         topicTableView.setItems(topicList);
         topicTableView.setPlaceholder(new Label(I18nUtil.get("placeholder.noTopics")));
 
+        // Single click selection
         topicTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 showTopicDetails(newVal);
+            }
+        });
+        
+        // Double click to show partition details dialog
+        topicTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                TopicInfo selectedTopic = topicTableView.getSelectionModel().getSelectedItem();
+                if (selectedTopic != null) {
+                    showPartitionDetailsDialog(selectedTopic);
+                }
             }
         });
     }
@@ -377,8 +390,15 @@ public class MainController implements Initializable {
                     StringBuilder details = new StringBuilder();
                     details.append(I18nUtil.get("topic.name")).append(": ").append(fullInfo.getName()).append("\n");
                     details.append(I18nUtil.get("topic.partitions")).append(": ").append(fullInfo.getPartitions()).append("\n");
-                    details.append(I18nUtil.get("topic.replication")).append(": ").append(fullInfo.getReplicationFactor()).append("\n\n");
-                    details.append("Configuration:\n");
+                    details.append(I18nUtil.get("topic.replication")).append(": ").append(fullInfo.getReplicationFactor()).append("\n");
+                    
+                    // Get message count
+                    long totalMessages = getTopicMessageCount(fullInfo.getName());
+                    if (totalMessages >= 0) {
+                        details.append("Total Messages: ").append(totalMessages).append("\n");
+                    }
+                    
+                    details.append("\nConfiguration:\n");
                     fullInfo.getConfig().forEach((key, value) -> 
                         details.append("  ").append(key).append(": ").append(value).append("\n")
                     );
@@ -387,6 +407,48 @@ public class MainController implements Initializable {
                 }
             });
         }).start();
+    }
+    
+    private long getTopicMessageCount(String topicName) {
+        if (currentCluster == null) {
+            return -1;
+        }
+        
+        try {
+            KafkaConsumer<String, String> consumer = ConsumerService.getInstance().createConsumer(
+                currentCluster.getBootstrapServers(),
+                "kafkadesk-count-" + System.currentTimeMillis()
+            );
+            
+            TopicInfo info = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topicName);
+            if (info == null) {
+                ConsumerService.getInstance().closeConsumer(consumer);
+                return -1;
+            }
+            
+            List<Integer> partitions = new ArrayList<>();
+            for (int i = 0; i < info.getPartitions(); i++) {
+                partitions.add(i);
+            }
+            
+            ConsumerService.getInstance().assignPartitions(consumer, topicName, partitions);
+            
+            long totalMessages = 0;
+            for (int partition : partitions) {
+                TopicPartition tp = new TopicPartition(topicName, partition);
+                consumer.seekToBeginning(Collections.singleton(tp));
+                long beginning = consumer.position(tp);
+                consumer.seekToEnd(Collections.singleton(tp));
+                long end = consumer.position(tp);
+                totalMessages += (end - beginning);
+            }
+            
+            ConsumerService.getInstance().closeConsumer(consumer);
+            return totalMessages;
+        } catch (Exception e) {
+            logger.error("Failed to get message count for topic: " + topicName, e);
+            return -1;
+        }
     }
 
     private void initializeProducerView() {
@@ -454,6 +516,16 @@ public class MainController implements Initializable {
             }
         });
         
+        // Make topic combo box editable for easier selection
+        queryTopicComboBox.setEditable(true);
+        
+        // Add listener for topic selection to update partitions
+        queryTopicComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                updatePartitionList(newVal);
+            }
+        });
+        
         queryPartitionComboBox.getItems().add(I18nUtil.get("query.partition.all"));
         queryPartitionComboBox.setValue(I18nUtil.get("query.partition.all"));
     }
@@ -463,16 +535,16 @@ public class MainController implements Initializable {
             return;
         }
 
+        String previousSelection = queryTopicComboBox.getValue();
         queryTopicComboBox.getItems().clear();
         queryTopicComboBox.getItems().addAll(
             TopicService.getInstance().listTopics(currentCluster.getId())
         );
         
-        queryTopicComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                updatePartitionList(newVal);
-            }
-        });
+        // Restore previous selection if it still exists
+        if (previousSelection != null && queryTopicComboBox.getItems().contains(previousSelection)) {
+            queryTopicComboBox.setValue(previousSelection);
+        }
     }
 
     private void updatePartitionList(String topic) {
@@ -848,6 +920,73 @@ public class MainController implements Initializable {
         if (stage != null) {
             stage.close();
         }
+    }
+
+    private void initializeTabListeners() {
+        mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null && currentCluster != null) {
+                if (newTab == topicTab) {
+                    loadTopics();
+                } else if (newTab == consumerGroupsTab) {
+                    loadConsumerGroups();
+                } else if (newTab == queryTab) {
+                    updateQueryTopicList();
+                }
+            }
+        });
+    }
+
+    private void showPartitionDetailsDialog(TopicInfo topic) {
+        if (currentCluster == null) {
+            return;
+        }
+
+        new Thread(() -> {
+            TopicInfo fullInfo = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topic.getName());
+            
+            Platform.runLater(() -> {
+                if (fullInfo == null || fullInfo.getPartitionDetails().isEmpty()) {
+                    showError(I18nUtil.get("dialog.error.title"), "Failed to load partition details");
+                    return;
+                }
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle(I18nUtil.get("topic.details") + " - " + topic.getName());
+                alert.setHeaderText("Partition Details");
+                
+                StringBuilder details = new StringBuilder();
+                details.append(String.format("Topic: %s\n", fullInfo.getName()));
+                details.append(String.format("Partitions: %d\n", fullInfo.getPartitions()));
+                details.append(String.format("Replication Factor: %d\n\n", fullInfo.getReplicationFactor()));
+                details.append("Partition Information:\n");
+                details.append("─".repeat(60)).append("\n");
+                
+                for (TopicInfo.PartitionInfo partitionInfo : fullInfo.getPartitionDetails()) {
+                    details.append(String.format("\nPartition %d:\n", partitionInfo.getPartition()));
+                    if (partitionInfo.getLeader() != null) {
+                        details.append(String.format("  Leader: %s\n", partitionInfo.getLeader()));
+                    }
+                    details.append(String.format("  Replicas: %s\n", 
+                        partitionInfo.getReplicas().stream()
+                            .map(TopicInfo.Node::toString)
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("None")));
+                    details.append(String.format("  ISR: %s\n", 
+                        partitionInfo.getIsr().stream()
+                            .map(TopicInfo.Node::toString)
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("None")));
+                }
+                
+                TextArea textArea = new TextArea(details.toString());
+                textArea.setEditable(false);
+                textArea.setPrefRowCount(20);
+                textArea.setPrefColumnCount(60);
+                
+                alert.getDialogPane().setContent(textArea);
+                alert.showAndWait();
+            });
+        }).start();
     }
 
     private void updateStatus(String message) {
