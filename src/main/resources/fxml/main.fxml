@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.kafkadesk.controller.MainController">
+    
+    <!-- Top Menu Bar -->
+    <top>
+        <VBox>
+            <MenuBar>
+                <Menu text="File">
+                    <MenuItem text="Exit" onAction="#handleDisconnect"/>
+                </Menu>
+                <Menu text="Help">
+                    <MenuItem text="About"/>
+                </Menu>
+            </MenuBar>
+        </VBox>
+    </top>
+
+    <!-- Main Content -->
+    <center>
+        <SplitPane dividerPositions="0.2">
+            <!-- Left Panel - Connections -->
+            <VBox spacing="10" style="-fx-padding: 10;">
+                <Label text="Connections" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                <ListView fx:id="connectionListView" VBox.vgrow="ALWAYS"/>
+                <HBox spacing="5">
+                    <Button fx:id="connectButton" text="Connect" onAction="#handleConnect"/>
+                    <Button fx:id="disconnectButton" text="Disconnect" onAction="#handleDisconnect"/>
+                </HBox>
+                <HBox spacing="5">
+                    <Button fx:id="addConnectionButton" text="Add" onAction="#handleAddConnection"/>
+                    <Button fx:id="deleteConnectionButton" text="Delete" onAction="#handleDeleteConnection"/>
+                </HBox>
+            </VBox>
+
+            <!-- Right Panel - Tabs -->
+            <TabPane tabClosingPolicy="UNAVAILABLE">
+                <!-- Topics Tab -->
+                <Tab text="Topics">
+                    <VBox spacing="10" style="-fx-padding: 10;">
+                        <HBox spacing="5">
+                            <Button fx:id="refreshTopicsButton" text="Refresh" onAction="#handleRefreshTopics"/>
+                            <Button fx:id="createTopicButton" text="Create Topic" onAction="#handleCreateTopic"/>
+                            <Button fx:id="deleteTopicButton" text="Delete Topic" onAction="#handleDeleteTopic"/>
+                        </HBox>
+                        <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="topicNameColumn" text="Topic Name" prefWidth="200"/>
+                                <TableColumn fx:id="topicPartitionsColumn" text="Partitions" prefWidth="100"/>
+                                <TableColumn fx:id="topicReplicationColumn" text="Replication Factor" prefWidth="150"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+                <!-- Messages Tab -->
+                <Tab text="Messages">
+                    <VBox spacing="10" style="-fx-padding: 10;">
+                        <HBox spacing="5" alignment="CENTER_LEFT">
+                            <Button fx:id="browseMessagesButton" text="Browse Messages" onAction="#handleBrowseMessages"/>
+                            <Button fx:id="sendMessageButton" text="Send Message" onAction="#handleSendMessage"/>
+                            <Separator orientation="VERTICAL"/>
+                            <Label text="Search:"/>
+                            <TextField fx:id="searchTextField" promptText="Enter search term" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="searchButton" text="Search" onAction="#handleSearch"/>
+                        </HBox>
+                        <TableView fx:id="messageTableView" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="messagePartitionColumn" text="Partition" prefWidth="80"/>
+                                <TableColumn fx:id="messageOffsetColumn" text="Offset" prefWidth="100"/>
+                                <TableColumn fx:id="messageKeyColumn" text="Key" prefWidth="150"/>
+                                <TableColumn fx:id="messageValueColumn" text="Value" prefWidth="400"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+                <!-- Consumer Groups Tab -->
+                <Tab text="Consumer Groups">
+                    <VBox spacing="10" style="-fx-padding: 10;">
+                        <HBox spacing="5">
+                            <Button fx:id="refreshConsumerGroupsButton" text="Refresh" onAction="#handleRefreshConsumerGroups"/>
+                        </HBox>
+                        <TableView fx:id="consumerGroupTableView" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="groupIdColumn" text="Group ID" prefWidth="250"/>
+                                <TableColumn fx:id="groupStateColumn" text="State" prefWidth="120"/>
+                                <TableColumn fx:id="groupMembersColumn" text="Members" prefWidth="100"/>
+                                <TableColumn fx:id="groupLagColumn" text="Total Lag" prefWidth="100"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+                <!-- Monitoring Tab -->
+                <Tab text="Monitoring">
+                    <VBox spacing="10" style="-fx-padding: 10;">
+                        <Label text="Cluster Performance Monitoring" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                        <TextArea editable="false" promptText="Select a topic to view partition metrics" VBox.vgrow="ALWAYS"/>
+                    </VBox>
+                </Tab>
+            </TabPane>
+        </SplitPane>
+    </center>
+
+    <!-- Bottom Status Bar -->
+    <bottom>
+        <HBox style="-fx-background-color: #f0f0f0; -fx-padding: 5;">
+            <Label fx:id="statusLabel" text="Ready"/>
+        </HBox>
+    </bottom>
+</BorderPane>
