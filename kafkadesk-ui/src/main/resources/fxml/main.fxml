@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.kafkadesk.ui.controller.MainController"
+            prefHeight="800.0" prefWidth="1200.0">
+
+    <!-- Top: Menu Bar -->
+    <top>
+        <VBox>
+            <MenuBar fx:id="menuBar">
+                <Menu fx:id="menuFile">
+                    <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem fx:id="menuItemExit" onAction="#handleExit"/>
+                </Menu>
+                <Menu fx:id="menuView">
+                    <MenuItem fx:id="menuItemRefresh" onAction="#handleRefreshTopics"/>
+                </Menu>
+                <Menu fx:id="menuTools">
+                    <MenuItem fx:id="menuItemSettings" onAction="#handleSettings"/>
+                </Menu>
+                <Menu fx:id="menuHelp">
+                    <MenuItem fx:id="menuItemAbout" onAction="#handleAbout"/>
+                </Menu>
+            </MenuBar>
+            
+            <!-- Toolbar -->
+            <ToolBar>
+                <Button fx:id="btnAddCluster" onAction="#handleAddCluster"/>
+                <Separator orientation="VERTICAL"/>
+                <Button fx:id="btnRefresh" onAction="#handleRefreshTopics"/>
+                <Separator orientation="VERTICAL"/>
+                <Button fx:id="btnSettings" onAction="#handleSettings"/>
+            </ToolBar>
+        </VBox>
+    </top>
+
+    <!-- Center: Main Work Area -->
+    <center>
+        <SplitPane dividerPositions="0.25">
+            <!-- Left: Cluster Tree -->
+            <VBox>
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                <Label fx:id="lblClusterList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS">
+                    <VBox.margin>
+                        <Insets top="10"/>
+                    </VBox.margin>
+                </TreeView>
+            </VBox>
+
+            <!-- Right: Main Work Area -->
+            <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+                
+                <!-- Topic Management Tab -->
+                <Tab fx:id="topicTab">
+                    <SplitPane orientation="VERTICAL" dividerPositions="0.6">
+                        <!-- Topic List -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblTopicList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="topicNameColumn" prefWidth="300"/>
+                                    <TableColumn fx:id="topicPartitionsColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="topicReplicationColumn" prefWidth="100"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Topic Details -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblTopicDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <TextArea fx:id="topicDetailsTextArea" editable="false" VBox.vgrow="ALWAYS">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </TextArea>
+                        </VBox>
+                    </SplitPane>
+                </Tab>
+
+                <!-- Message Producer Tab -->
+                <Tab fx:id="producerTab">
+                    <VBox spacing="10">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+
+                        <Label fx:id="lblProducerTitle" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label fx:id="lblProducerTopic"/>
+                            <TextField fx:id="producerTopicField" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label fx:id="lblProducerKey"/>
+                            <TextField fx:id="producerKeyField" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+
+                        <Label fx:id="lblProducerValue"/>
+                        <TextArea fx:id="producerMessageTextArea" 
+                                  VBox.vgrow="ALWAYS"
+                                  wrapText="true"/>
+
+                        <HBox spacing="10" alignment="CENTER_RIGHT">
+                            <Button fx:id="btnSendMessage" 
+                                    style="-fx-font-size: 14px; -fx-padding: 10 20;"
+                                    onAction="#handleSendMessage"/>
+                        </HBox>
+                    </VBox>
+                </Tab>
+
+                <!-- Message Query Tab -->
+                <Tab fx:id="queryTab">
+                    <SplitPane orientation="VERTICAL" dividerPositions="0.6">
+                        <!-- Query Form and Results -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+
+                            <!-- Query Controls -->
+                            <GridPane hgap="10" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="15"/>
+                                    <ColumnConstraints percentWidth="35"/>
+                                    <ColumnConstraints percentWidth="15"/>
+                                    <ColumnConstraints percentWidth="35"/>
+                                </columnConstraints>
+
+                                <Label fx:id="lblQueryTopic" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <ComboBox fx:id="queryTopicComboBox" GridPane.columnIndex="1" GridPane.rowIndex="0" maxWidth="Infinity"/>
+
+                                <Label fx:id="lblQueryPartition" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                <ComboBox fx:id="queryPartitionComboBox" GridPane.columnIndex="3" GridPane.rowIndex="0" maxWidth="Infinity"/>
+
+                                <Label fx:id="lblQueryOffsetFrom" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                <TextField fx:id="queryOffsetFromField" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="0"/>
+
+                                <Label fx:id="lblQueryOffsetTo" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                <TextField fx:id="queryOffsetToField" GridPane.columnIndex="3" GridPane.rowIndex="1" promptText="-1"/>
+
+                                <Label fx:id="lblQueryMaxRecords" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                <TextField fx:id="queryMaxRecordsField" GridPane.columnIndex="1" GridPane.rowIndex="2" text="100"/>
+                            </GridPane>
+
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                                <Button fx:id="btnQuerySearch" onAction="#handleQueryMessages"/>
+                                <Button fx:id="btnQueryClear" onAction="#handleClearQuery"/>
+                                <Button fx:id="btnQueryExport" onAction="#handleExportQuery"/>
+                            </HBox>
+
+                            <Label fx:id="lblQueryResults" style="-fx-font-size: 14px; -fx-font-weight: bold;">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </Label>
+
+                            <TableView fx:id="queryTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="queryOffsetColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="queryKeyColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="queryValueColumn" prefWidth="400"/>
+                                    <TableColumn fx:id="queryTimestampColumn" prefWidth="180"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Message Details -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblQueryDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <TextArea fx:id="queryDetailsTextArea" editable="false" VBox.vgrow="ALWAYS">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </TextArea>
+                        </VBox>
+                    </SplitPane>
+                </Tab>
+
+                <!-- Consumer Groups Tab -->
+                <Tab fx:id="consumerGroupsTab">
+                    <SplitPane dividerPositions="0.4">
+                        <!-- Consumer Group List -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblConsumerGroupList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            <TableView fx:id="consumerGroupTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="consumerGroupIdColumn" prefWidth="200"/>
+                                    <TableColumn fx:id="consumerGroupStateColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="consumerGroupCoordinatorColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="consumerGroupMembersColumn" prefWidth="80"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Consumer Group Details -->
+                        <VBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label fx:id="lblConsumerGroupDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            
+                            <!-- Group Members Table -->
+                            <Label text="Members:" style="-fx-font-weight: bold;">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </Label>
+                            <TableView fx:id="consumerGroupMembersTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="memberIdColumn" prefWidth="200"/>
+                                    <TableColumn fx:id="memberClientIdColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="memberHostColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="memberAssignmentsColumn" prefWidth="200"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="5"/>
+                                </VBox.margin>
+                            </TableView>
+
+                            <!-- Offset/Lag Information -->
+                            <Label text="Offsets &amp; Lag:" style="-fx-font-weight: bold;">
+                                <VBox.margin>
+                                    <Insets top="10"/>
+                                </VBox.margin>
+                            </Label>
+                            <TableView fx:id="consumerGroupLagTableView" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="lagTopicColumn" prefWidth="150"/>
+                                    <TableColumn fx:id="lagPartitionColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="lagOffsetColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="lagValueColumn" prefWidth="100"/>
+                                </columns>
+                                <VBox.margin>
+                                    <Insets top="5"/>
+                                </VBox.margin>
+                            </TableView>
+                        </VBox>
+                    </SplitPane>
+                </Tab>
+            </TabPane>
+        </SplitPane>
+    </center>
+
+    <!-- Bottom: Status Bar -->
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #f0f0f0; -fx-padding: 5;">
+            <Label fx:id="statusLabel"/>
+        </HBox>
+    </bottom>
+</BorderPane>
