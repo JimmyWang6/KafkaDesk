@@ -1,69 +1,84 @@
 # KafkaDesk
-A desktop client tool for Kafka, offering visualized functions for Kafka cluster management and operations.
 
-## 功能特性
+[![Java CI with Maven](https://github.com/JimmyWang6/KafkaDesk/actions/workflows/maven.yml/badge.svg)](https://github.com/JimmyWang6/KafkaDesk/actions/workflows/maven.yml)
 
-- **集群管理**: 支持多集群配置和管理
-- **主题管理**: 查看、创建和删除 Kafka 主题
-- **消息生产**: 可视化界面发送消息到 Kafka
-- **消息消费**: 实时消费和查看 Kafka 消息
-- **跨平台**: 支持 Windows、macOS 和 Linux
+A cross-platform desktop client tool for Apache Kafka, offering visualized functions for Kafka cluster management and operations.
 
-## 技术栈
+## Features
+
+- **Cluster Management**: Support for multi-cluster configuration and management
+- **Topic Management**: View, create, and delete Kafka topics
+- **Message Producer**: Visual interface for sending messages to Kafka
+- **Message Query**: Advanced query functionality with filters for topic, partition, and offset
+- **Consumer Group Management**: Monitor consumer groups, members, and lag information
+- **Internationalization**: Full support for English and Chinese languages
+- **Cross-Platform**: Support for Windows, macOS, and Linux
+
+## Tech Stack
 
 - Java 17+
 - JavaFX 17+
 - Apache Kafka Clients 3.6.0
 - Maven
 
-## 构建和运行
+## Build and Run
 
-### 前置要求
+### Prerequisites
 
-- JDK 17 或更高版本
-- Maven 3.6 或更高版本
+- JDK 17 or higher
+- Maven 3.6 or higher
 
-### 构建项目
+### Build Project
 
 ```bash
 mvn clean package
 ```
 
-### 运行应用
+### Run Application
 
 ```bash
 cd kafkadesk-ui
 mvn javafx:run
 ```
 
-或者运行打包后的 JAR:
+Or run the packaged JAR:
 
 ```bash
 java -jar kafkadesk-ui/target/kafkadesk-ui-1.0.0-SNAPSHOT.jar
 ```
 
-## 快速开始
+## Quick Start
 
-1. 启动应用程序
-2. 点击"添加集群"按钮
-3. 输入集群名称和 Bootstrap Servers (例如: localhost:9092)
-4. 在左侧集群树中选择集群进行连接
-5. 在主题管理、消息生产、消息消费标签页中进行操作
+1. Launch the application
+2. Click "Add Cluster" button
+3. Enter cluster name and Bootstrap Servers (e.g., localhost:9092)
+4. Select a cluster from the tree on the left to connect
+5. Use Topic Management, Message Producer, Message Query, and Consumer Groups tabs
 
-## 项目结构
+## Project Structure
 
 ```
 KafkaDesk/
-├── kafkadesk-model/     # 数据模型
-├── kafkadesk-utils/     # 工具类
-├── kafkadesk-core/      # 核心服务
-└── kafkadesk-ui/        # JavaFX 用户界面
+├── kafkadesk-model/     # Data models
+├── kafkadesk-utils/     # Utility classes
+├── kafkadesk-core/      # Core services
+└── kafkadesk-ui/        # JavaFX user interface
 ```
 
-## 配置文件
+## Configuration
 
-配置文件位于: `~/.kafkadesk/config.json`
+Configuration file location: `~/.kafkadesk/config.json`
 
-## 许可证
+## Documentation
+
+- [Design Document](DESIGN.md) - Comprehensive design specification
+- [Quick Start Guide](QUICKSTART.md) - Detailed usage guide
+- [Changelog](CHANGELOG.md) - Version history and feature documentation
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
 
 Apache License 2.0

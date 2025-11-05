@@ -1,239 +1,268 @@
-# KafkaDesk 快速入门指南
+# KafkaDesk Quick Start Guide
 
-## 项目简介
+## Project Introduction
 
-KafkaDesk 是一个基于 Java 17 和 JavaFX 17 构建的 Kafka 桌面客户端，提供了友好的图形界面来管理和操作 Kafka 集群。
+KafkaDesk is a Kafka desktop client built with Java 17 and JavaFX 17, providing a user-friendly graphical interface for managing and operating Kafka clusters.
 
-## 项目结构
+## Project Structure
 
 ```
 KafkaDesk/
-├── pom.xml                    # Maven 父级配置
-├── DESIGN.md                  # 详细设计文档
-├── README.md                  # 项目说明
-├── QUICKSTART.md             # 本文件
+├── pom.xml                    # Maven parent configuration
+├── DESIGN.md                  # Detailed design document
+├── README.md                  # Project description
+├── QUICKSTART.md             # This file
 │
-├── kafkadesk-model/          # 数据模型模块
-│   ├── ClusterConfig.java    # 集群配置
-│   ├── TopicInfo.java        # 主题信息
-│   ├── Message.java          # 消息模型
-│   └── ConsumerGroupInfo.java # 消费者组信息
+├── kafkadesk-model/          # Data model module
+│   ├── ClusterConfig.java    # Cluster configuration
+│   ├── TopicInfo.java        # Topic information
+│   ├── Message.java          # Message model
+│   └── ConsumerGroupInfo.java # Consumer group information
 │
-├── kafkadesk-utils/          # 工具模块
-│   ├── JsonUtil.java         # JSON 工具
-│   ├── DateTimeUtil.java     # 日期时间工具
-│   └── StringUtil.java       # 字符串工具
+├── kafkadesk-utils/          # Utility module
+│   ├── JsonUtil.java         # JSON utilities
+│   ├── DateTimeUtil.java     # Date/time utilities
+│   └── StringUtil.java       # String utilities
 │
-├── kafkadesk-core/           # 核心服务模块
+├── kafkadesk-core/           # Core service module
 │   ├── service/
-│   │   ├── ClusterService.java      # 集群服务
-│   │   ├── TopicService.java        # 主题服务
-│   │   ├── ProducerService.java     # 生产者服务
-│   │   └── ConsumerService.java     # 消费者服务
+│   │   ├── ClusterService.java      # Cluster service
+│   │   ├── TopicService.java        # Topic service
+│   │   ├── ProducerService.java     # Producer service
+│   │   ├── ConsumerService.java     # Consumer service
+│   │   └── ConsumerGroupService.java # Consumer group service
 │   └── config/
-│       └── ConfigManager.java       # 配置管理器
+│       └── ConfigManager.java       # Configuration manager
 │
-└── kafkadesk-ui/             # JavaFX UI 模块
-    ├── KafkaDeskApplication.java    # 主应用程序
+└── kafkadesk-ui/             # JavaFX UI module
+    ├── KafkaDeskApplication.java    # Main application
     ├── controller/
-    │   └── MainController.java      # 主控制器
+    │   └── MainController.java      # Main controller
+    ├── util/
+    │   └── I18nUtil.java            # Internationalization utility
     └── resources/
-        ├── fxml/main.fxml           # 主界面布局
-        └── css/light-theme.css      # 亮色主题样式
+        ├── fxml/main.fxml           # Main UI layout
+        ├── css/light-theme.css      # Light theme styles
+        └── i18n/                    # Language resources
+            ├── messages_en.properties
+            └── messages_zh_CN.properties
 ```
 
-## 环境要求
+## System Requirements
 
-- **JDK**: 17 或更高版本
-- **Maven**: 3.6 或更高版本
-- **Kafka**: 2.8+ (用于测试连接)
+- **JDK**: 17 or higher
+- **Maven**: 3.6 or higher
+- **Kafka**: 2.8+ (for testing connections)
 
-## 快速开始
+## Quick Start
 
-### 1. 克隆项目
+### 1. Clone the Project
 
 ```bash
 git clone https://github.com/JimmyWang6/KafkaDesk.git
 cd KafkaDesk
 ```
 
-### 2. 编译项目
+### 2. Compile the Project
 
 ```bash
 mvn clean compile
 ```
 
-### 3. 打包项目
+### 3. Package the Project
 
 ```bash
 mvn clean package -DskipTests
 ```
 
-### 4. 运行应用
+### 4. Run the Application
 
-方式一：使用 Maven 插件运行
+**Method 1: Using Maven Plugin**
 ```bash
 cd kafkadesk-ui
 mvn javafx:run
 ```
 
-方式二：直接运行 JAR 包
+**Method 2: Running the JAR Directly**
 ```bash
 java -jar kafkadesk-ui/target/kafkadesk-ui-1.0.0-SNAPSHOT.jar
 ```
 
-## 使用说明
+## Usage Instructions
 
-### 添加 Kafka 集群
+### Adding a Kafka Cluster
 
-1. 点击菜单栏 "文件" -> "添加集群"
-2. 输入集群名称（例如：本地开发环境）
-3. 输入 Bootstrap Servers（例如：localhost:9092）
-4. 点击确定保存
+1. Click "File" menu -> "Add Cluster"
+2. Enter cluster name (e.g., Local Development)
+3. Enter Bootstrap Servers (e.g., localhost:9092)
+4. Click OK to save
 
-### 连接到集群
+### Connecting to a Cluster
 
-1. 在左侧集群树中选择一个集群
-2. 应用会自动尝试连接
-3. 连接成功后，状态栏会显示 "已连接到集群: xxx"
+1. Select a cluster from the tree on the left side
+2. The application will automatically attempt to connect
+3. Upon successful connection, the status bar will display "Connected to cluster: xxx"
 
-### 查看主题列表
+### Viewing Topic List
 
-1. 连接到集群后，切换到 "主题管理" 标签页
-2. 主题列表会自动加载
-3. 点击某个主题可以查看详细信息（分区、副本、配置等）
+1. After connecting to a cluster, switch to the "Topic Management" tab
+2. The topic list will load automatically
+3. Click on a topic to view detailed information (partitions, replicas, configuration, etc.)
 
-### 发送消息
+### Sending Messages
 
-1. 切换到 "消息生产" 标签页
-2. 输入主题名称
-3. （可选）输入消息 Key
-4. 输入消息内容
-5. 点击 "发送消息" 按钮
+1. Switch to the "Message Producer" tab
+2. Enter the topic name
+3. (Optional) Enter message Key
+4. Enter message content
+5. Click "Send Message" button
 
-### 消费消息
+### Querying Messages
 
-1. 切换到 "消息消费" 标签页
-2. 选择要消费的主题
-3. 点击 "开始消费" 按钮
-4. 消息会实时显示在表格中
+1. Switch to the "Message Query" tab
+2. Select the topic to query
+3. (Optional) Select specific partition or "All Partitions"
+4. Set offset range (from/to)
+5. Set maximum number of records
+6. Click "Search" button
+7. Messages will be displayed in the table in real-time
 
-## 配置文件
+### Managing Consumer Groups
 
-应用的配置文件位于：
+1. Switch to the "Consumer Groups" tab
+2. The list of consumer groups will load automatically
+3. Click on a consumer group to view:
+   - Group members (Member ID, Client ID, Host, Assignments)
+   - Lag information (Topic, Partition, Current Offset, Lag value)
+
+### Settings
+
+1. Click "Tools" menu -> "Settings"
+2. Select language (English or 中文)
+3. Click OK to save
+4. Restart the application for language changes to take effect
+
+## Configuration Files
+
+Application configuration file location:
 ```
 ~/.kafkadesk/config.json
 ```
 
-配置内容包括：
-- 集群连接配置
-- 用户偏好设置
-- 窗口大小和位置
+Configuration includes:
+- Cluster connection configurations
+- User preference settings
+- Window size and position
+- Recently used clusters
 
-## 日志文件
+## Log Files
 
-应用日志位于：
+Application log location:
 ```
 ~/.kafkadesk/logs/kafkadesk.log
 ```
 
-## 功能特性
+## Feature Highlights
 
-### 已实现功能 ✅
+### Implemented Features ✅
 
-- 多集群管理
-- 集群连接测试
-- 主题列表查看
-- 主题详细信息
-- 消息生产（支持 Key/Value）
-- 配置持久化
-- 友好的 UI 界面
+- Multi-cluster management
+- Cluster connection testing
+- Topic list viewing
+- Topic detailed information
+- Message production (with Key/Value support)
+- Message query (with filters)
+- Consumer group management
+- Lag monitoring
+- Configuration persistence
+- Multi-language support (English/Chinese)
+- User-friendly UI interface
 
-### 计划功能 🚧
+### Planned Features 🚧
 
-- 主题创建和删除
-- 消息实时消费
-- 消费者组管理
-- 消息过滤和搜索
-- 暗色主题
-- 多语言支持
-- 性能监控
+- Topic creation and deletion
+- Topic configuration modification
+- Message filtering and searching
+- Message export functionality
+- Dark theme
+- Performance monitoring
+- ACL management
 
-## 开发说明
+## Development Guide
 
-### 项目依赖
+### Project Dependencies
 
-- **JavaFX 17.0.8**: UI 框架
-- **Kafka Clients 3.6.0**: Kafka 客户端
-- **Jackson 2.15.3**: JSON 处理
-- **SLF4J + Logback**: 日志框架
+- **JavaFX 17.0.8**: UI framework
+- **Kafka Clients 3.6.0**: Kafka client library
+- **Jackson 2.15.3**: JSON processing
+- **SLF4J + Logback**: Logging framework
 
-### 编译单个模块
+### Building Individual Modules
 
 ```bash
-# 只编译 model 模块
+# Build only the model module
 mvn clean compile -pl kafkadesk-model
 
-# 只编译 core 模块及其依赖
+# Build only the core module with dependencies
 mvn clean compile -pl kafkadesk-core -am
 ```
 
-### 运行测试
+### Running Tests
 
 ```bash
 mvn test
 ```
 
-### 生成项目文档
+### Generating Project Documentation
 
 ```bash
 mvn javadoc:javadoc
 ```
 
-## 故障排查
+## Troubleshooting
 
-### 问题：无法连接到 Kafka 集群
+### Issue: Cannot connect to Kafka cluster
 
-**解决方案**：
-1. 确认 Kafka 服务正在运行
-2. 检查 Bootstrap Servers 地址是否正确
-3. 检查网络连接和防火墙设置
-4. 查看日志文件获取详细错误信息
+**Solution**:
+1. Ensure Kafka service is running
+2. Verify Bootstrap Servers address is correct
+3. Check network connection and firewall settings
+4. Review log files for detailed error information
 
-### 问题：JavaFX 运行时错误
+### Issue: JavaFX runtime errors
 
-**解决方案**：
-1. 确认 JDK 版本为 17 或更高
-2. 使用 `mvn javafx:run` 而不是直接运行 JAR
-3. 检查是否有 JavaFX 运行时库
+**Solution**:
+1. Ensure JDK version is 17 or higher
+2. Use `mvn javafx:run` instead of running JAR directly
+3. Check if JavaFX runtime libraries are present
 
-### 问题：编译错误
+### Issue: Compilation errors
 
-**解决方案**：
-1. 清理并重新构建：`mvn clean install`
-2. 确认 Maven 版本 >= 3.6
-3. 删除 `~/.m2/repository` 中的缓存重新下载
+**Solution**:
+1. Clean and rebuild: `mvn clean install`
+2. Ensure Maven version >= 3.6
+3. Delete cache in `~/.m2/repository` and re-download dependencies
 
-## 贡献指南
+## Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Contributions are welcome! Please feel free to submit Issues and Pull Requests.
 
-开发流程：
-1. Fork 项目
-2. 创建特性分支
-3. 提交更改
-4. 推送到分支
-5. 创建 Pull Request
+Development workflow:
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-## 许可证
+## License
 
 Apache License 2.0
 
-## 联系方式
+## Contact
 
 - GitHub: https://github.com/JimmyWang6/KafkaDesk
 - Issues: https://github.com/JimmyWang6/KafkaDesk/issues
 
 ---
 
-**祝您使用愉快！** 🎉
+**Enjoy using KafkaDesk!** 🎉
