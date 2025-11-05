@@ -252,7 +252,7 @@
                             </TableView>
 
                             <!-- Offset/Lag Information -->
-                            <Label text="Offsets & Lag:" style="-fx-font-weight: bold;">
+                            <Label text="Offsets &amp; Lag:" style="-fx-font-weight: bold;">
                                 <VBox.margin>
                                     <Insets top="10"/>
                                 </VBox.margin>
