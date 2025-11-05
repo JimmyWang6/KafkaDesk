@@ -36,7 +36,7 @@ jobs:
       
     - name: Upload artifacts
       if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: kafkadesk-jar
         path: kafkadesk-ui/target/*.jar
