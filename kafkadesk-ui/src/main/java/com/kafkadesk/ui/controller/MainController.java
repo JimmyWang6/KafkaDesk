@@ -231,6 +231,13 @@ public class MainController implements Initializable {
         lagValueColumn.setText(I18nUtil.get("consumerGroup.lag"));
     }
 
+    private String parseClusterNameFromDisplay(String displayName) {
+        if (displayName.contains(" (")) {
+            return displayName.substring(0, displayName.indexOf(" ("));
+        }
+        return displayName;
+    }
+
     private void initializeClusterTree() {
         TreeItem<String> rootItem = new TreeItem<>(I18nUtil.get("cluster.list"));
         rootItem.setExpanded(true);
@@ -251,13 +258,19 @@ public class MainController implements Initializable {
         MenuItem deleteItem = new MenuItem(I18nUtil.get("common.delete"));
         deleteItem.setOnAction(e -> {
             TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && selectedItem.getParent() == rootItem) {
+            if (selectedItem != null && selectedItem != rootItem && selectedItem.getParent() == rootItem) {
                 handleDeleteCluster(selectedItem.getValue());
             }
         });
         contextMenu.getItems().add(deleteItem);
 
-        clusterTreeView.setContextMenu(contextMenu);
+        // Show context menu only for cluster items (not root)
+        clusterTreeView.setOnContextMenuRequested(event -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && selectedItem != rootItem && selectedItem.getParent() == rootItem) {
+                contextMenu.show(clusterTreeView, event.getScreenX(), event.getScreenY());
+            }
+        });
 
         clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && newVal.getParent() != null && newVal.getParent() == rootItem) {
@@ -269,16 +282,12 @@ public class MainController implements Initializable {
     private void onClusterSelected(String displayName) {
         logger.info("Cluster selected: {}", displayName);
         
-        // Parse cluster name from display name (format: "name (servers)")
-        String clusterName = displayName;
-        if (displayName.contains(" (")) {
-            clusterName = displayName.substring(0, displayName.indexOf(" ("));
-        }
+        // Parse cluster name from display name
+        String clusterName = parseClusterNameFromDisplay(displayName);
         
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
-        final String finalClusterName = clusterName;
         Optional<ClusterConfig> cluster = clusters.stream()
-                .filter(c -> c.getName().equals(finalClusterName))
+                .filter(c -> c.getName().equals(clusterName))
                 .findFirst();
 
         if (cluster.isPresent()) {
@@ -744,10 +753,7 @@ public class MainController implements Initializable {
 
     private void handleDeleteCluster(String displayName) {
         // Parse cluster name from display name
-        String clusterName = displayName;
-        if (displayName.contains(" (")) {
-            clusterName = displayName.substring(0, displayName.indexOf(" ("));
-        }
+        String clusterName = parseClusterNameFromDisplay(displayName);
         
         // Show confirmation dialog
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -758,9 +764,8 @@ public class MainController implements Initializable {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             // Find and delete the cluster
             List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
-            final String finalClusterName = clusterName;
             Optional<ClusterConfig> cluster = clusters.stream()
-                    .filter(c -> c.getName().equals(finalClusterName))
+                    .filter(c -> c.getName().equals(clusterName))
                     .findFirst();
             
             if (cluster.isPresent()) {
@@ -775,7 +780,7 @@ public class MainController implements Initializable {
                 }
                 
                 initializeClusterTree();
-                showInfo(I18nUtil.get("common.success"), I18nUtil.get("cluster.delete.success", finalClusterName));
+                showInfo(I18nUtil.get("common.success"), I18nUtil.get("cluster.delete.success", clusterName));
             }
         }
     }
