@@ -106,6 +106,15 @@ public class TopicService {
                     }
                 });
                 topicInfo.setConfig(configMap);
+                
+                // Parse and format retention time
+                String retentionMs = configMap.getOrDefault("retention.ms", 
+                    config.entries().stream()
+                        .filter(e -> "retention.ms".equals(e.name()))
+                        .map(e -> e.value())
+                        .findFirst()
+                        .orElse("-1"));
+                topicInfo.setRetentionTime(formatRetentionTime(retentionMs));
             }
 
             return topicInfo;
@@ -185,5 +194,36 @@ public class TopicService {
      */
     private TopicInfo.Node convertNode(org.apache.kafka.common.Node kafkaNode) {
         return new TopicInfo.Node(kafkaNode.id(), kafkaNode.host(), kafkaNode.port());
+    }
+    
+    /**
+     * Format retention time from milliseconds to human-readable format
+     */
+    private String formatRetentionTime(String retentionMs) {
+        try {
+            long ms = Long.parseLong(retentionMs);
+            if (ms < 0) {
+                return "Infinite";
+            }
+            
+            long days = ms / (1000 * 60 * 60 * 24);
+            if (days > 0) {
+                return days + " days";
+            }
+            
+            long hours = ms / (1000 * 60 * 60);
+            if (hours > 0) {
+                return hours + " hours";
+            }
+            
+            long minutes = ms / (1000 * 60);
+            if (minutes > 0) {
+                return minutes + " minutes";
+            }
+            
+            return ms + " ms";
+        } catch (NumberFormatException e) {
+            return "N/A";
+        }
     }
 }
