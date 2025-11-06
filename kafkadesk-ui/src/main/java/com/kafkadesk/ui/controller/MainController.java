@@ -93,6 +93,7 @@ public class MainController implements Initializable {
     private static final String CLUSTER_DELETE_SUCCESS = "cluster.delete.success";
     private static final String CLUSTER_EDIT_TITLE = "cluster.edit.title";
     private static final String CLUSTER_EDIT_HEADER = "cluster.edit.header";
+    private static final String CLUSTER_EDIT_HOST = "cluster.edit.host";
     private static final String CLUSTER_EDIT_PROTOCOL = "cluster.edit.protocol";
     private static final String CLUSTER_EDIT_PORT = "cluster.edit.port";
     private static final String CLUSTER_EDIT_SUCCESS = "cluster.edit.success";
@@ -1050,7 +1051,7 @@ public class MainController implements Initializable {
         
         grid.add(new Label(I18nUtil.get(CLUSTER_ADD_NAME)), 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label("Host:"), 0, 1);
+        grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_HOST)), 0, 1);
         grid.add(hostnameField, 1, 1);
         grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_PORT)), 0, 2);
         grid.add(portField, 1, 2);
@@ -1060,12 +1061,35 @@ public class MainController implements Initializable {
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         
+        // Add validation
+        javafx.scene.control.Button okButton = (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (nameField.getText() == null || nameField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Cluster name cannot be empty");
+                event.consume();
+            } else if (hostnameField.getText() == null || hostnameField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Host cannot be empty");
+                event.consume();
+            } else if (portField.getText() == null || portField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Port cannot be empty");
+                event.consume();
+            } else {
+                // Validate port is a number
+                try {
+                    Integer.parseInt(portField.getText().trim());
+                } catch (NumberFormatException e) {
+                    showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Port must be a valid number");
+                    event.consume();
+                }
+            }
+        });
+        
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 ClusterConfig updatedCluster = new ClusterConfig();
                 updatedCluster.setId(cluster.getId());
-                updatedCluster.setName(nameField.getText());
-                updatedCluster.setBootstrapServers(hostnameField.getText() + ":" + portField.getText());
+                updatedCluster.setName(nameField.getText().trim());
+                updatedCluster.setBootstrapServers(hostnameField.getText().trim() + ":" + portField.getText().trim());
                 updatedCluster.setSecurityProtocol(protocolCombo.getValue());
                 updatedCluster.setCreatedAt(cluster.getCreatedAt());
                 return updatedCluster;
