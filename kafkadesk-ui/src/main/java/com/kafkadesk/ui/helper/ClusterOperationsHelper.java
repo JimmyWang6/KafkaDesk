@@ -57,8 +57,8 @@ public class ClusterOperationsHelper {
         
         // Create form
         GridPane grid = new GridPane();
-        grid.setHgap(15);  // Increased from 10 to prevent label truncation
-        grid.setVgap(12);  // Increased from 10 for better spacing
+        grid.setHgap(20);  // Further increased to 20 to prevent label truncation
+        grid.setVgap(15);  // Increased to 15 for better spacing
         grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
         
         TextField nameField = new TextField(cluster != null ? cluster.getName() : "");
@@ -97,13 +97,26 @@ public class ClusterOperationsHelper {
             protocolCombo.setValue("PLAINTEXT");
         }
         
-        grid.add(new Label(nameLabel), 0, 0);
+        // Create labels with minimum width to prevent truncation
+        Label nameLbl = new Label(nameLabel);
+        nameLbl.setMinWidth(100);
+        
+        Label hostLbl = new Label(hostLabel);
+        hostLbl.setMinWidth(100);
+        
+        Label portLbl = new Label(portLabel);
+        portLbl.setMinWidth(100);
+        
+        Label protocolLbl = new Label(protocolLabel);
+        protocolLbl.setMinWidth(100);
+        
+        grid.add(nameLbl, 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label(hostLabel), 0, 1);
+        grid.add(hostLbl, 0, 1);
         grid.add(hostnameField, 1, 1);
-        grid.add(new Label(portLabel), 0, 2);
+        grid.add(portLbl, 0, 2);
         grid.add(portField, 1, 2);
-        grid.add(new Label(protocolLabel), 0, 3);
+        grid.add(protocolLbl, 0, 3);
         grid.add(protocolCombo, 1, 3);
         
         dialog.getDialogPane().setContent(grid);
