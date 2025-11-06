@@ -87,6 +87,7 @@ public class MainController implements Initializable {
     @FXML private TableColumn<TopicInfo, String> topicNameColumn;
     @FXML private TableColumn<TopicInfo, Integer> topicPartitionsColumn, topicReplicationColumn;
     @FXML private TextArea topicDetailsTextArea;
+    @FXML private Button btnCreateTopic, btnDeleteTopic;
 
     // Producer
     @FXML private Label lblProducerTitle, lblProducerTopic, lblProducerKey, lblProducerValue;
@@ -198,6 +199,8 @@ public class MainController implements Initializable {
         topicNameColumn.setText(I18nUtil.get(I18nKeys.TOPIC_NAME));
         topicPartitionsColumn.setText(I18nUtil.get(I18nKeys.TOPIC_PARTITIONS));
         topicReplicationColumn.setText(I18nUtil.get(I18nKeys.TOPIC_REPLICATION));
+        btnCreateTopic.setText(I18nUtil.get(I18nKeys.TOPIC_CREATE));
+        btnDeleteTopic.setText(I18nUtil.get(I18nKeys.TOPIC_DELETE));
 
         // Producer
         lblProducerTitle.setText(I18nUtil.get(I18nKeys.PRODUCER_TITLE));
@@ -1034,6 +1037,116 @@ public class MainController implements Initializable {
             initializeClusterTree();
             showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.CLUSTER_EDIT_SUCCESS, updatedCluster.getName()));
         });
+    }
+
+    @FXML
+    private void handleCreateTopic() {
+        if (currentCluster == null) {
+            showError(I18nUtil.get(I18nKeys.COMMON_ERROR), "Please select a cluster first");
+            return;
+        }
+
+        // Create dialog
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(I18nUtil.get(I18nKeys.TOPIC_CREATE_TITLE));
+        dialog.setHeaderText(I18nUtil.get(I18nKeys.TOPIC_CREATE_HEADER));
+
+        // Create form
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Topic name");
+        TextField partitionsField = new TextField();
+        partitionsField.setPromptText("Number of partitions");
+        partitionsField.setText("1");
+        TextField replicationField = new TextField();
+        replicationField.setPromptText("Replication factor");
+        replicationField.setText("1");
+
+        grid.add(new Label(I18nUtil.get(I18nKeys.TOPIC_NAME) + ":"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label(I18nUtil.get(I18nKeys.TOPIC_PARTITIONS) + ":"), 0, 1);
+        grid.add(partitionsField, 1, 1);
+        grid.add(new Label(I18nUtil.get(I18nKeys.TOPIC_REPLICATION) + ":"), 0, 2);
+        grid.add(replicationField, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String topicName = nameField.getText().trim();
+            String partitionsStr = partitionsField.getText().trim();
+            String replicationStr = replicationField.getText().trim();
+
+            // Validation
+            if (topicName.isEmpty()) {
+                showError(I18nUtil.get(I18nKeys.COMMON_ERROR), "Topic name cannot be empty");
+                return;
+            }
+
+            try {
+                int partitions = Integer.parseInt(partitionsStr);
+                short replication = Short.parseShort(replicationStr);
+
+                if (partitions < 1) {
+                    showError(I18nUtil.get(I18nKeys.COMMON_ERROR), "Partitions must be at least 1");
+                    return;
+                }
+
+                if (replication < 1) {
+                    showError(I18nUtil.get(I18nKeys.COMMON_ERROR), "Replication factor must be at least 1");
+                    return;
+                }
+
+                // Create topic
+                boolean success = TopicService.getInstance().createTopic(currentCluster.getId(), topicName, partitions, replication);
+
+                if (success) {
+                    showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.TOPIC_CREATE_SUCCESS));
+                    loadTopics();
+                } else {
+                    showError(I18nUtil.get(I18nKeys.COMMON_ERROR), I18nUtil.get(I18nKeys.TOPIC_CREATE_ERROR));
+                }
+            } catch (NumberFormatException e) {
+                showError(I18nUtil.get(I18nKeys.COMMON_ERROR), "Invalid number format");
+            }
+        }
+    }
+
+    @FXML
+    private void handleDeleteTopic() {
+        if (currentCluster == null) {
+            showError(I18nUtil.get(I18nKeys.COMMON_ERROR), "Please select a cluster first");
+            return;
+        }
+
+        TopicInfo selectedTopic = topicTableView.getSelectionModel().getSelectedItem();
+        if (selectedTopic == null) {
+            showError(I18nUtil.get(I18nKeys.COMMON_ERROR), I18nUtil.get(I18nKeys.TOPIC_DELETE_NO_SELECTION));
+            return;
+        }
+
+        // Confirm deletion
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle(I18nUtil.get(I18nKeys.TOPIC_DELETE_TITLE));
+        confirmAlert.setHeaderText(null);
+        confirmAlert.setContentText(I18nUtil.get(I18nKeys.TOPIC_DELETE_CONFIRM, selectedTopic.getName()));
+
+        Optional<ButtonType> result = confirmAlert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            boolean success = TopicService.getInstance().deleteTopic(currentCluster.getId(), selectedTopic.getName());
+
+            if (success) {
+                showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.TOPIC_DELETE_SUCCESS));
+                loadTopics();
+            } else {
+                showError(I18nUtil.get(I18nKeys.COMMON_ERROR), I18nUtil.get(I18nKeys.TOPIC_DELETE_ERROR));
+            }
+        }
     }
 
     @FXML

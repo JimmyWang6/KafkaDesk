@@ -75,8 +75,19 @@
                             <padding>
                                 <Insets top="16" right="16" bottom="16" left="16"/>
                             </padding>
-                            <Label fx:id="lblTopicList" styleClass="label subheader" 
-                                   style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
+                            
+                            <!-- Topic Header with Actions -->
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label fx:id="lblTopicList" styleClass="label subheader" 
+                                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="btnCreateTopic" onAction="#handleCreateTopic"
+                                        style="-fx-min-width: 100; -fx-font-size: 13px;"/>
+                                <Button fx:id="btnDeleteTopic" onAction="#handleDeleteTopic"
+                                        styleClass="button secondary"
+                                        style="-fx-min-width: 100; -fx-font-size: 13px;"/>
+                            </HBox>
+                            
                             <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS"
                                       style="-fx-background-color: white;">
                                 <columns>

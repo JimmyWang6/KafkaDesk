@@ -90,6 +90,17 @@ public final class I18nKeys {
     public static final String TOPIC_REPLICATION = "topic.replication";
     public static final String TOPIC_LOADING = "topic.loading";
     public static final String TOPIC_LOADED = "topic.loaded";
+    public static final String TOPIC_CREATE = "topic.create";
+    public static final String TOPIC_DELETE = "topic.delete";
+    public static final String TOPIC_CREATE_TITLE = "topic.create.title";
+    public static final String TOPIC_CREATE_HEADER = "topic.create.header";
+    public static final String TOPIC_CREATE_SUCCESS = "topic.create.success";
+    public static final String TOPIC_CREATE_ERROR = "topic.create.error";
+    public static final String TOPIC_DELETE_TITLE = "topic.delete.title";
+    public static final String TOPIC_DELETE_CONFIRM = "topic.delete.confirm";
+    public static final String TOPIC_DELETE_SUCCESS = "topic.delete.success";
+    public static final String TOPIC_DELETE_ERROR = "topic.delete.error";
+    public static final String TOPIC_DELETE_NO_SELECTION = "topic.delete.noSelection";
 
     // I18n Keys - Producer
     public static final String PRODUCER_TITLE = "producer.title";
@@ -155,6 +166,7 @@ public final class I18nKeys {
     public static final String COMMON_EDIT = "common.edit";
     public static final String COMMON_SUCCESS = "common.success";
     public static final String COMMON_INFO = "common.info";
+    public static final String COMMON_ERROR = "common.error";
 
     // I18n Keys - Dialog
     public static final String DIALOG_ERROR_TITLE = "dialog.error.title";
