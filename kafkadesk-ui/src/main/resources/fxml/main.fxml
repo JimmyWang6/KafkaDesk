@@ -56,12 +56,13 @@
                 <!-- Search Box -->
                 <HBox spacing="0" style="-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3;">
                     <TextField fx:id="searchField" promptText="Search clusters..." 
-                               style="-fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 6 8;">
+                               style="-fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 8 8;"
+                               HBox.hgrow="ALWAYS">
                         <HBox.margin>
                             <Insets/>
                         </HBox.margin>
                     </TextField>
-                    <Label text="🔍" style="-fx-padding: 6 8; -fx-text-fill: #666; -fx-font-size: 14px;"/>
+                    <Label text="🔍" style="-fx-padding: 8 10; -fx-text-fill: #666; -fx-font-size: 18px; -fx-min-width: 36px; -fx-alignment: center;"/>
                 </HBox>
                 
                 <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
