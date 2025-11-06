@@ -37,6 +37,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -179,9 +180,11 @@ public class MainController implements Initializable {
         menuHelp.setText(I18nUtil.get(I18nKeys.MENU_HELP));
         menuItemAbout.setText(I18nUtil.get(I18nKeys.MENU_HELP_ABOUT));
 
-        // Toolbar with icons
-        btnAddCluster.setText("➕ " + I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER));
-        btnRefresh.setText("🔄 " + I18nUtil.get(I18nKeys.TOOLBAR_REFRESH));
+        // Toolbar with icons only
+        btnAddCluster.setText("➕");
+        btnAddCluster.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER)));
+        btnRefresh.setText("🔄");
+        btnRefresh.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_REFRESH)));
 
         // Cluster
         lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));
@@ -200,8 +203,10 @@ public class MainController implements Initializable {
         topicPartitionsColumn.setText(I18nUtil.get(I18nKeys.TOPIC_PARTITIONS));
         topicReplicationColumn.setText(I18nUtil.get(I18nKeys.TOPIC_REPLICATION));
         topicRetentionColumn.setText(I18nUtil.get(I18nKeys.TOPIC_RETENTION));
-        btnCreateTopic.setText("➕ " + I18nUtil.get(I18nKeys.TOPIC_CREATE));
-        btnDeleteTopic.setText("🗑 " + I18nUtil.get(I18nKeys.TOPIC_DELETE));
+        btnCreateTopic.setText("➕");
+        btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
+        btnDeleteTopic.setText("🗑");
+        btnDeleteTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_DELETE)));
 
         // Producer
         lblProducerTitle.setText(I18nUtil.get(I18nKeys.PRODUCER_TITLE));

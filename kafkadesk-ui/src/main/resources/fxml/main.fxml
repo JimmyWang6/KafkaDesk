@@ -36,11 +36,11 @@
             <Region HBox.hgrow="ALWAYS"/>
             
             <!-- Quick Action Buttons -->
-            <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕ "
-                    style="-fx-min-width: 100; -fx-font-size: 13px;"/>
-            <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄 "
+            <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕"
+                    style="-fx-min-width: 40; -fx-font-size: 16px;"/>
+            <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄"
                     styleClass="button secondary"
-                    style="-fx-min-width: 80; -fx-font-size: 13px;"/>
+                    style="-fx-min-width: 40; -fx-font-size: 16px;"/>
         </HBox>
     </top>
 
@@ -78,11 +78,11 @@
                                 <Label fx:id="lblTopicList" styleClass="label subheader" 
                                        style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
                                 <Region HBox.hgrow="ALWAYS"/>
-                                <Button fx:id="btnCreateTopic" onAction="#handleCreateTopic" text="➕ "
-                                        style="-fx-min-width: 100; -fx-font-size: 13px;"/>
-                                <Button fx:id="btnDeleteTopic" onAction="#handleDeleteTopic" text="🗑 "
+                                <Button fx:id="btnCreateTopic" onAction="#handleCreateTopic" text="➕"
+                                        style="-fx-min-width: 40; -fx-font-size: 16px;"/>
+                                <Button fx:id="btnDeleteTopic" onAction="#handleDeleteTopic" text="🗑"
                                         styleClass="button secondary"
-                                        style="-fx-min-width: 100; -fx-font-size: 13px;"/>
+                                        style="-fx-min-width: 40; -fx-font-size: 16px;"/>
                             </HBox>
                             
                             <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS"
