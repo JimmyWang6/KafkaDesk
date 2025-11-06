@@ -97,6 +97,10 @@ public class MainController implements Initializable {
     private static final String CLUSTER_EDIT_PROTOCOL = "cluster.edit.protocol";
     private static final String CLUSTER_EDIT_PORT = "cluster.edit.port";
     private static final String CLUSTER_EDIT_SUCCESS = "cluster.edit.success";
+    private static final String CLUSTER_EDIT_ERROR_NAME_EMPTY = "cluster.edit.error.nameEmpty";
+    private static final String CLUSTER_EDIT_ERROR_HOST_EMPTY = "cluster.edit.error.hostEmpty";
+    private static final String CLUSTER_EDIT_ERROR_PORT_EMPTY = "cluster.edit.error.portEmpty";
+    private static final String CLUSTER_EDIT_ERROR_PORT_INVALID = "cluster.edit.error.portInvalid";
 
     // I18n Keys - Tabs
     private static final String TAB_TOPICS = "tab.topics";
@@ -1065,20 +1069,20 @@ public class MainController implements Initializable {
         javafx.scene.control.Button okButton = (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             if (nameField.getText() == null || nameField.getText().trim().isEmpty()) {
-                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Cluster name cannot be empty");
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_NAME_EMPTY));
                 event.consume();
             } else if (hostnameField.getText() == null || hostnameField.getText().trim().isEmpty()) {
-                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Host cannot be empty");
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_HOST_EMPTY));
                 event.consume();
             } else if (portField.getText() == null || portField.getText().trim().isEmpty()) {
-                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Port cannot be empty");
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_PORT_EMPTY));
                 event.consume();
             } else {
                 // Validate port is a number
                 try {
                     Integer.parseInt(portField.getText().trim());
                 } catch (NumberFormatException e) {
-                    showError(I18nUtil.get(PRODUCER_ERROR_TITLE), "Port must be a valid number");
+                    showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_PORT_INVALID));
                     event.consume();
                 }
             }
