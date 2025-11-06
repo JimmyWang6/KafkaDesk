@@ -366,6 +366,7 @@ public class MainController implements Initializable {
         Dialog<ClusterConfig> dialog = new Dialog<>();
         dialog.setTitle(I18nUtil.get(I18nKeys.CLUSTER_ADD_TITLE));
         dialog.setHeaderText(I18nUtil.get(I18nKeys.CLUSTER_ADD_HEADER));
+        dialog.initOwner(stage);
         
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -443,6 +444,7 @@ public class MainController implements Initializable {
             return null;
         });
         
+        centerDialogOnStage(dialog);
         Optional<ClusterConfig> result = dialog.showAndWait();
         result.ifPresent(config -> {
             ConfigManager.getInstance().addCluster(config);
@@ -459,6 +461,7 @@ public class MainController implements Initializable {
         Dialog<ClusterConfig> dialog = new Dialog<>();
         dialog.setTitle(I18nUtil.get(I18nKeys.CLUSTER_EDIT_TITLE));
         dialog.setHeaderText(I18nUtil.get(I18nKeys.CLUSTER_EDIT_HEADER));
+        dialog.initOwner(stage);
         
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -532,6 +535,7 @@ public class MainController implements Initializable {
             return null;
         });
         
+        centerDialogOnStage(dialog);
         Optional<ClusterConfig> result = dialog.showAndWait();
         result.ifPresent(updatedCluster -> {
             ConfigManager.getInstance().updateCluster(updatedCluster);
@@ -550,6 +554,8 @@ public class MainController implements Initializable {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(I18nUtil.get(I18nKeys.CLUSTER_DELETE_TITLE));
         alert.setHeaderText(I18nUtil.get(I18nKeys.CLUSTER_DELETE_CONFIRM, cluster.getName()));
+        alert.initOwner(stage);
+        centerDialogOnStage(alert);
         
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -590,6 +596,7 @@ public class MainController implements Initializable {
     private void handleSettings() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle(I18nUtil.get(I18nKeys.SETTINGS_TITLE));
+        dialog.initOwner(stage);
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -612,6 +619,7 @@ public class MainController implements Initializable {
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
+        centerDialogOnStage(dialog);
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             String lang = languageCombo.getValue().equals("中文") ? "zh_CN" : "en";
@@ -631,6 +639,8 @@ public class MainController implements Initializable {
         alert.setTitle(I18nUtil.get(I18nKeys.DIALOG_ABOUT_TITLE));
         alert.setHeaderText(I18nUtil.get(I18nKeys.DIALOG_ABOUT_HEADER));
         alert.setContentText(I18nUtil.get(I18nKeys.DIALOG_ABOUT_CONTENT));
+        alert.initOwner(stage);
+        centerDialogOnStage(alert);
         alert.showAndWait();
     }
 
@@ -651,6 +661,8 @@ public class MainController implements Initializable {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setContentText(message);
+        alert.initOwner(stage);
+        centerDialogOnStage(alert);
         alert.showAndWait();
     }
 
@@ -658,7 +670,21 @@ public class MainController implements Initializable {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setContentText(message);
+        alert.initOwner(stage);
+        centerDialogOnStage(alert);
         alert.showAndWait();
+    }
+    
+    /**
+     * Center a dialog on the main application window
+     */
+    private void centerDialogOnStage(Dialog<?> dialog) {
+        if (stage != null) {
+            dialog.setOnShown(e -> {
+                dialog.setX(stage.getX() + (stage.getWidth() - dialog.getWidth()) / 2);
+                dialog.setY(stage.getY() + (stage.getHeight() - dialog.getHeight()) / 2);
+            });
+        }
     }
 
     public void setStage(Stage stage) {
@@ -919,6 +945,15 @@ public class MainController implements Initializable {
             
             Scene scene = new Scene(detailTabPane, 800, 600);
             detailStage.setScene(scene);
+            
+            // Center the stage on the owner window
+            if (mainController.stage != null) {
+                detailStage.setOnShown(e -> {
+                    detailStage.setX(mainController.stage.getX() + (mainController.stage.getWidth() - detailStage.getWidth()) / 2);
+                    detailStage.setY(mainController.stage.getY() + (mainController.stage.getHeight() - detailStage.getHeight()) / 2);
+                });
+            }
+            
             detailStage.show();
         }
         
@@ -1272,6 +1307,8 @@ public class MainController implements Initializable {
             Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
             confirmAlert.setTitle(I18nUtil.get(I18nKeys.TOPIC_DELETE_TITLE));
             confirmAlert.setContentText(I18nUtil.get(I18nKeys.TOPIC_DELETE_CONFIRM, selectedTopic.getName()));
+            confirmAlert.initOwner(mainController.stage);
+            mainController.centerDialogOnStage(confirmAlert);
             
             Optional<ButtonType> result = confirmAlert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
