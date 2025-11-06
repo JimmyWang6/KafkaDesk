@@ -144,12 +144,17 @@
     -fx-text-fill: #212121;
 }
 
-.tree-cell:hover {
+.tree-cell:filled:hover {
     -fx-background-color: #F5F5F5;
 }
 
 .tree-cell:selected:hover {
     -fx-background-color: #BBDEFB;
+}
+
+/* Disable hover effect on empty tree cells */
+.tree-cell:empty:hover {
+    -fx-background-color: white;
 }
 
 /* Tab Pane - Modern tabs */
