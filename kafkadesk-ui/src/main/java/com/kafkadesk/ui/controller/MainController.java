@@ -701,110 +701,116 @@ public class MainController implements Initializable {
         }
 
         private Node createOverviewContent() {
-            VBox vbox = new VBox(15);
-            vbox.setPadding(new Insets(20));
-            
-            Label title = new Label(I18nUtil.get(I18nKeys.OVERVIEW_TITLE));
-            title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white; -fx-padding: 20;");
             
             GridPane grid = new GridPane();
-            grid.setHgap(10);
-            grid.setVgap(10);
-            grid.setPadding(new Insets(10));
+            grid.setHgap(15);
+            grid.setVgap(12);
+            grid.setStyle("-fx-background-color: white;");
             
             overviewClusterName = new Label(cluster.getName());
             overviewBootstrapServers = new Label(cluster.getBootstrapServers());
             overviewBrokerCount = new Label("Loading...");
             overviewTopicCount = new Label("Loading...");
             
-            grid.add(new Label("Cluster Name:"), 0, 0);
+            Label lblClusterName = new Label("Cluster Name:");
+            lblClusterName.setStyle("-fx-font-weight: bold;");
+            Label lblBootstrap = new Label("Bootstrap Servers:");
+            lblBootstrap.setStyle("-fx-font-weight: bold;");
+            Label lblBrokerCount = new Label("Broker Count:");
+            lblBrokerCount.setStyle("-fx-font-weight: bold;");
+            Label lblTopicCount = new Label("Topic Count:");
+            lblTopicCount.setStyle("-fx-font-weight: bold;");
+            
+            grid.add(lblClusterName, 0, 0);
             grid.add(overviewClusterName, 1, 0);
-            grid.add(new Label("Bootstrap Servers:"), 0, 1);
+            grid.add(lblBootstrap, 0, 1);
             grid.add(overviewBootstrapServers, 1, 1);
-            grid.add(new Label(I18nUtil.get(I18nKeys.OVERVIEW_BROKER_COUNT) + ":"), 0, 2);
+            grid.add(lblBrokerCount, 0, 2);
             grid.add(overviewBrokerCount, 1, 2);
-            grid.add(new Label(I18nUtil.get(I18nKeys.OVERVIEW_TOPIC_COUNT) + ":"), 0, 3);
+            grid.add(lblTopicCount, 0, 3);
             grid.add(overviewTopicCount, 1, 3);
             
-            vbox.getChildren().addAll(title, grid);
+            vbox.getChildren().add(grid);
             return vbox;
         }
 
         private Node createBrokersContent() {
-            VBox vbox = new VBox(10);
-            vbox.setPadding(new Insets(16));
-            
-            Label title = new Label(I18nUtil.get(I18nKeys.BROKER_LIST));
-            title.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white;");
             
             brokersTableView = new TableView<>();
             brokersTableView.setItems(brokerList);
+            brokersTableView.setStyle("-fx-background-color: white;");
             
-            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>(I18nUtil.get(I18nKeys.BROKER_ID));
-            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-            idCol.setPrefWidth(100);
-            
-            TableColumn<BrokerRow, String> hostCol = new TableColumn<>(I18nUtil.get(I18nKeys.BROKER_HOST));
+            TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
             hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
-            hostCol.setPrefWidth(250);
+            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.25));
             
-            TableColumn<BrokerRow, Integer> portCol = new TableColumn<>(I18nUtil.get(I18nKeys.BROKER_PORT));
+            TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
             portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
-            portCol.setPrefWidth(100);
+            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
             
-            TableColumn<BrokerRow, String> rackCol = new TableColumn<>(I18nUtil.get(I18nKeys.BROKER_RACK));
-            rackCol.setCellValueFactory(new PropertyValueFactory<>("rack"));
-            rackCol.setPrefWidth(150);
+            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("Broker ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
             
-            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, rackCol);
+            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
+            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            
+            TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
+            leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
+            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            
+            TableColumn<BrokerRow, Integer> replicasCol = new TableColumn<>("Replicas");
+            replicasCol.setCellValueFactory(new PropertyValueFactory<>("replicas"));
+            replicasCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            
+            brokersTableView.getColumns().addAll(hostCol, portCol, idCol, diskUsageCol, leadersCol, replicasCol);
             VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
             
-            vbox.getChildren().addAll(title, brokersTableView);
+            vbox.getChildren().add(brokersTableView);
             return vbox;
         }
 
         private Node createTopicsContent() {
-            SplitPane splitPane = new SplitPane();
-            splitPane.setOrientation(javafx.geometry.Orientation.VERTICAL);
-            splitPane.setDividerPositions(0.6);
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white;");
             
-            // Top: Topic list
-            VBox topVBox = new VBox(10);
-            topVBox.setPadding(new Insets(16));
-            
-            HBox headerBox = new HBox(10);
-            headerBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            
-            Label lblTopicList = new Label(I18nUtil.get(I18nKeys.TOPIC_LIST));
-            lblTopicList.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-            
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            // Toolbar with action buttons
+            HBox toolbar = new HBox(8);
+            toolbar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+            toolbar.setStyle("-fx-padding: 8; -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;");
             
             Button btnCreateTopic = new Button("➕");
             btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
+            btnCreateTopic.setStyle("-fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px;");
             btnCreateTopic.setOnAction(e -> handleCreateTopic());
             
             Button btnDeleteTopic = new Button("🗑");
             btnDeleteTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_DELETE)));
+            btnDeleteTopic.setStyle("-fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px;");
             btnDeleteTopic.setOnAction(e -> handleDeleteTopic());
             
-            headerBox.getChildren().addAll(lblTopicList, spacer, btnCreateTopic, btnDeleteTopic);
+            toolbar.getChildren().addAll(btnCreateTopic, btnDeleteTopic);
             
             topicsTableView = new TableView<>();
             topicsTableView.setItems(topicList);
+            topicsTableView.setStyle("-fx-background-color: white;");
             
-            TableColumn<TopicInfo, String> nameCol = new TableColumn<>(I18nUtil.get(I18nKeys.TOPIC_NAME));
+            TableColumn<TopicInfo, String> nameCol = new TableColumn<>("Topic Name");
             nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-            nameCol.setPrefWidth(250);
+            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.50));
             
-            TableColumn<TopicInfo, Integer> partitionsCol = new TableColumn<>(I18nUtil.get(I18nKeys.TOPIC_PARTITIONS));
+            TableColumn<TopicInfo, Integer> partitionsCol = new TableColumn<>("Partitions");
             partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
-            partitionsCol.setPrefWidth(100);
+            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.25));
             
-            TableColumn<TopicInfo, Integer> replicationCol = new TableColumn<>(I18nUtil.get(I18nKeys.TOPIC_REPLICATION));
+            TableColumn<TopicInfo, Integer> replicationCol = new TableColumn<>("Replication");
             replicationCol.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
-            replicationCol.setPrefWidth(120);
+            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.25));
             
             topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol);
             topicsTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -814,112 +820,49 @@ public class MainController implements Initializable {
             });
             
             VBox.setVgrow(topicsTableView, javafx.scene.layout.Priority.ALWAYS);
-            topVBox.getChildren().addAll(headerBox, topicsTableView);
+            vbox.getChildren().addAll(toolbar, topicsTableView);
             
-            // Bottom: Topic details
-            VBox bottomVBox = new VBox(10);
-            bottomVBox.setPadding(new Insets(16));
-            
-            Label lblTopicDetails = new Label(I18nUtil.get(I18nKeys.TOPIC_DETAILS));
-            lblTopicDetails.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-            
-            topicDetailsTextArea = new TextArea();
-            topicDetailsTextArea.setEditable(false);
-            topicDetailsTextArea.setStyle("-fx-background-color: #F8F9FA;");
-            VBox.setVgrow(topicDetailsTextArea, javafx.scene.layout.Priority.ALWAYS);
-            
-            bottomVBox.getChildren().addAll(lblTopicDetails, topicDetailsTextArea);
-            
-            splitPane.getItems().addAll(topVBox, bottomVBox);
-            return splitPane;
+            return vbox;
         }
 
         private Node createConsumerGroupsContent() {
-            SplitPane splitPane = new SplitPane();
-            splitPane.setDividerPositions(0.4);
-            
-            // Left: Consumer group list
-            VBox leftVBox = new VBox(10);
-            leftVBox.setPadding(new Insets(10));
-            
-            Label lblGroupList = new Label(I18nUtil.get(I18nKeys.CONSUMER_GROUP_LIST));
-            lblGroupList.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white;");
             
             consumerGroupTableView = new TableView<>();
             consumerGroupTableView.setItems(consumerGroupList);
+            consumerGroupTableView.setStyle("-fx-background-color: white;");
             
-            TableColumn<ConsumerGroupRow, String> groupIdCol = new TableColumn<>(I18nUtil.get(I18nKeys.CONSUMER_GROUP_ID));
+            TableColumn<ConsumerGroupRow, String> groupIdCol = new TableColumn<>("Group ID");
             groupIdCol.setCellValueFactory(new PropertyValueFactory<>("groupId"));
-            groupIdCol.setPrefWidth(200);
+            groupIdCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.40));
             
-            TableColumn<ConsumerGroupRow, String> stateCol = new TableColumn<>(I18nUtil.get(I18nKeys.CONSUMER_GROUP_STATE));
+            TableColumn<ConsumerGroupRow, String> stateCol = new TableColumn<>("State");
             stateCol.setCellValueFactory(new PropertyValueFactory<>("state"));
-            stateCol.setPrefWidth(100);
+            stateCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.20));
             
-            consumerGroupTableView.getColumns().addAll(groupIdCol, stateCol);
-            consumerGroupTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal != null) {
-                    showConsumerGroupDetails(newVal.getGroupId());
-                }
-            });
+            TableColumn<ConsumerGroupRow, String> coordinatorCol = new TableColumn<>("Coordinator");
+            coordinatorCol.setCellValueFactory(new PropertyValueFactory<>("coordinator"));
+            coordinatorCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.25));
             
+            TableColumn<ConsumerGroupRow, Integer> membersCol = new TableColumn<>("Members");
+            membersCol.setCellValueFactory(new PropertyValueFactory<>("memberCount"));
+            membersCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
+            
+            consumerGroupTableView.getColumns().addAll(groupIdCol, stateCol, coordinatorCol, membersCol);
             VBox.setVgrow(consumerGroupTableView, javafx.scene.layout.Priority.ALWAYS);
-            leftVBox.getChildren().addAll(lblGroupList, consumerGroupTableView);
             
-            // Right: Consumer group details
-            VBox rightVBox = new VBox(10);
-            rightVBox.setPadding(new Insets(10));
-            
-            Label lblGroupDetails = new Label(I18nUtil.get(I18nKeys.CONSUMER_GROUP_DETAILS));
-            lblGroupDetails.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-            
-            Label lblMembers = new Label("Members:");
-            lblMembers.setStyle("-fx-font-weight: bold;");
-            
-            consumerGroupMembersTableView = new TableView<>();
-            consumerGroupMembersTableView.setItems(memberList);
-            
-            TableColumn<MemberRow, String> memberIdCol = new TableColumn<>(I18nUtil.get(I18nKeys.CONSUMER_GROUP_MEMBER_ID));
-            memberIdCol.setCellValueFactory(new PropertyValueFactory<>("memberId"));
-            memberIdCol.setPrefWidth(200);
-            
-            consumerGroupMembersTableView.getColumns().add(memberIdCol);
-            VBox.setVgrow(consumerGroupMembersTableView, javafx.scene.layout.Priority.ALWAYS);
-            
-            Label lblLag = new Label("Lag:");
-            lblLag.setStyle("-fx-font-weight: bold;");
-            
-            consumerGroupLagTableView = new TableView<>();
-            consumerGroupLagTableView.setItems(lagList);
-            
-            TableColumn<LagRow, String> topicCol = new TableColumn<>(I18nUtil.get(I18nKeys.TOPIC_NAME));
-            topicCol.setCellValueFactory(new PropertyValueFactory<>("topic"));
-            topicCol.setPrefWidth(150);
-            
-            TableColumn<LagRow, Integer> partitionCol = new TableColumn<>(I18nUtil.get(I18nKeys.QUERY_PARTITION));
-            partitionCol.setCellValueFactory(new PropertyValueFactory<>("partition"));
-            partitionCol.setPrefWidth(100);
-            
-            TableColumn<LagRow, Long> lagCol = new TableColumn<>(I18nUtil.get(I18nKeys.CONSUMER_GROUP_LAG));
-            lagCol.setCellValueFactory(new PropertyValueFactory<>("lag"));
-            lagCol.setPrefWidth(100);
-            
-            consumerGroupLagTableView.getColumns().addAll(topicCol, partitionCol, lagCol);
-            VBox.setVgrow(consumerGroupLagTableView, javafx.scene.layout.Priority.ALWAYS);
-            
-            rightVBox.getChildren().addAll(lblGroupDetails, lblMembers, consumerGroupMembersTableView, lblLag, consumerGroupLagTableView);
-            
-            splitPane.getItems().addAll(leftVBox, rightVBox);
-            return splitPane;
+            vbox.getChildren().add(consumerGroupTableView);
+            return vbox;
         }
 
         private Node createAclContent() {
-            VBox vbox = new VBox(20);
-            vbox.setPadding(new Insets(20));
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white; -fx-padding: 20;");
             vbox.setAlignment(javafx.geometry.Pos.CENTER);
             
             Label aclPlaceholder = new Label("ACL Management - Coming Soon");
-            aclPlaceholder.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
+            aclPlaceholder.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
             
             vbox.getChildren().add(aclPlaceholder);
             return vbox;
@@ -947,7 +890,8 @@ public class MainController implements Initializable {
             new Thread(() -> {
                 Platform.runLater(() -> {
                     brokerList.clear();
-                    brokerList.add(new BrokerRow(0, "localhost", 9092, "rack1"));
+                    // Sample data - in real implementation, this would fetch actual broker data
+                    brokerList.add(new BrokerRow(0, "localhost", 9092, "rack1", "45%", 12, 24));
                 });
             }).start();
         }
@@ -1137,18 +1081,27 @@ public class MainController implements Initializable {
         private final String host;
         private final int port;
         private final String rack;
+        private final String diskUsage;
+        private final int leaders;
+        private final int replicas;
 
-        public BrokerRow(int id, String host, int port, String rack) {
+        public BrokerRow(int id, String host, int port, String rack, String diskUsage, int leaders, int replicas) {
             this.id = id;
             this.host = host;
             this.port = port;
             this.rack = rack;
+            this.diskUsage = diskUsage;
+            this.leaders = leaders;
+            this.replicas = replicas;
         }
 
         public int getId() { return id; }
         public String getHost() { return host; }
         public int getPort() { return port; }
         public String getRack() { return rack; }
+        public String getDiskUsage() { return diskUsage; }
+        public int getLeaders() { return leaders; }
+        public int getReplicas() { return replicas; }
     }
 
     public static class ConsumerGroupRow {

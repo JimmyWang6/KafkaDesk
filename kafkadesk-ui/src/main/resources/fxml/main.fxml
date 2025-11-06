@@ -9,29 +9,39 @@
             fx:controller="com.kafkadesk.ui.controller.MainController"
             prefHeight="800.0" prefWidth="1200.0">
 
-    <!-- Top: Integrated Header Bar -->
+    <!-- Top: Header with Toolbar and Menu Bar -->
     <top>
-        <HBox styleClass="integrated-header" spacing="8" alignment="CENTER_LEFT"
-              style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0; -fx-padding: 8 12 8 12;">
+        <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
+            <!-- Toolbar - Small Icons -->
+            <HBox spacing="4" alignment="CENTER_LEFT" style="-fx-padding: 6 12 6 12; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
+                <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕"
+                        style="-fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4;"/>
+                <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄"
+                        styleClass="button secondary"
+                        style="-fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4;"/>
+            </HBox>
             
-            <!-- Menu Bar - Compact -->
-            <MenuBar fx:id="menuBar" style="-fx-background-color: transparent; -fx-border-width: 0;">
-                <Menu fx:id="menuFile">
-                    <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
-                    <SeparatorMenuItem/>
-                    <MenuItem fx:id="menuItemExit" onAction="#handleExit"/>
-                </Menu>
-                <Menu fx:id="menuView">
-                    <MenuItem fx:id="menuItemRefresh" onAction="#handleRefreshTopics"/>
-                </Menu>
-                <Menu fx:id="menuTools">
-                    <MenuItem fx:id="menuItemSettings" onAction="#handleSettings"/>
-                </Menu>
-                <Menu fx:id="menuHelp">
-                    <MenuItem fx:id="menuItemAbout" onAction="#handleAbout"/>
-                </Menu>
-            </MenuBar>
-        </HBox>
+            <!-- Menu Bar -->
+            <HBox styleClass="integrated-header" spacing="8" alignment="CENTER_LEFT"
+                  style="-fx-background-color: #FFFFFF; -fx-padding: 4 12 4 12;">
+                <MenuBar fx:id="menuBar" style="-fx-background-color: transparent; -fx-border-width: 0;">
+                    <Menu fx:id="menuFile">
+                        <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
+                        <SeparatorMenuItem/>
+                        <MenuItem fx:id="menuItemExit" onAction="#handleExit"/>
+                    </Menu>
+                    <Menu fx:id="menuView">
+                        <MenuItem fx:id="menuItemRefresh" onAction="#handleRefreshTopics"/>
+                    </Menu>
+                    <Menu fx:id="menuTools">
+                        <MenuItem fx:id="menuItemSettings" onAction="#handleSettings"/>
+                    </Menu>
+                    <Menu fx:id="menuHelp">
+                        <MenuItem fx:id="menuItemAbout" onAction="#handleAbout"/>
+                    </Menu>
+                </MenuBar>
+            </HBox>
+        </VBox>
     </top>
 
     <!-- Center: Main Work Area with Cluster Tree on Left -->
@@ -43,15 +53,6 @@
                 <padding>
                     <Insets top="12" right="12" bottom="12" left="12"/>
                 </padding>
-                
-                <!-- Action Buttons Bar -->
-                <HBox spacing="8" alignment="CENTER_RIGHT" style="-fx-padding: 0 0 12 0;">
-                    <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕"
-                            style="-fx-min-width: 40; -fx-font-size: 16px;"/>
-                    <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄"
-                            styleClass="button secondary"
-                            style="-fx-min-width: 40; -fx-font-size: 16px;"/>
-                </HBox>
                 
                 <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
                           style="-fx-border-color: transparent; -fx-background-color: white;">
