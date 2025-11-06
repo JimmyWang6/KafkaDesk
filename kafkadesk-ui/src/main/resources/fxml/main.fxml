@@ -44,29 +44,27 @@
         </HBox>
     </top>
 
-    <!-- Center: Main Work Area with Cluster Tabs on Left -->
+    <!-- Center: Main Work Area with Cluster Tree on Left -->
     <center>
-        <SplitPane dividerPositions="0.15" style="-fx-background-color: #F8F9FA;">
-            <!-- Left: Cluster Tabs (Vertical) -->
+        <SplitPane dividerPositions="0.2" style="-fx-background-color: #F8F9FA;">
+            <!-- Left: Cluster TreeView -->
             <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 1 0 0;">
                 <padding>
-                    <Insets top="12" right="8" bottom="12" left="8"/>
+                    <Insets top="12" right="12" bottom="12" left="12"/>
                 </padding>
                 <Label fx:id="lblClusterList" styleClass="label subheader" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
-                <TabPane fx:id="clusterTabPane" VBox.vgrow="ALWAYS" side="LEFT" tabClosingPolicy="UNAVAILABLE"
-                         style="-fx-border-color: transparent; -fx-background-color: white; -fx-tab-min-height: 60;">
+                <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
+                          style="-fx-border-color: transparent; -fx-background-color: white;">
                     <VBox.margin>
                         <Insets top="12"/>
                     </VBox.margin>
-                    <!-- Cluster tabs will be added dynamically -->
-                </TabPane>
+                </TreeView>
             </VBox>
 
-            <!-- Right: Cluster Content Area with Nested Tabs -->
-            <TabPane fx:id="openClustersTabPane" tabClosingPolicy="ALL_TABS" style="-fx-background-color: white;">
-                <!-- Open cluster tabs will be added dynamically -->
-                <!-- Each tab will contain a nested TabPane with Overview, Brokers, Topics, Consumer, ACL -->
-            </TabPane>
+            <!-- Right: Content Area -->
+            <StackPane fx:id="contentArea" style="-fx-background-color: white;">
+                <!-- Content will be shown here based on tree selection -->
+            </StackPane>
         </SplitPane>
     </center>
 

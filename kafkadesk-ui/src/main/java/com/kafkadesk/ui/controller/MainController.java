@@ -3,8 +3,6 @@ package com.kafkadesk.ui.controller;
 import com.kafkadesk.core.config.ConfigManager;
 import com.kafkadesk.core.service.ClusterService;
 import com.kafkadesk.core.service.ConsumerGroupService;
-import com.kafkadesk.core.service.ConsumerService;
-import com.kafkadesk.core.service.ProducerService;
 import com.kafkadesk.core.service.TopicService;
 import com.kafkadesk.model.ClusterConfig;
 import com.kafkadesk.model.ConsumerGroupInfo;
@@ -27,21 +25,17 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-import java.time.Duration;
 import java.util.*;
 
 /**
- * Main Window Controller with multi-cluster tab support
+ * Main Window Controller with TreeView-based cluster navigation
  */
 public class MainController implements Initializable {
     private static final Logger logger = LoggerFactory.getLogger(MainController.class);
@@ -54,30 +48,40 @@ public class MainController implements Initializable {
     // Toolbar components
     @FXML private Button btnAddCluster, btnRefresh;
     
-    // Cluster tabs (left side - vertical)
+    // Cluster tree (left side)
     @FXML private Label lblClusterList;
-    @FXML private TabPane clusterTabPane;
+    @FXML private TreeView<String> clusterTreeView;
 
-    // Open clusters tabs (right side - horizontal)
-    @FXML private TabPane openClustersTabPane;
+    // Content area (right side)
+    @FXML private StackPane contentArea;
 
     // Status bar
     @FXML private Label statusLabel;
 
     private Stage stage;
-    private final Map<String, ClusterTabContent> openClusterTabs = new HashMap<>();
-    private final Set<String> openedClusterIds = new HashSet<>();
+    private final Map<String, ClusterContentManager> clusterContentManagers = new HashMap<>();
+    private final Map<String, TreeItem<String>> clusterTreeItems = new HashMap<>();
+    private final Map<TreeItem<String>, TreeItemData> treeItemDataMap = new HashMap<>();
+    
+    // Tree item types
+    private static final String TYPE_ROOT = "ROOT";
+    private static final String TYPE_CLUSTER = "CLUSTER";
+    private static final String TYPE_OVERVIEW = "OVERVIEW";
+    private static final String TYPE_BROKERS = "BROKERS";
+    private static final String TYPE_TOPICS = "TOPICS";
+    private static final String TYPE_CONSUMER_GROUPS = "CONSUMER_GROUPS";
+    private static final String TYPE_ACL = "ACL";
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        logger.info("Initializing MainController with new multi-cluster tab layout");
+        logger.info("Initializing MainController with TreeView-based cluster navigation");
         
         // Initialize i18n from configuration
         String language = ConfigManager.getInstance().getConfig().getPreferences().getLanguage();
         I18nUtil.setLocale(language);
 
         initializeUI();
-        initializeClusterTabs();
+        initializeClusterTree();
         
         updateStatus(I18nUtil.get(I18nKeys.STATUS_READY));
     }
@@ -111,57 +115,174 @@ public class MainController implements Initializable {
     }
 
     /**
-     * Initialize cluster tabs on the left side
+     * Initialize cluster tree with expandable structure
      */
-    private void initializeClusterTabs() {
+    private void initializeClusterTree() {
+        TreeItem<String> rootItem = new TreeItem<>(I18nUtil.get(I18nKeys.CLUSTER_LIST));
+        rootItem.setExpanded(true);
+        
+        // Store type in userData
+        TreeItemData rootData = new TreeItemData(TYPE_ROOT, null, null);
+        treeItemDataMap.put(rootItem, rootData);
+
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
-        
-        clusterTabPane.getTabs().clear();
-        
         for (ClusterConfig cluster : clusters) {
-            Tab clusterTab = new Tab(cluster.getName());
-            clusterTab.setClosable(false);
-            
-            // Store cluster config in user data
-            clusterTab.setUserData(cluster);
-            
-            // Create a simple label as placeholder content
-            Label placeholderLabel = new Label("Click to open cluster");
-            placeholderLabel.setStyle("-fx-padding: 20;");
-            clusterTab.setContent(placeholderLabel);
-            
-            clusterTabPane.getTabs().add(clusterTab);
+            addClusterToTree(rootItem, cluster);
         }
+
+        clusterTreeView.setRoot(rootItem);
+        clusterTreeView.setShowRoot(true);
+
+        // Add context menu for cluster items
+        setupContextMenu();
+
+        // Handle tree item selection - single click selects, double click opens
+        clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                handleTreeItemSelected(newVal);
+            }
+        });
         
-        // Add selection listener to open cluster when clicked
-        clusterTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            if (newTab != null) {
-                ClusterConfig cluster = (ClusterConfig) newTab.getUserData();
-                if (cluster != null) {
-                    openCluster(cluster);
+        // Handle double-click to open/expand
+        clusterTreeView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null) {
+                    TreeItemData data = treeItemDataMap.get(selectedItem);
+                    if (data != null) {
+                        if (TYPE_CLUSTER.equals(data.getType())) {
+                            // Double-click on cluster - expand/collapse
+                            selectedItem.setExpanded(!selectedItem.isExpanded());
+                        } else if (!TYPE_ROOT.equals(data.getType())) {
+                            // Double-click on function - open content
+                            handleTreeItemActivated(selectedItem);
+                        }
+                    }
                 }
             }
         });
     }
-    
-    /**
-     * Open a cluster in a new tab (or switch to it if already open)
-     */
-    private void openCluster(ClusterConfig cluster) {
-        // Check if cluster is already open
-        if (openedClusterIds.contains(cluster.getId())) {
-            // Switch to existing tab
-            for (Tab tab : openClustersTabPane.getTabs()) {
-                if (tab.getUserData() != null && tab.getUserData().equals(cluster.getId())) {
-                    openClustersTabPane.getSelectionModel().select(tab);
-                    return;
+
+    private void addClusterToTree(TreeItem<String> rootItem, ClusterConfig cluster) {
+        String displayName = cluster.getName();
+        TreeItem<String> clusterItem = new TreeItem<>(displayName);
+        TreeItemData clusterData = new TreeItemData(TYPE_CLUSTER, cluster.getId(), cluster);
+        treeItemDataMap.put(clusterItem, clusterData);
+        clusterItem.setExpanded(false);
+        
+        // Add sub-items for cluster functions
+        TreeItem<String> overviewItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_OVERVIEW));
+        treeItemDataMap.put(overviewItem, new TreeItemData(TYPE_OVERVIEW, cluster.getId(), cluster));
+        
+        TreeItem<String> brokersItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_BROKERS));
+        treeItemDataMap.put(brokersItem, new TreeItemData(TYPE_BROKERS, cluster.getId(), cluster));
+        
+        TreeItem<String> topicsItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_TOPICS));
+        treeItemDataMap.put(topicsItem, new TreeItemData(TYPE_TOPICS, cluster.getId(), cluster));
+        
+        TreeItem<String> consumerGroupsItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_CONSUMER_GROUPS));
+        treeItemDataMap.put(consumerGroupsItem, new TreeItemData(TYPE_CONSUMER_GROUPS, cluster.getId(), cluster));
+        
+        TreeItem<String> aclItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_ACL));
+        treeItemDataMap.put(aclItem, new TreeItemData(TYPE_ACL, cluster.getId(), cluster));
+        
+        clusterItem.getChildren().addAll(overviewItem, brokersItem, topicsItem, consumerGroupsItem, aclItem);
+        
+        rootItem.getChildren().add(clusterItem);
+        clusterTreeItems.put(cluster.getId(), clusterItem);
+    }
+
+    private void setupContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem editItem = new MenuItem(I18nUtil.get(I18nKeys.COMMON_EDIT));
+        editItem.setOnAction(e -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null) {
+                TreeItemData data = treeItemDataMap.get(selectedItem);
+                if (data != null && TYPE_CLUSTER.equals(data.getType())) {
+                    handleEditCluster(data.getClusterConfig());
                 }
             }
+        });
+        
+        MenuItem deleteItem = new MenuItem(I18nUtil.get(I18nKeys.COMMON_DELETE));
+        deleteItem.setOnAction(e -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null) {
+                TreeItemData data = treeItemDataMap.get(selectedItem);
+                if (data != null && TYPE_CLUSTER.equals(data.getType())) {
+                    handleDeleteCluster(data.getClusterConfig());
+                }
+            }
+        });
+        
+        contextMenu.getItems().addAll(editItem, deleteItem);
+
+        clusterTreeView.setOnContextMenuRequested(event -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null) {
+                TreeItemData data = treeItemDataMap.get(selectedItem);
+                if (data != null && TYPE_CLUSTER.equals(data.getType())) {
+                    contextMenu.show(clusterTreeView, event.getScreenX(), event.getScreenY());
+                }
+            }
+        });
+    }
+
+    private void handleTreeItemSelected(TreeItem<String> item) {
+        // Just selection, don't open content yet (wait for double-click)
+        TreeItemData data = treeItemDataMap.get(item);
+        if (data != null && TYPE_CLUSTER.equals(data.getType())) {
+            updateStatus(I18nUtil.get(I18nKeys.CLUSTER_LIST) + ": " + item.getValue());
+        }
+    }
+
+    private void handleTreeItemActivated(TreeItem<String> item) {
+        TreeItemData data = treeItemDataMap.get(item);
+        if (data == null) {
+            return;
+        }
+
+        ClusterConfig cluster = data.getClusterConfig();
+        String clusterId = data.getClusterId();
+        
+        // Ensure cluster is connected
+        if (!clusterContentManagers.containsKey(clusterId)) {
+            connectToCluster(cluster);
         }
         
-        // Connect to cluster first
+        // Show appropriate content based on type
+        ClusterContentManager manager = clusterContentManagers.get(clusterId);
+        if (manager != null) {
+            Node content = null;
+            switch (data.getType()) {
+                case TYPE_OVERVIEW:
+                    content = manager.getOverviewContent();
+                    break;
+                case TYPE_BROKERS:
+                    content = manager.getBrokersContent();
+                    break;
+                case TYPE_TOPICS:
+                    content = manager.getTopicsContent();
+                    break;
+                case TYPE_CONSUMER_GROUPS:
+                    content = manager.getConsumerGroupsContent();
+                    break;
+                case TYPE_ACL:
+                    content = manager.getAclContent();
+                    break;
+            }
+            
+            if (content != null) {
+                contentArea.getChildren().clear();
+                contentArea.getChildren().add(content);
+            }
+        }
+    }
+
+    private void connectToCluster(ClusterConfig cluster) {
         updateStatus(I18nUtil.get(I18nKeys.CLUSTER_CONNECTING, cluster.getName()));
-        
+
         new Thread(() -> {
             boolean connected = ClusterService.getInstance().connect(cluster);
             
@@ -169,30 +290,10 @@ public class MainController implements Initializable {
                 if (connected) {
                     updateStatus(I18nUtil.get(I18nKeys.CLUSTER_CONNECTED, cluster.getName()));
                     
-                    // Create new tab for this cluster
-                    Tab clusterTab = new Tab(cluster.getName());
-                    clusterTab.setUserData(cluster.getId());
-                    
-                    // Create cluster content with nested tabs
-                    ClusterTabContent content = createClusterContent(cluster);
-                    clusterTab.setContent(content.getRootNode());
-                    
-                    // Store the content
-                    openClusterTabs.put(cluster.getId(), content);
-                    openedClusterIds.add(cluster.getId());
-                    
-                    // Add tab close handler
-                    clusterTab.setOnClosed(event -> {
-                        openedClusterIds.remove(cluster.getId());
-                        openClusterTabs.remove(cluster.getId());
-                    });
-                    
-                    // Add tab and select it
-                    openClustersTabPane.getTabs().add(clusterTab);
-                    openClustersTabPane.getSelectionModel().select(clusterTab);
-                    
-                    // Load initial data
-                    content.loadInitialData();
+                    // Create content manager for this cluster
+                    ClusterContentManager manager = new ClusterContentManager(cluster, this);
+                    clusterContentManagers.put(cluster.getId(), manager);
+                    manager.loadInitialData();
                 } else {
                     updateStatus(I18nUtil.get(I18nKeys.CLUSTER_FAILED, cluster.getName()));
                     showError(I18nUtil.get(I18nKeys.DIALOG_ERROR_TITLE), 
@@ -200,42 +301,6 @@ public class MainController implements Initializable {
                 }
             });
         }).start();
-    }
-    
-    /**
-     * Create the content for a cluster tab with nested function tabs
-     */
-    private ClusterTabContent createClusterContent(ClusterConfig cluster) {
-        TabPane functionsTabPane = new TabPane();
-        functionsTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        
-        // Create tabs for different functions
-        Tab overviewTab = new Tab(I18nUtil.get(I18nKeys.TAB_OVERVIEW));
-        Tab brokersTab = new Tab(I18nUtil.get(I18nKeys.TAB_BROKERS));
-        Tab topicsTab = new Tab(I18nUtil.get(I18nKeys.TAB_TOPICS));
-        Tab consumerGroupsTab = new Tab(I18nUtil.get(I18nKeys.TAB_CONSUMER_GROUPS));
-        Tab aclTab = new Tab(I18nUtil.get(I18nKeys.TAB_ACL));
-        
-        // Create cluster tab content wrapper
-        ClusterTabContent content = new ClusterTabContent(cluster, functionsTabPane, this);
-        
-        // Set content for each tab
-        overviewTab.setContent(content.createOverviewContent());
-        brokersTab.setContent(content.createBrokersContent());
-        topicsTab.setContent(content.createTopicsContent());
-        consumerGroupsTab.setContent(content.createConsumerGroupsContent());
-        aclTab.setContent(content.createAclContent());
-        
-        // Add all tabs
-        functionsTabPane.getTabs().addAll(
-            overviewTab,
-            brokersTab,
-            topicsTab,
-            consumerGroupsTab,
-            aclTab
-        );
-        
-        return content;
     }
 
     @FXML
@@ -245,7 +310,6 @@ public class MainController implements Initializable {
         dialog.setTitle(I18nUtil.get(I18nKeys.CLUSTER_ADD_TITLE));
         dialog.setHeaderText(I18nUtil.get(I18nKeys.CLUSTER_ADD_HEADER));
         
-        // Create form
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -270,7 +334,113 @@ public class MainController implements Initializable {
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         
-        // Add validation
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (nameField.getText() == null || nameField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(I18nKeys.PRODUCER_ERROR_TITLE), I18nUtil.get(I18nKeys.CLUSTER_EDIT_ERROR_NAME_EMPTY));
+                event.consume();
+            } else if (hostnameField.getText() == null || hostnameField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(I18nKeys.PRODUCER_ERROR_TITLE), I18nUtil.get(I18nKeys.CLUSTER_EDIT_ERROR_HOST_EMPTY));
+                event.consume();
+            } else if (portField.getText() == null || portField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(I18nKeys.PRODUCER_ERROR_TITLE), I18nUtil.get(I18nKeys.CLUSTER_EDIT_ERROR_PORT_EMPTY));
+                event.consume();
+            } else {
+                try {
+                    Integer.parseInt(portField.getText().trim());
+                    
+                    // Check for duplicate cluster name or server
+                    String newName = nameField.getText().trim();
+                    String newServer = hostnameField.getText().trim() + ":" + portField.getText().trim();
+                    List<ClusterConfig> existingClusters = ConfigManager.getInstance().getClusters();
+                    
+                    for (ClusterConfig existing : existingClusters) {
+                        if (existing.getName().equalsIgnoreCase(newName)) {
+                            showError(I18nUtil.get(I18nKeys.PRODUCER_ERROR_TITLE), 
+                                "Cluster name '" + newName + "' already exists!");
+                            event.consume();
+                            return;
+                        }
+                        if (existing.getBootstrapServers().equalsIgnoreCase(newServer)) {
+                            showError(I18nUtil.get(I18nKeys.PRODUCER_ERROR_TITLE), 
+                                "Server '" + newServer + "' already exists!");
+                            event.consume();
+                            return;
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    showError(I18nUtil.get(I18nKeys.PRODUCER_ERROR_TITLE), I18nUtil.get(I18nKeys.CLUSTER_EDIT_ERROR_PORT_INVALID));
+                    event.consume();
+                }
+            }
+        });
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                ClusterConfig config = new ClusterConfig();
+                config.setName(nameField.getText().trim());
+                config.setBootstrapServers(hostnameField.getText().trim() + ":" + portField.getText().trim());
+                config.setSecurityProtocol(protocolCombo.getValue());
+                return config;
+            }
+            return null;
+        });
+        
+        Optional<ClusterConfig> result = dialog.showAndWait();
+        result.ifPresent(config -> {
+            ConfigManager.getInstance().addCluster(config);
+            
+            // Add to tree
+            TreeItem<String> rootItem = clusterTreeView.getRoot();
+            addClusterToTree(rootItem, config);
+            
+            showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.CLUSTER_ADD_SUCCESS, config.getName()));
+        });
+    }
+
+    private void handleEditCluster(ClusterConfig cluster) {
+        Dialog<ClusterConfig> dialog = new Dialog<>();
+        dialog.setTitle(I18nUtil.get(I18nKeys.CLUSTER_EDIT_TITLE));
+        dialog.setHeaderText(I18nUtil.get(I18nKeys.CLUSTER_EDIT_HEADER));
+        
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+        
+        TextField nameField = new TextField(cluster.getName());
+        TextField hostnameField = new TextField();
+        TextField portField = new TextField();
+        ComboBox<String> protocolCombo = new ComboBox<>();
+        protocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
+        
+        String bootstrapServers = cluster.getBootstrapServers();
+        if (bootstrapServers != null && bootstrapServers.contains(":")) {
+            String[] parts = bootstrapServers.split(":");
+            hostnameField.setText(parts[0]);
+            if (parts.length > 1) {
+                portField.setText(parts[1].split(",")[0]);
+            }
+        } else {
+            hostnameField.setText(bootstrapServers != null ? bootstrapServers : "localhost");
+            portField.setText("9092");
+        }
+        
+        String protocol = cluster.getSecurityProtocol();
+        protocolCombo.setValue(protocol != null && !protocol.isEmpty() ? protocol : "PLAINTEXT");
+        
+        grid.add(new Label(I18nUtil.get(I18nKeys.CLUSTER_ADD_NAME)), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label(I18nUtil.get(I18nKeys.CLUSTER_EDIT_HOST)), 0, 1);
+        grid.add(hostnameField, 1, 1);
+        grid.add(new Label(I18nUtil.get(I18nKeys.CLUSTER_EDIT_PORT)), 0, 2);
+        grid.add(portField, 1, 2);
+        grid.add(new Label(I18nUtil.get(I18nKeys.CLUSTER_EDIT_PROTOCOL)), 0, 3);
+        grid.add(protocolCombo, 1, 3);
+        
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             if (nameField.getText() == null || nameField.getText().trim().isEmpty()) {
@@ -294,39 +464,73 @@ public class MainController implements Initializable {
         
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
-                ClusterConfig config = new ClusterConfig();
-                config.setName(nameField.getText().trim());
-                config.setBootstrapServers(hostnameField.getText().trim() + ":" + portField.getText().trim());
-                config.setSecurityProtocol(protocolCombo.getValue());
-                return config;
+                ClusterConfig updatedCluster = new ClusterConfig();
+                updatedCluster.setId(cluster.getId());
+                updatedCluster.setName(nameField.getText().trim());
+                updatedCluster.setBootstrapServers(hostnameField.getText().trim() + ":" + portField.getText().trim());
+                updatedCluster.setSecurityProtocol(protocolCombo.getValue());
+                updatedCluster.setCreatedAt(cluster.getCreatedAt());
+                return updatedCluster;
             }
             return null;
         });
         
         Optional<ClusterConfig> result = dialog.showAndWait();
-        result.ifPresent(config -> {
-            ConfigManager.getInstance().addCluster(config);
-            initializeClusterTabs();
-            showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.CLUSTER_ADD_SUCCESS, config.getName()));
+        result.ifPresent(updatedCluster -> {
+            ConfigManager.getInstance().updateCluster(updatedCluster);
+            
+            // Update tree item
+            TreeItem<String> clusterTreeItem = clusterTreeItems.get(cluster.getId());
+            if (clusterTreeItem != null) {
+                clusterTreeItem.setValue(updatedCluster.getName());
+            }
+            
+            showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.CLUSTER_EDIT_SUCCESS, updatedCluster.getName()));
         });
+    }
+
+    private void handleDeleteCluster(ClusterConfig cluster) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(I18nUtil.get(I18nKeys.CLUSTER_DELETE_TITLE));
+        alert.setHeaderText(I18nUtil.get(I18nKeys.CLUSTER_DELETE_CONFIRM, cluster.getName()));
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            ConfigManager.getInstance().deleteCluster(cluster.getId());
+            
+            // Remove from tree
+            TreeItem<String> clusterTreeItem = clusterTreeItems.get(cluster.getId());
+            if (clusterTreeItem != null && clusterTreeItem.getParent() != null) {
+                clusterTreeItem.getParent().getChildren().remove(clusterTreeItem);
+                clusterTreeItems.remove(cluster.getId());
+            }
+            
+            // Remove content manager
+            clusterContentManagers.remove(cluster.getId());
+            
+            // Clear content area if this cluster was displayed
+            contentArea.getChildren().clear();
+            
+            showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.CLUSTER_DELETE_SUCCESS, cluster.getName()));
+        }
     }
 
     @FXML
     private void handleRefreshTopics() {
-        // Refresh the currently selected open cluster
-        Tab selectedTab = openClustersTabPane.getSelectionModel().getSelectedItem();
-        if (selectedTab != null) {
-            String clusterId = (String) selectedTab.getUserData();
-            ClusterTabContent content = openClusterTabs.get(clusterId);
-            if (content != null) {
-                content.refresh();
+        TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            TreeItemData data = treeItemDataMap.get(selectedItem);
+            if (data != null && data.getClusterId() != null) {
+                ClusterContentManager manager = clusterContentManagers.get(data.getClusterId());
+                if (manager != null) {
+                    manager.refresh();
+                }
             }
         }
     }
 
     @FXML
     private void handleSettings() {
-        // Create settings dialog
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle(I18nUtil.get(I18nKeys.SETTINGS_TITLE));
 
@@ -404,51 +608,99 @@ public class MainController implements Initializable {
         this.stage = stage;
     }
 
-    // Inner class to manage content for each cluster tab
-    static class ClusterTabContent {
+    // Helper class to store tree item data
+    static class TreeItemData {
+        private final String type;
+        private final String clusterId;
+        private final ClusterConfig clusterConfig;
+
+        public TreeItemData(String type, String clusterId, ClusterConfig clusterConfig) {
+            this.type = type;
+            this.clusterId = clusterId;
+            this.clusterConfig = clusterConfig;
+        }
+
+        public String getType() { return type; }
+        public String getClusterId() { return clusterId; }
+        public ClusterConfig getClusterConfig() { return clusterConfig; }
+    }
+
+    // Inner class to manage content for each cluster
+    static class ClusterContentManager {
         private final ClusterConfig cluster;
-        private final TabPane functionsTabPane;
         private final MainController mainController;
         
-        // Overview components
+        // Content nodes (cached)
+        private Node overviewContent;
+        private Node brokersContent;
+        private Node topicsContent;
+        private Node consumerGroupsContent;
+        private Node aclContent;
+        
+        // Data components for topics
+        private TableView<TopicInfo> topicsTableView;
+        private TextArea topicDetailsTextArea;
+        private final ObservableList<TopicInfo> topicList = FXCollections.observableArrayList();
+        
+        // Data components for consumer groups
+        private TableView<ConsumerGroupRow> consumerGroupTableView;
+        private TableView<MemberRow> consumerGroupMembersTableView;
+        private TableView<LagRow> consumerGroupLagTableView;
+        private final ObservableList<ConsumerGroupRow> consumerGroupList = FXCollections.observableArrayList();
+        private final ObservableList<MemberRow> memberList = FXCollections.observableArrayList();
+        private final ObservableList<LagRow> lagList = FXCollections.observableArrayList();
+        
+        // Data for overview
         private Label overviewClusterName;
         private Label overviewBootstrapServers;
         private Label overviewBrokerCount;
         private Label overviewTopicCount;
         
-        // Brokers components
+        // Data for brokers
         private TableView<BrokerRow> brokersTableView;
-        
-        // Topics components
-        private TableView<TopicInfo> topicsTableView;
-        private TextArea topicDetailsTextArea;
-        
-        // Consumer Groups components
-        private TableView<ConsumerGroupRow> consumerGroupTableView;
-        private TableView<MemberRow> consumerGroupMembersTableView;
-        private TableView<LagRow> consumerGroupLagTableView;
-        
-        // ACL components (placeholder)
-        private Label aclPlaceholder;
-        
-        // Observable lists
-        private final ObservableList<TopicInfo> topicList = FXCollections.observableArrayList();
-        private final ObservableList<ConsumerGroupRow> consumerGroupList = FXCollections.observableArrayList();
-        private final ObservableList<MemberRow> memberList = FXCollections.observableArrayList();
-        private final ObservableList<LagRow> lagList = FXCollections.observableArrayList();
         private final ObservableList<BrokerRow> brokerList = FXCollections.observableArrayList();
 
-        public ClusterTabContent(ClusterConfig cluster, TabPane functionsTabPane, MainController mainController) {
+        public ClusterContentManager(ClusterConfig cluster, MainController mainController) {
             this.cluster = cluster;
-            this.functionsTabPane = functionsTabPane;
             this.mainController = mainController;
         }
 
-        public Node getRootNode() {
-            return functionsTabPane;
+        public Node getOverviewContent() {
+            if (overviewContent == null) {
+                overviewContent = createOverviewContent();
+            }
+            return overviewContent;
         }
 
-        public Node createOverviewContent() {
+        public Node getBrokersContent() {
+            if (brokersContent == null) {
+                brokersContent = createBrokersContent();
+            }
+            return brokersContent;
+        }
+
+        public Node getTopicsContent() {
+            if (topicsContent == null) {
+                topicsContent = createTopicsContent();
+            }
+            return topicsContent;
+        }
+
+        public Node getConsumerGroupsContent() {
+            if (consumerGroupsContent == null) {
+                consumerGroupsContent = createConsumerGroupsContent();
+            }
+            return consumerGroupsContent;
+        }
+
+        public Node getAclContent() {
+            if (aclContent == null) {
+                aclContent = createAclContent();
+            }
+            return aclContent;
+        }
+
+        private Node createOverviewContent() {
             VBox vbox = new VBox(15);
             vbox.setPadding(new Insets(20));
             
@@ -478,7 +730,7 @@ public class MainController implements Initializable {
             return vbox;
         }
 
-        public Node createBrokersContent() {
+        private Node createBrokersContent() {
             VBox vbox = new VBox(10);
             vbox.setPadding(new Insets(16));
             
@@ -511,7 +763,7 @@ public class MainController implements Initializable {
             return vbox;
         }
 
-        public Node createTopicsContent() {
+        private Node createTopicsContent() {
             SplitPane splitPane = new SplitPane();
             splitPane.setOrientation(javafx.geometry.Orientation.VERTICAL);
             splitPane.setDividerPositions(0.6);
@@ -582,7 +834,7 @@ public class MainController implements Initializable {
             return splitPane;
         }
 
-        public Node createConsumerGroupsContent() {
+        private Node createConsumerGroupsContent() {
             SplitPane splitPane = new SplitPane();
             splitPane.setDividerPositions(0.4);
             
@@ -661,12 +913,12 @@ public class MainController implements Initializable {
             return splitPane;
         }
 
-        public Node createAclContent() {
+        private Node createAclContent() {
             VBox vbox = new VBox(20);
             vbox.setPadding(new Insets(20));
             vbox.setAlignment(javafx.geometry.Pos.CENTER);
             
-            aclPlaceholder = new Label("ACL Management - Coming Soon");
+            Label aclPlaceholder = new Label("ACL Management - Coming Soon");
             aclPlaceholder.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
             
             vbox.getChildren().add(aclPlaceholder);
@@ -686,17 +938,15 @@ public class MainController implements Initializable {
                 
                 Platform.runLater(() -> {
                     overviewTopicCount.setText(String.valueOf(topicNames.size()));
-                    overviewBrokerCount.setText("N/A"); // Would need broker service
+                    overviewBrokerCount.setText("N/A");
                 });
             }).start();
         }
 
         private void loadBrokers() {
             new Thread(() -> {
-                // Placeholder - would need BrokerService
                 Platform.runLater(() -> {
                     brokerList.clear();
-                    // Add sample data
                     brokerList.add(new BrokerRow(0, "localhost", 9092, "rack1"));
                 });
             }).start();
@@ -753,7 +1003,6 @@ public class MainController implements Initializable {
                     }
                     mainController.updateStatus(I18nUtil.get(I18nKeys.CONSUMER_GROUP_LOADED, groupIds.size()));
                     
-                    // Load details in background
                     loadConsumerGroupDetails();
                 });
             }).start();
