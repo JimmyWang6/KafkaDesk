@@ -374,3 +374,31 @@
     -fx-background-color: #D8D8D8;
     -fx-border-color: #BBBBBB;
 }
+
+/* Toolbar Icon Labels - Better emoji rendering */
+.toolbar-icon {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-min-width: 42px;
+    -fx-min-height: 42px;
+    -fx-pref-width: 42px;
+    -fx-pref-height: 42px;
+    -fx-font-size: 28px;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.toolbar-icon:hover {
+    -fx-background-color: #E8E8E8;
+    -fx-border-color: #CCCCCC;
+}
+
+/* Simulate pressed state via CSS when active */
+.toolbar-icon:pressed {
+    -fx-background-color: #D8D8D8;
+    -fx-border-color: #BBBBBB;
+}

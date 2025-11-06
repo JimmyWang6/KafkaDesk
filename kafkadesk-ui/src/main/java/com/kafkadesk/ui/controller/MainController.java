@@ -46,8 +46,8 @@ public class MainController implements Initializable {
     @FXML private Menu menuFile, menuView, menuTools, menuHelp;
     @FXML private MenuItem menuItemAddCluster, menuItemExit, menuItemRefresh, menuItemSettings, menuItemAbout;
     
-    // Toolbar components
-    @FXML private Button btnAddCluster, btnRefresh;
+    // Toolbar components (now Labels for better icon display)
+    @FXML private Label btnAddCluster, btnRefresh;
     
     // Cluster tree (left side)
     // @FXML private Label lblClusterList;  // Removed - buttons now replace the label
@@ -107,11 +107,14 @@ public class MainController implements Initializable {
         menuHelp.setText(I18nUtil.get(I18nKeys.MENU_HELP));
         menuItemAbout.setText(I18nUtil.get(I18nKeys.MENU_HELP_ABOUT));
 
-        // Toolbar with icons only
+        // Toolbar with icons only - set up click handlers
         btnAddCluster.setText("➕");
         btnAddCluster.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER)));
+        btnAddCluster.setOnMouseClicked(event -> handleAddCluster());
+        
         btnRefresh.setText("🔄");
         btnRefresh.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_REFRESH)));
+        btnRefresh.setOnMouseClicked(event -> handleRefreshTopics());
 
         // Cluster
         // lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));  // Removed - no longer needed

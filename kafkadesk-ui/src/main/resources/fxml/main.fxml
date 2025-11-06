@@ -12,12 +12,12 @@
     <!-- Top: Header with Toolbar and Menu Bar -->
     <top>
         <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
-            <!-- Toolbar - Small Icons -->
-            <HBox spacing="4" alignment="CENTER_LEFT" style="-fx-padding: 6 12 6 12; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
-                <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕"
-                        styleClass="toolbar-button"/>
-                <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄"
-                        styleClass="toolbar-button"/>
+            <!-- Toolbar - Icon Labels (clickable) -->
+            <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 8 12 8 12; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
+                <Label fx:id="btnAddCluster" text="➕"
+                       styleClass="toolbar-icon"/>
+                <Label fx:id="btnRefresh" text="🔄"
+                       styleClass="toolbar-icon"/>
             </HBox>
             
             <!-- Menu Bar -->
