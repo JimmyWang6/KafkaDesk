@@ -66,6 +66,7 @@ public class ClusterOperationsHelper {
         TextField portField = new TextField();
         ComboBox<String> protocolCombo = new ComboBox<>();
         protocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
+        protocolCombo.setMaxWidth(Double.MAX_VALUE);
         
         if (cluster != null) {
             // Parse bootstrap servers to get hostname and port
