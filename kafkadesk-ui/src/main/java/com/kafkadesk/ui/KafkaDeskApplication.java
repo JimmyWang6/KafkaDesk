@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 public class KafkaDeskApplication extends Application {
     private static final Logger logger = LoggerFactory.getLogger(KafkaDeskApplication.class);
     private static final String MAIN_FXML = "/fxml/main.fxml";
+    private static final String APP_TITLE_KEY = "app.title";
 
     @Override
     public void start(Stage primaryStage) {
@@ -43,7 +44,7 @@ public class KafkaDeskApplication extends Application {
                     .getConfig()
                     .getWindow();
 
-            primaryStage.setTitle(I18nUtil.get("app.title"));
+            primaryStage.setTitle(I18nUtil.get(APP_TITLE_KEY));
             primaryStage.setScene(scene);
             primaryStage.setWidth(windowConfig.getWidth());
             primaryStage.setHeight(windowConfig.getHeight());
