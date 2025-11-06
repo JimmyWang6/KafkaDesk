@@ -358,8 +358,8 @@
     -fx-cursor: hand;
     -fx-min-width: 32px;
     -fx-min-height: 32px;
-    -fx-font-size: 14px;
-    -fx-padding: 4px;
+    -fx-font-size: 20px;
+    -fx-padding: 2px;
 }
 
 .toolbar-button:hover {
