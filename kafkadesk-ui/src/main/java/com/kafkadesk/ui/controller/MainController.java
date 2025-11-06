@@ -20,6 +20,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
@@ -50,6 +51,7 @@ public class MainController implements Initializable {
     
     // Cluster tree (left side)
     // @FXML private Label lblClusterList;  // Removed - buttons now replace the label
+    @FXML private TextField searchField;
     @FXML private TreeView<String> clusterTreeView;
 
     // Content area (right side)
@@ -62,6 +64,7 @@ public class MainController implements Initializable {
     private final Map<String, ClusterContentManager> clusterContentManagers = new HashMap<>();
     private final Map<String, TreeItem<String>> clusterTreeItems = new HashMap<>();
     private final Map<TreeItem<String>, TreeItemData> treeItemDataMap = new HashMap<>();
+    private TreeItem<String> rootTreeItem; // Store root for filtering
     
     // Tree item types
     private static final String TYPE_ROOT = "ROOT";
@@ -120,6 +123,7 @@ public class MainController implements Initializable {
     private void initializeClusterTree() {
         TreeItem<String> rootItem = new TreeItem<>(I18nUtil.get(I18nKeys.CLUSTER_LIST));
         rootItem.setExpanded(true);
+        rootTreeItem = rootItem; // Store for filtering
         
         // Store type in userData
         TreeItemData rootData = new TreeItemData(TYPE_ROOT, null, null);
@@ -135,6 +139,9 @@ public class MainController implements Initializable {
 
         // Add context menu for cluster items
         setupContextMenu();
+        
+        // Setup search filter
+        setupSearchFilter();
 
         // Handle tree item selection - single click selects, double click opens
         clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -161,6 +168,56 @@ public class MainController implements Initializable {
                 }
             }
         });
+    }
+    
+    /**
+     * Setup search filter for cluster list
+     */
+    private void setupSearchFilter() {
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filterClusterTree(newValue);
+        });
+    }
+    
+    /**
+     * Filter cluster tree based on search text
+     */
+    private void filterClusterTree(String searchText) {
+        if (searchText == null || searchText.trim().isEmpty()) {
+            // Show all clusters
+            for (TreeItem<String> clusterItem : clusterTreeItems.values()) {
+                clusterItem.setExpanded(false);
+                if (!rootTreeItem.getChildren().contains(clusterItem)) {
+                    rootTreeItem.getChildren().add(clusterItem);
+                }
+            }
+        } else {
+            String lowerSearch = searchText.toLowerCase().trim();
+            
+            // Filter clusters based on name or IP
+            List<TreeItem<String>> matchingClusters = new ArrayList<>();
+            for (Map.Entry<String, TreeItem<String>> entry : clusterTreeItems.entrySet()) {
+                TreeItemData data = treeItemDataMap.get(entry.getValue());
+                if (data != null && data.getClusterConfig() != null) {
+                    ClusterConfig config = data.getClusterConfig();
+                    String name = config.getName().toLowerCase();
+                    String servers = config.getBootstrapServers().toLowerCase();
+                    
+                    if (name.contains(lowerSearch) || servers.contains(lowerSearch)) {
+                        matchingClusters.add(entry.getValue());
+                    }
+                }
+            }
+            
+            // Update tree to show only matching clusters
+            rootTreeItem.getChildren().clear();
+            rootTreeItem.getChildren().addAll(matchingClusters);
+            
+            // Expand matching clusters to show sub-items
+            for (TreeItem<String> item : matchingClusters) {
+                item.setExpanded(true);
+            }
+        }
     }
 
     private void addClusterToTree(TreeItem<String> rootItem, ClusterConfig cluster) {
@@ -802,25 +859,180 @@ public class MainController implements Initializable {
             
             TableColumn<TopicInfo, String> nameCol = new TableColumn<>("Topic Name");
             nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.50));
+            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
             
             TableColumn<TopicInfo, Integer> partitionsCol = new TableColumn<>("Partitions");
             partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
-            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.25));
+            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
             TableColumn<TopicInfo, Integer> replicationCol = new TableColumn<>("Replication");
             replicationCol.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
-            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.25));
+            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
-            topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol);
-            topicsTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal != null) {
-                    showTopicDetails(newVal);
+            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention Time");
+            retentionCol.setCellValueFactory(new PropertyValueFactory<>("retentionTime"));
+            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
+            
+            topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol, retentionCol);
+            
+            // Double-click to show topic details
+            topicsTableView.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2) {
+                    TopicInfo selectedTopic = topicsTableView.getSelectionModel().getSelectedItem();
+                    if (selectedTopic != null) {
+                        showTopicDetailView(selectedTopic);
+                    }
                 }
             });
             
             VBox.setVgrow(topicsTableView, javafx.scene.layout.Priority.ALWAYS);
             vbox.getChildren().addAll(toolbar, topicsTableView);
+            
+            return vbox;
+        }
+        
+        /**
+         * Show detailed view for a topic with partitions and consumers tabs
+         */
+        private void showTopicDetailView(TopicInfo topic) {
+            // Create a new window/dialog for topic details
+            Stage detailStage = new Stage();
+            detailStage.setTitle("Topic Details: " + topic.getName());
+            detailStage.initOwner(mainController.stage);
+            
+            TabPane detailTabPane = new TabPane();
+            detailTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+            detailTabPane.setStyle("-fx-background-color: white;");
+            
+            // Tab 1: Partitions
+            Tab partitionsTab = new Tab("Partitions");
+            partitionsTab.setContent(createPartitionsView(topic));
+            
+            // Tab 2: Consumers
+            Tab consumersTab = new Tab("Consumers");
+            consumersTab.setContent(createTopicConsumersView(topic));
+            
+            detailTabPane.getTabs().addAll(partitionsTab, consumersTab);
+            
+            Scene scene = new Scene(detailTabPane, 800, 600);
+            detailStage.setScene(scene);
+            detailStage.show();
+        }
+        
+        /**
+         * Create partitions view showing partition details
+         */
+        private Node createPartitionsView(TopicInfo topic) {
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white;");
+            
+            TableView<PartitionRow> partitionsTable = new TableView<>();
+            partitionsTable.setStyle("-fx-background-color: white;");
+            
+            ObservableList<PartitionRow> partitionData = FXCollections.observableArrayList();
+            
+            TableColumn<PartitionRow, Integer> partitionCol = new TableColumn<>("Partition");
+            partitionCol.setCellValueFactory(new PropertyValueFactory<>("partition"));
+            partitionCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.20));
+            
+            TableColumn<PartitionRow, Long> minOffsetCol = new TableColumn<>("Min Offset");
+            minOffsetCol.setCellValueFactory(new PropertyValueFactory<>("minOffset"));
+            minOffsetCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.25));
+            
+            TableColumn<PartitionRow, Long> maxOffsetCol = new TableColumn<>("Max Offset");
+            maxOffsetCol.setCellValueFactory(new PropertyValueFactory<>("maxOffset"));
+            maxOffsetCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.25));
+            
+            TableColumn<PartitionRow, String> leaderCol = new TableColumn<>("Leader");
+            leaderCol.setCellValueFactory(new PropertyValueFactory<>("leader"));
+            leaderCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.30));
+            
+            partitionsTable.getColumns().addAll(partitionCol, minOffsetCol, maxOffsetCol, leaderCol);
+            partitionsTable.setItems(partitionData);
+            
+            // Load partition data in background
+            new Thread(() -> {
+                // Simulate loading partition data - in real implementation, fetch from Kafka
+                for (int i = 0; i < topic.getPartitions(); i++) {
+                    int partition = i;
+                    PartitionRow row = new PartitionRow(partition, 0L, 1000L + (partition * 100), "Broker " + (partition % 3));
+                    Platform.runLater(() -> partitionData.add(row));
+                }
+            }).start();
+            
+            VBox.setVgrow(partitionsTable, javafx.scene.layout.Priority.ALWAYS);
+            vbox.getChildren().add(partitionsTable);
+            
+            return vbox;
+        }
+        
+        /**
+         * Create consumers view for a specific topic
+         */
+        private Node createTopicConsumersView(TopicInfo topic) {
+            VBox vbox = new VBox(0);
+            vbox.setStyle("-fx-background-color: white;");
+            
+            TableView<TopicConsumerRow> consumersTable = new TableView<>();
+            consumersTable.setStyle("-fx-background-color: white;");
+            
+            ObservableList<TopicConsumerRow> consumerData = FXCollections.observableArrayList();
+            
+            TableColumn<TopicConsumerRow, String> groupNameCol = new TableColumn<>("Consumer Group");
+            groupNameCol.setCellValueFactory(new PropertyValueFactory<>("groupName"));
+            groupNameCol.prefWidthProperty().bind(consumersTable.widthProperty().multiply(0.30));
+            
+            TableColumn<TopicConsumerRow, String> stateCol = new TableColumn<>("State");
+            stateCol.setCellValueFactory(new PropertyValueFactory<>("state"));
+            stateCol.prefWidthProperty().bind(consumersTable.widthProperty().multiply(0.20));
+            
+            TableColumn<TopicConsumerRow, String> coordinatorCol = new TableColumn<>("Coordinator ID");
+            coordinatorCol.setCellValueFactory(new PropertyValueFactory<>("coordinatorId"));
+            coordinatorCol.prefWidthProperty().bind(consumersTable.widthProperty().multiply(0.25));
+            
+            TableColumn<TopicConsumerRow, Long> lagCol = new TableColumn<>("Message Backlog");
+            lagCol.setCellValueFactory(new PropertyValueFactory<>("messageLag"));
+            lagCol.prefWidthProperty().bind(consumersTable.widthProperty().multiply(0.25));
+            
+            consumersTable.getColumns().addAll(groupNameCol, stateCol, coordinatorCol, lagCol);
+            consumersTable.setItems(consumerData);
+            
+            // Load consumer data for this topic in background
+            new Thread(() -> {
+                List<String> groupIds = ConsumerGroupService.getInstance().listConsumerGroups(cluster.getId());
+                
+                for (String groupId : groupIds) {
+                    ConsumerGroupInfo info = ConsumerGroupService.getInstance()
+                            .getConsumerGroupInfo(cluster.getId(), groupId);
+                    
+                    if (info != null) {
+                        // Check if this group consumes from the selected topic
+                        long totalLag = 0;
+                        boolean consumesFromTopic = false;
+                        
+                        for (Map.Entry<ConsumerGroupInfo.TopicPartition, Long> entry : info.getLag().entrySet()) {
+                            if (entry.getKey().getTopic().equals(topic.getName())) {
+                                consumesFromTopic = true;
+                                totalLag += entry.getValue();
+                            }
+                        }
+                        
+                        if (consumesFromTopic) {
+                            long finalTotalLag = totalLag;
+                            TopicConsumerRow row = new TopicConsumerRow(
+                                groupId,
+                                info.getState(),
+                                String.valueOf(info.getCoordinatorId()),
+                                finalTotalLag
+                            );
+                            Platform.runLater(() -> consumerData.add(row));
+                        }
+                    }
+                }
+            }).start();
+            
+            VBox.setVgrow(consumersTable, javafx.scene.layout.Priority.ALWAYS);
+            vbox.getChildren().add(consumersTable);
             
             return vbox;
         }
@@ -1163,5 +1375,43 @@ public class MainController implements Initializable {
         public int getPartition() { return partition; }
         public Long getOffset() { return offset; }
         public Long getLag() { return lag; }
+    }
+    
+    public static class PartitionRow {
+        private final int partition;
+        private final Long minOffset;
+        private final Long maxOffset;
+        private final String leader;
+
+        public PartitionRow(int partition, Long minOffset, Long maxOffset, String leader) {
+            this.partition = partition;
+            this.minOffset = minOffset;
+            this.maxOffset = maxOffset;
+            this.leader = leader;
+        }
+
+        public int getPartition() { return partition; }
+        public Long getMinOffset() { return minOffset; }
+        public Long getMaxOffset() { return maxOffset; }
+        public String getLeader() { return leader; }
+    }
+    
+    public static class TopicConsumerRow {
+        private final String groupName;
+        private final String state;
+        private final String coordinatorId;
+        private final Long messageLag;
+
+        public TopicConsumerRow(String groupName, String state, String coordinatorId, Long messageLag) {
+            this.groupName = groupName;
+            this.state = state;
+            this.coordinatorId = coordinatorId;
+            this.messageLag = messageLag;
+        }
+
+        public String getGroupName() { return groupName; }
+        public String getState() { return state; }
+        public String getCoordinatorId() { return coordinatorId; }
+        public Long getMessageLag() { return messageLag; }
     }
 }

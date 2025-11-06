@@ -370,3 +370,23 @@
     -fx-padding: 6 10 6 10;
 }
 
+
+/* Toolbar Button Styles */
+.toolbar-button {
+    -fx-background-color: white;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-cursor: hand;
+}
+
+.toolbar-button:hover {
+    -fx-background-color: #F0F0F0;
+    -fx-border-color: #CCCCCC;
+}
+
+.toolbar-button:pressed {
+    -fx-background-color: #E0E0E0;
+    -fx-border-color: #BBBBBB;
+}
