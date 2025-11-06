@@ -356,10 +356,13 @@
     -fx-border-radius: 3;
     -fx-background-radius: 3;
     -fx-cursor: hand;
-    -fx-min-width: 32px;
-    -fx-min-height: 32px;
-    -fx-font-size: 20px;
-    -fx-padding: 2px;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-pref-width: 40px;
+    -fx-pref-height: 40px;
+    -fx-font-size: 24px;
+    -fx-padding: 0px;
+    -fx-alignment: center;
 }
 
 .toolbar-button:hover {
