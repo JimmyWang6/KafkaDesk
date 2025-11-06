@@ -91,6 +91,11 @@ public class MainController implements Initializable {
     private static final String CLUSTER_DELETE_TITLE = "cluster.delete.title";
     private static final String CLUSTER_DELETE_CONFIRM = "cluster.delete.confirm";
     private static final String CLUSTER_DELETE_SUCCESS = "cluster.delete.success";
+    private static final String CLUSTER_EDIT_TITLE = "cluster.edit.title";
+    private static final String CLUSTER_EDIT_HEADER = "cluster.edit.header";
+    private static final String CLUSTER_EDIT_PROTOCOL = "cluster.edit.protocol";
+    private static final String CLUSTER_EDIT_PORT = "cluster.edit.port";
+    private static final String CLUSTER_EDIT_SUCCESS = "cluster.edit.success";
 
     // I18n Keys - Tabs
     private static final String TAB_TOPICS = "tab.topics";
@@ -168,6 +173,7 @@ public class MainController implements Initializable {
 
     // I18n Keys - Common
     private static final String COMMON_DELETE = "common.delete";
+    private static final String COMMON_EDIT = "common.edit";
     private static final String COMMON_SUCCESS = "common.success";
     private static final String COMMON_INFO = "common.info";
 
@@ -381,6 +387,13 @@ public class MainController implements Initializable {
 
         // Add context menu for cluster items
         ContextMenu contextMenu = new ContextMenu();
+        MenuItem editItem = new MenuItem(I18nUtil.get(COMMON_EDIT));
+        editItem.setOnAction(e -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && selectedItem != rootItem && selectedItem.getParent() == rootItem) {
+                handleEditCluster(selectedItem.getValue());
+            }
+        });
         MenuItem deleteItem = new MenuItem(I18nUtil.get(COMMON_DELETE));
         deleteItem.setOnAction(e -> {
             TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
@@ -388,7 +401,7 @@ public class MainController implements Initializable {
                 handleDeleteCluster(selectedItem.getValue());
             }
         });
-        contextMenu.getItems().add(deleteItem);
+        contextMenu.getItems().addAll(editItem, deleteItem);
 
         // Show context menu only for cluster items (not root)
         clusterTreeView.setOnContextMenuRequested(event -> {
@@ -979,6 +992,99 @@ public class MainController implements Initializable {
                 showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_DELETE_SUCCESS, clusterName));
             }
         }
+    }
+
+    private void handleEditCluster(String displayName) {
+        // Parse cluster name from display name
+        String clusterName = parseClusterNameFromDisplay(displayName);
+        
+        // Find the cluster
+        List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
+        Optional<ClusterConfig> clusterOpt = clusters.stream()
+                .filter(c -> c.getName().equals(clusterName))
+                .findFirst();
+        
+        if (!clusterOpt.isPresent()) {
+            return;
+        }
+        
+        ClusterConfig cluster = clusterOpt.get();
+        
+        // Create edit dialog
+        Dialog<ClusterConfig> dialog = new Dialog<>();
+        dialog.setTitle(I18nUtil.get(CLUSTER_EDIT_TITLE));
+        dialog.setHeaderText(I18nUtil.get(CLUSTER_EDIT_HEADER));
+        
+        // Create form
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
+        
+        TextField nameField = new TextField(cluster.getName());
+        TextField hostnameField = new TextField();
+        TextField portField = new TextField();
+        ComboBox<String> protocolCombo = new ComboBox<>();
+        protocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
+        
+        // Parse bootstrap servers to get hostname and port
+        String bootstrapServers = cluster.getBootstrapServers();
+        if (bootstrapServers != null && bootstrapServers.contains(":")) {
+            String[] parts = bootstrapServers.split(":");
+            hostnameField.setText(parts[0]);
+            if (parts.length > 1) {
+                portField.setText(parts[1].split(",")[0]); // Get first port if multiple servers
+            }
+        } else {
+            hostnameField.setText(bootstrapServers != null ? bootstrapServers : "localhost");
+            portField.setText("9092");
+        }
+        
+        // Set protocol
+        String protocol = cluster.getSecurityProtocol();
+        if (protocol != null && !protocol.isEmpty()) {
+            protocolCombo.setValue(protocol);
+        } else {
+            protocolCombo.setValue("PLAINTEXT");
+        }
+        
+        grid.add(new Label(I18nUtil.get(CLUSTER_ADD_NAME)), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("Host:"), 0, 1);
+        grid.add(hostnameField, 1, 1);
+        grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_PORT)), 0, 2);
+        grid.add(portField, 1, 2);
+        grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_PROTOCOL)), 0, 3);
+        grid.add(protocolCombo, 1, 3);
+        
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                ClusterConfig updatedCluster = new ClusterConfig();
+                updatedCluster.setId(cluster.getId());
+                updatedCluster.setName(nameField.getText());
+                updatedCluster.setBootstrapServers(hostnameField.getText() + ":" + portField.getText());
+                updatedCluster.setSecurityProtocol(protocolCombo.getValue());
+                updatedCluster.setCreatedAt(cluster.getCreatedAt());
+                return updatedCluster;
+            }
+            return null;
+        });
+        
+        Optional<ClusterConfig> result = dialog.showAndWait();
+        result.ifPresent(updatedCluster -> {
+            ConfigManager.getInstance().updateCluster(updatedCluster);
+            
+            // Update current cluster if it was edited
+            if (currentCluster != null && currentCluster.getId().equals(updatedCluster.getId())) {
+                currentCluster = updatedCluster;
+            }
+            
+            initializeClusterTree();
+            showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_EDIT_SUCCESS, updatedCluster.getName()));
+        });
     }
 
     @FXML
