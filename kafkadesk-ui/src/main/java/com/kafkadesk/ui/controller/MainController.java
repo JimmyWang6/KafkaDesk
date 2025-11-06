@@ -800,10 +800,11 @@ public class MainController implements Initializable {
             brokersTableView = new TableView<>();
             brokersTableView.setItems(brokerList);
             brokersTableView.setStyle("-fx-background-color: white;");
+            brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
             
             TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
             hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
-            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.25));
+            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.27));
             
             TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
             portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
@@ -815,15 +816,15 @@ public class MainController implements Initializable {
             
             TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
             diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
-            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
             
             TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
             leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
-            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
             
             TableColumn<BrokerRow, Integer> replicasCol = new TableColumn<>("Replicas");
             replicasCol.setCellValueFactory(new PropertyValueFactory<>("replicas"));
-            replicasCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            replicasCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
             
             brokersTableView.getColumns().addAll(hostCol, portCol, idCol, diskUsageCol, leadersCol, replicasCol);
             VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
@@ -843,12 +844,14 @@ public class MainController implements Initializable {
             
             Button btnCreateTopic = new Button("➕");
             btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
-            btnCreateTopic.setStyle("-fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px;");
+            btnCreateTopic.getStyleClass().add("toolbar-button");
+            btnCreateTopic.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4; -fx-cursor: hand;");
             btnCreateTopic.setOnAction(e -> handleCreateTopic());
             
             Button btnDeleteTopic = new Button("🗑");
             btnDeleteTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_DELETE)));
-            btnDeleteTopic.setStyle("-fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px;");
+            btnDeleteTopic.getStyleClass().add("toolbar-button");
+            btnDeleteTopic.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4; -fx-cursor: hand;");
             btnDeleteTopic.setOnAction(e -> handleDeleteTopic());
             
             toolbar.getChildren().addAll(btnCreateTopic, btnDeleteTopic);
@@ -869,7 +872,7 @@ public class MainController implements Initializable {
             replicationCol.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
             replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
-            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention Time");
+            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention Time (hours)");
             retentionCol.setCellValueFactory(new PropertyValueFactory<>("retentionTime"));
             retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
             
@@ -1092,8 +1095,12 @@ public class MainController implements Initializable {
                 List<String> topicNames = TopicService.getInstance().listTopics(cluster.getId());
                 
                 Platform.runLater(() -> {
-                    overviewTopicCount.setText(String.valueOf(topicNames.size()));
-                    overviewBrokerCount.setText("N/A");
+                    if (overviewTopicCount != null) {
+                        overviewTopicCount.setText(String.valueOf(topicNames.size()));
+                    }
+                    if (overviewBrokerCount != null) {
+                        overviewBrokerCount.setText("N/A");
+                    }
                 });
             }).start();
         }

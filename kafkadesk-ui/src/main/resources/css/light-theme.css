@@ -1,39 +1,10 @@
 /* KafkaDesk Light Theme - Optimized Design */
 
-/* CSS Variables for consistent theming */
+/* Root styles */
 .root {
     /* Font Family */
     -fx-font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", "Roboto", "Arial", sans-serif;
     -fx-font-size: 13px;
-    
-    /* Color Palette */
-    --primary-color: #1976D2;
-    --primary-hover: #1565C0;
-    --primary-pressed: #0D47A1;
-    --success-color: #4CAF50;
-    --warning-color: #FF9800;
-    --error-color: #F44336;
-    --info-color: #2196F3;
-    
-    /* Neutral Colors */
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #F8F9FA;
-    --border-color: #E0E0E0;
-    --text-primary: #212121;
-    --text-secondary: #666666;
-    --text-disabled: #BDBDBD;
-    
-    /* Spacing */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 20px;
-    
-    /* Borders */
-    --border-radius: 4px;
-    --border-radius-lg: 8px;
-    
     -fx-base: #ffffff;
     -fx-background: #F8F9FA;
 }

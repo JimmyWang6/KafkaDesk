@@ -49,8 +49,8 @@
     <center>
         <SplitPane dividerPositions="0.2" style="-fx-background-color: #F8F9FA;">
             <!-- Left: Cluster TreeView with Fixed Width -->
-            <VBox prefWidth="250" minWidth="200" maxWidth="300" 
-                  style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 1 0 0;">
+            <VBox prefWidth="250" minWidth="250" maxWidth="250" 
+                  style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0.5 0 0;">
                 <padding>
                     <Insets top="12" right="12" bottom="12" left="12"/>
                 </padding>
