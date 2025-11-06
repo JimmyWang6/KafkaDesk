@@ -113,23 +113,14 @@ public class MainController implements Initializable {
     private static final String CONFIG_TITLE = "config.title";
     private static final String CONFIG_CURRENT_CLUSTER = "config.currentCluster";
     private static final String CONFIG_NO_CLUSTER_SELECTED = "config.noClusterSelected";
-    private static final String CONFIG_BASIC_SETTINGS = "config.basicSettings";
-    private static final String CONFIG_ADVANCED_SETTINGS = "config.advancedSettings";
-    private static final String CONFIG_CLUSTER_NAME = "config.clusterName";
-    private static final String CONFIG_BOOTSTRAP_SERVERS = "config.bootstrapServers";
-    private static final String CONFIG_SECURITY_PROTOCOL = "config.securityProtocol";
-    private static final String CONFIG_SASL_MECHANISM = "config.saslMechanism";
     private static final String CONFIG_PROPERTIES = "config.properties";
-    private static final String CONFIG_PROPERTY_KEY = "config.propertyKey";
-    private static final String CONFIG_PROPERTY_VALUE = "config.propertyValue";
-    private static final String CONFIG_ADD_PROPERTY = "config.addProperty";
-    private static final String CONFIG_REMOVE_PROPERTY = "config.removeProperty";
-    private static final String CONFIG_SAVE = "config.save";
-    private static final String CONFIG_CANCEL = "config.cancel";
-    private static final String CONFIG_SAVE_SUCCESS = "config.saveSuccess";
-    private static final String CONFIG_SAVE_FAILED = "config.saveFailed";
-    private static final String CONFIG_VALIDATION_NAME_REQUIRED = "config.validation.nameRequired";
-    private static final String CONFIG_VALIDATION_SERVERS_REQUIRED = "config.validation.serversRequired";
+    private static final String CONFIG_PARAM_NAME = "config.parameter.name";
+    private static final String CONFIG_PARAM_RANGE = "config.parameter.range";
+    private static final String CONFIG_PARAM_DEFAULT = "config.parameter.default";
+    private static final String CONFIG_PARAM_CURRENT = "config.parameter.current";
+    private static final String CONFIG_PARAM_OPERATION = "config.parameter.operation";
+    private static final String CONFIG_PARAM_EDIT = "config.parameter.edit";
+    private static final String CONFIG_PARAM_DESC = "config.parameter.description";
 
     // I18n Keys - Topic
     private static final String TOPIC_LIST = "topic.list";
@@ -275,15 +266,10 @@ public class MainController implements Initializable {
     @FXML private TableColumn<LagRow, Long> lagOffsetColumn, lagValueColumn;
 
     // Configuration Management
-    @FXML private Label lblConfigTitle, lblCurrentCluster, lblCurrentClusterValue;
-    @FXML private Label lblBasicSettings, lblAdvancedSettings;
-    @FXML private Label lblConfigClusterName, lblConfigBootstrapServers, lblConfigSecurityProtocol, lblConfigSaslMechanism;
-    @FXML private Label lblConfigProperties;
-    @FXML private TextField configClusterNameField, configBootstrapServersField, configSaslMechanismField;
-    @FXML private ComboBox<String> configSecurityProtocolCombo;
-    @FXML private TableView<PropertyRow> configPropertiesTable;
-    @FXML private TableColumn<PropertyRow, String> configPropertyKeyColumn, configPropertyValueColumn;
-    @FXML private Button btnAddProperty, btnRemoveProperty, btnSaveConfig, btnCancelConfig;
+    @FXML private Label lblConfigTitle, lblCurrentCluster, lblCurrentClusterValue, lblKafkaConfigs;
+    @FXML private TableView<KafkaConfigRow> kafkaConfigTable;
+    @FXML private TableColumn<KafkaConfigRow, String> configNameColumn, configDescColumn, configRangeColumn;
+    @FXML private TableColumn<KafkaConfigRow, String> configDefaultColumn, configCurrentColumn, configOperationColumn;
 
     // Status bar
     @FXML private Label statusLabel;
@@ -295,7 +281,7 @@ public class MainController implements Initializable {
     private final ObservableList<ConsumerGroupRow> consumerGroupList = FXCollections.observableArrayList();
     private final ObservableList<MemberRow> memberList = FXCollections.observableArrayList();
     private final ObservableList<LagRow> lagList = FXCollections.observableArrayList();
-    private final ObservableList<PropertyRow> propertyList = FXCollections.observableArrayList();
+    private final ObservableList<KafkaConfigRow> kafkaConfigList = FXCollections.observableArrayList();
     
     private KafkaConsumer<String, String> queryConsumer;
 
@@ -980,25 +966,75 @@ public class MainController implements Initializable {
 
     @FXML
     private void handleAddCluster() {
-        TextInputDialog dialog = new TextInputDialog();
+        // Create add cluster dialog similar to edit dialog
+        Dialog<ClusterConfig> dialog = new Dialog<>();
         dialog.setTitle(I18nUtil.get(CLUSTER_ADD_TITLE));
         dialog.setHeaderText(I18nUtil.get(CLUSTER_ADD_HEADER));
-        dialog.setContentText(I18nUtil.get(CLUSTER_ADD_NAME));
-
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(name -> {
-            TextInputDialog serversDialog = new TextInputDialog("localhost:9092");
-            serversDialog.setTitle(I18nUtil.get(CLUSTER_ADD_TITLE));
-            serversDialog.setHeaderText(I18nUtil.get(CLUSTER_ADD_HEADER));
-            serversDialog.setContentText(I18nUtil.get(CLUSTER_ADD_SERVERS));
-
-            Optional<String> serversResult = serversDialog.showAndWait();
-            serversResult.ifPresent(servers -> {
-                ClusterConfig config = new ClusterConfig(name, servers);
-                ConfigManager.getInstance().addCluster(config);
-                initializeClusterTree();
-                showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_ADD_SUCCESS, name));
-            });
+        
+        // Create form
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
+        
+        TextField nameField = new TextField();
+        TextField hostnameField = new TextField("localhost");
+        TextField portField = new TextField("9092");
+        ComboBox<String> protocolCombo = new ComboBox<>();
+        protocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
+        protocolCombo.setValue("PLAINTEXT");
+        
+        grid.add(new Label(I18nUtil.get(CLUSTER_ADD_NAME)), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_HOST)), 0, 1);
+        grid.add(hostnameField, 1, 1);
+        grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_PORT)), 0, 2);
+        grid.add(portField, 1, 2);
+        grid.add(new Label(I18nUtil.get(CLUSTER_EDIT_PROTOCOL)), 0, 3);
+        grid.add(protocolCombo, 1, 3);
+        
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        // Add validation
+        javafx.scene.control.Button okButton = (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (nameField.getText() == null || nameField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_NAME_EMPTY));
+                event.consume();
+            } else if (hostnameField.getText() == null || hostnameField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_HOST_EMPTY));
+                event.consume();
+            } else if (portField.getText() == null || portField.getText().trim().isEmpty()) {
+                showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_PORT_EMPTY));
+                event.consume();
+            } else {
+                // Validate port is a number
+                try {
+                    Integer.parseInt(portField.getText().trim());
+                } catch (NumberFormatException e) {
+                    showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CLUSTER_EDIT_ERROR_PORT_INVALID));
+                    event.consume();
+                }
+            }
+        });
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                ClusterConfig config = new ClusterConfig();
+                config.setName(nameField.getText().trim());
+                config.setBootstrapServers(hostnameField.getText().trim() + ":" + portField.getText().trim());
+                config.setSecurityProtocol(protocolCombo.getValue());
+                return config;
+            }
+            return null;
+        });
+        
+        Optional<ClusterConfig> result = dialog.showAndWait();
+        result.ifPresent(config -> {
+            ConfigManager.getInstance().addCluster(config);
+            initializeClusterTree();
+            showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_ADD_SUCCESS, config.getName()));
         });
     }
 
@@ -1237,37 +1273,46 @@ public class MainController implements Initializable {
         // Set labels
         lblConfigTitle.setText(I18nUtil.get(CONFIG_TITLE));
         lblCurrentCluster.setText(I18nUtil.get(CONFIG_CURRENT_CLUSTER));
-        lblBasicSettings.setText(I18nUtil.get(CONFIG_BASIC_SETTINGS));
-        lblAdvancedSettings.setText(I18nUtil.get(CONFIG_ADVANCED_SETTINGS));
-        lblConfigClusterName.setText(I18nUtil.get(CONFIG_CLUSTER_NAME));
-        lblConfigBootstrapServers.setText(I18nUtil.get(CONFIG_BOOTSTRAP_SERVERS));
-        lblConfigSecurityProtocol.setText(I18nUtil.get(CONFIG_SECURITY_PROTOCOL));
-        lblConfigSaslMechanism.setText(I18nUtil.get(CONFIG_SASL_MECHANISM));
-        lblConfigProperties.setText(I18nUtil.get(CONFIG_PROPERTIES));
+        lblKafkaConfigs.setText(I18nUtil.get(CONFIG_PROPERTIES));
         
-        // Set button texts
-        btnAddProperty.setText(I18nUtil.get(CONFIG_ADD_PROPERTY));
-        btnRemoveProperty.setText(I18nUtil.get(CONFIG_REMOVE_PROPERTY));
-        btnSaveConfig.setText(I18nUtil.get(CONFIG_SAVE));
-        btnCancelConfig.setText(I18nUtil.get(CONFIG_CANCEL));
+        // Setup kafka config table columns
+        configNameColumn.setText(I18nUtil.get(CONFIG_PARAM_NAME));
+        configDescColumn.setText(I18nUtil.get(CONFIG_PARAM_DESC));
+        configRangeColumn.setText(I18nUtil.get(CONFIG_PARAM_RANGE));
+        configDefaultColumn.setText(I18nUtil.get(CONFIG_PARAM_DEFAULT));
+        configCurrentColumn.setText(I18nUtil.get(CONFIG_PARAM_CURRENT));
+        configOperationColumn.setText(I18nUtil.get(CONFIG_PARAM_OPERATION));
         
-        // Setup security protocol combo
-        configSecurityProtocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
-        configSecurityProtocolCombo.setValue("PLAINTEXT");
+        configNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        configDescColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+        configRangeColumn.setCellValueFactory(new PropertyValueFactory<>("range"));
+        configDefaultColumn.setCellValueFactory(new PropertyValueFactory<>("defaultValue"));
+        configCurrentColumn.setCellValueFactory(new PropertyValueFactory<>("currentValue"));
         
-        // Setup properties table
-        configPropertyKeyColumn.setText(I18nUtil.get(CONFIG_PROPERTY_KEY));
-        configPropertyValueColumn.setText(I18nUtil.get(CONFIG_PROPERTY_VALUE));
-        configPropertyKeyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
-        configPropertyValueColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+        // Add edit button to operation column
+        configOperationColumn.setCellFactory(col -> new javafx.scene.control.TableCell<KafkaConfigRow, String>() {
+            private final Button editButton = new Button(I18nUtil.get(CONFIG_PARAM_EDIT));
+            
+            {
+                editButton.setOnAction(event -> {
+                    KafkaConfigRow config = getTableView().getItems().get(getIndex());
+                    handleEditKafkaConfig(config);
+                });
+            }
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(editButton);
+                }
+            }
+        });
         
-        // Make table cells editable
-        configPropertyKeyColumn.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
-        configPropertyValueColumn.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
-        configPropertiesTable.setEditable(true);
-        
-        configPropertiesTable.setItems(propertyList);
-        configPropertiesTable.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_DATA)));
+        kafkaConfigTable.setItems(kafkaConfigList);
+        kafkaConfigTable.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_DATA)));
         
         // Set initial state
         lblCurrentClusterValue.setText(I18nUtil.get(CONFIG_NO_CLUSTER_SELECTED));
@@ -1276,106 +1321,136 @@ public class MainController implements Initializable {
     private void loadConfigurationView() {
         if (currentCluster == null) {
             lblCurrentClusterValue.setText(I18nUtil.get(CONFIG_NO_CLUSTER_SELECTED));
-            configClusterNameField.setText("");
-            configBootstrapServersField.setText("");
-            configSecurityProtocolCombo.setValue("PLAINTEXT");
-            configSaslMechanismField.setText("");
-            propertyList.clear();
+            kafkaConfigList.clear();
             return;
         }
         
         // Load current cluster configuration
         lblCurrentClusterValue.setText(currentCluster.getName());
-        configClusterNameField.setText(currentCluster.getName());
-        configBootstrapServersField.setText(currentCluster.getBootstrapServers());
         
-        String protocol = currentCluster.getSecurityProtocol();
-        configSecurityProtocolCombo.setValue(protocol != null && !protocol.isEmpty() ? protocol : "PLAINTEXT");
-        
-        String saslMechanism = currentCluster.getSaslMechanism();
-        configSaslMechanismField.setText(saslMechanism != null ? saslMechanism : "");
-        
-        // Load properties
-        propertyList.clear();
-        if (currentCluster.getProperties() != null) {
-            currentCluster.getProperties().forEach((key, value) -> 
-                propertyList.add(new PropertyRow(key, value))
-            );
-        }
+        // Load Kafka broker configurations
+        kafkaConfigList.clear();
+        loadKafkaConfigurations();
     }
 
-    @FXML
-    private void handleAddConfigProperty() {
-        propertyList.add(new PropertyRow("", ""));
+    private void loadKafkaConfigurations() {
+        // Add common Kafka broker configurations
+        // These are example configurations - in a real implementation, 
+        // you would fetch these from the Kafka cluster
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "min.insync.replicas",
+            "最小同步副本数 / Min in-sync replicas",
+            ">=1",
+            "1",
+            currentCluster.getProperties().getOrDefault("min.insync.replicas", "1")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "unclean.leader.election.enable",
+            "是否允许不在ISR中的副本被选举为leader / Allow unclean leader election",
+            "true/false",
+            "false",
+            currentCluster.getProperties().getOrDefault("unclean.leader.election.enable", "false")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "log.retention.hours",
+            "日志保留时间（小时）/ Log retention hours",
+            ">=1",
+            "168",
+            currentCluster.getProperties().getOrDefault("log.retention.hours", "168")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "log.retention.bytes",
+            "日志保留大小（字节）/ Log retention bytes",
+            ">=-1",
+            "-1",
+            currentCluster.getProperties().getOrDefault("log.retention.bytes", "-1")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "log.segment.bytes",
+            "日志段大小（字节）/ Log segment bytes",
+            ">=14",
+            "1073741824",
+            currentCluster.getProperties().getOrDefault("log.segment.bytes", "1073741824")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "compression.type",
+            "压缩类型 / Compression type",
+            "none,gzip,snappy,lz4,zstd",
+            "producer",
+            currentCluster.getProperties().getOrDefault("compression.type", "producer")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "num.partitions",
+            "默认分区数 / Default partitions",
+            ">=1",
+            "1",
+            currentCluster.getProperties().getOrDefault("num.partitions", "1")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "default.replication.factor",
+            "默认副本因子 / Default replication factor",
+            ">=1",
+            "1",
+            currentCluster.getProperties().getOrDefault("default.replication.factor", "1")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "max.message.bytes",
+            "最大消息大小（字节）/ Max message bytes",
+            ">=0",
+            "1048588",
+            currentCluster.getProperties().getOrDefault("max.message.bytes", "1048588")
+        ));
+        
+        kafkaConfigList.add(new KafkaConfigRow(
+            "replica.lag.time.max.ms",
+            "副本最大滞后时间（毫秒）/ Replica lag time max ms",
+            ">=0",
+            "30000",
+            currentCluster.getProperties().getOrDefault("replica.lag.time.max.ms", "30000")
+        ));
     }
 
-    @FXML
-    private void handleRemoveConfigProperty() {
-        PropertyRow selected = configPropertiesTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            propertyList.remove(selected);
-        }
-    }
-
-    @FXML
-    private void handleSaveConfiguration() {
-        if (currentCluster == null) {
-            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(CONFIG_NO_CLUSTER_SELECTED));
-            return;
-        }
+    private void handleEditKafkaConfig(KafkaConfigRow config) {
+        TextInputDialog dialog = new TextInputDialog(config.getCurrentValue());
+        dialog.setTitle(I18nUtil.get(CONFIG_PARAM_EDIT));
+        dialog.setHeaderText(config.getName());
+        dialog.setContentText(config.getDescription() + "\n" + 
+                             I18nUtil.get(CONFIG_PARAM_RANGE) + ": " + config.getRange() + "\n" +
+                             I18nUtil.get(CONFIG_PARAM_DEFAULT) + ": " + config.getDefaultValue());
         
-        // Validate inputs
-        String name = configClusterNameField.getText();
-        String servers = configBootstrapServersField.getText();
-        
-        if (name == null || name.trim().isEmpty()) {
-            showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CONFIG_VALIDATION_NAME_REQUIRED));
-            return;
-        }
-        
-        if (servers == null || servers.trim().isEmpty()) {
-            showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CONFIG_VALIDATION_SERVERS_REQUIRED));
-            return;
-        }
-        
-        try {
-            // Update cluster configuration
-            currentCluster.setName(name.trim());
-            currentCluster.setBootstrapServers(servers.trim());
-            currentCluster.setSecurityProtocol(configSecurityProtocolCombo.getValue());
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(newValue -> {
+            // Update the configuration
+            config.setCurrentValue(newValue);
             
-            String saslMechanism = configSaslMechanismField.getText();
-            if (saslMechanism != null && !saslMechanism.trim().isEmpty()) {
-                currentCluster.setSaslMechanism(saslMechanism.trim());
-            }
-            
-            // Update properties
-            java.util.Map<String, String> properties = new java.util.HashMap<>();
-            for (PropertyRow row : propertyList) {
-                if (row.getKey() != null && !row.getKey().trim().isEmpty()) {
-                    properties.put(row.getKey().trim(), row.getValue() != null ? row.getValue().trim() : "");
+            // Update in cluster config
+            if (currentCluster != null) {
+                java.util.Map<String, String> properties = currentCluster.getProperties();
+                if (properties == null) {
+                    properties = new java.util.HashMap<>();
+                    currentCluster.setProperties(properties);
                 }
+                properties.put(config.getName(), newValue);
+                
+                // Save to config manager
+                ConfigManager.getInstance().updateCluster(currentCluster);
+                
+                // Refresh table
+                kafkaConfigTable.refresh();
+                
+                showInfo(I18nUtil.get(COMMON_SUCCESS), 
+                        "Configuration updated: " + config.getName() + " = " + newValue);
             }
-            currentCluster.setProperties(properties);
-            
-            // Save to config manager
-            ConfigManager.getInstance().updateCluster(currentCluster);
-            
-            // Refresh cluster tree
-            initializeClusterTree();
-            
-            showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CONFIG_SAVE_SUCCESS));
-            updateStatus(I18nUtil.get(CONFIG_SAVE_SUCCESS));
-            
-        } catch (Exception e) {
-            logger.error("Failed to save configuration", e);
-            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(CONFIG_SAVE_FAILED, e.getMessage()));
-        }
-    }
-
-    @FXML
-    private void handleCancelConfiguration() {
-        loadConfigurationView();
+        });
     }
 
     private void showPartitionDetailsDialog(TopicInfo topic) {
@@ -1536,18 +1611,26 @@ public class MainController implements Initializable {
         public Long getLag() { return lag; }
     }
 
-    public static class PropertyRow {
-        private String key;
-        private String value;
+    public static class KafkaConfigRow {
+        private final String name;
+        private final String description;
+        private final String range;
+        private final String defaultValue;
+        private String currentValue;
 
-        public PropertyRow(String key, String value) {
-            this.key = key;
-            this.value = value;
+        public KafkaConfigRow(String name, String description, String range, String defaultValue, String currentValue) {
+            this.name = name;
+            this.description = description;
+            this.range = range;
+            this.defaultValue = defaultValue;
+            this.currentValue = currentValue;
         }
 
-        public String getKey() { return key; }
-        public void setKey(String key) { this.key = key; }
-        public String getValue() { return value; }
-        public void setValue(String value) { this.value = value; }
+        public String getName() { return name; }
+        public String getDescription() { return description; }
+        public String getRange() { return range; }
+        public String getDefaultValue() { return defaultValue; }
+        public String getCurrentValue() { return currentValue; }
+        public void setCurrentValue(String currentValue) { this.currentValue = currentValue; }
     }
 }
