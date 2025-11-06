@@ -57,16 +57,23 @@ public class ClusterOperationsHelper {
         
         // Create form
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(15);  // Increased from 10 to prevent label truncation
+        grid.setVgap(12);  // Increased from 10 for better spacing
         grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
         
         TextField nameField = new TextField(cluster != null ? cluster.getName() : "");
+        nameField.setPrefWidth(300);  // Set consistent width for all fields
+        
         TextField hostnameField = new TextField();
+        hostnameField.setPrefWidth(300);
+        
         TextField portField = new TextField();
+        portField.setPrefWidth(300);
+        
         ComboBox<String> protocolCombo = new ComboBox<>();
         protocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
-        protocolCombo.setMaxWidth(Double.MAX_VALUE);
+        protocolCombo.setPrefWidth(300);  // Match width of text fields
+        protocolCombo.setMaxWidth(300);
         
         if (cluster != null) {
             // Parse bootstrap servers to get hostname and port
