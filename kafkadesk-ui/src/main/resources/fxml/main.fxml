@@ -31,33 +31,30 @@
                     <MenuItem fx:id="menuItemAbout" onAction="#handleAbout"/>
                 </Menu>
             </MenuBar>
-            
-            <!-- Spacer to push buttons to the right -->
-            <Region HBox.hgrow="ALWAYS"/>
-            
-            <!-- Quick Action Buttons -->
-            <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕"
-                    style="-fx-min-width: 40; -fx-font-size: 16px;"/>
-            <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄"
-                    styleClass="button secondary"
-                    style="-fx-min-width: 40; -fx-font-size: 16px;"/>
         </HBox>
     </top>
 
     <!-- Center: Main Work Area with Cluster Tree on Left -->
     <center>
         <SplitPane dividerPositions="0.2" style="-fx-background-color: #F8F9FA;">
-            <!-- Left: Cluster TreeView -->
-            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 1 0 0;">
+            <!-- Left: Cluster TreeView with Fixed Width -->
+            <VBox prefWidth="250" minWidth="200" maxWidth="300" 
+                  style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 1 0 0;">
                 <padding>
                     <Insets top="12" right="12" bottom="12" left="12"/>
                 </padding>
-                <Label fx:id="lblClusterList" styleClass="label subheader" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
+                
+                <!-- Action Buttons Bar -->
+                <HBox spacing="8" alignment="CENTER_RIGHT" style="-fx-padding: 0 0 12 0;">
+                    <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕"
+                            style="-fx-min-width: 40; -fx-font-size: 16px;"/>
+                    <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄"
+                            styleClass="button secondary"
+                            style="-fx-min-width: 40; -fx-font-size: 16px;"/>
+                </HBox>
+                
                 <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
                           style="-fx-border-color: transparent; -fx-background-color: white;">
-                    <VBox.margin>
-                        <Insets top="12"/>
-                    </VBox.margin>
                 </TreeView>
             </VBox>
 

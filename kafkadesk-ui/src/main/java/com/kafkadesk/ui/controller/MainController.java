@@ -49,7 +49,7 @@ public class MainController implements Initializable {
     @FXML private Button btnAddCluster, btnRefresh;
     
     // Cluster tree (left side)
-    @FXML private Label lblClusterList;
+    // @FXML private Label lblClusterList;  // Removed - buttons now replace the label
     @FXML private TreeView<String> clusterTreeView;
 
     // Content area (right side)
@@ -111,7 +111,7 @@ public class MainController implements Initializable {
         btnRefresh.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_REFRESH)));
 
         // Cluster
-        lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));
+        // lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));  // Removed - no longer needed
     }
 
     /**
