@@ -12,6 +12,7 @@ import com.kafkadesk.model.Message;
 import com.kafkadesk.model.TopicInfo;
 import com.kafkadesk.ui.util.I18nUtil;
 import com.kafkadesk.ui.constants.I18nKeys;
+import com.kafkadesk.ui.helper.ClusterOperationsHelper;
 import com.kafkadesk.utils.DateTimeUtil;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -244,12 +245,6 @@ public class MainController implements Initializable {
         lagValueColumn.setText(I18nUtil.get(I18nKeys.CONSUMER_GROUP_LAG));
     }
 
-    private String parseClusterNameFromDisplay(String displayName) {
-        if (displayName.contains(" (")) {
-            return displayName.substring(0, displayName.indexOf(" ("));
-        }
-        return displayName;
-    }
 
     private void initializeClusterTree() {
         TreeItem<String> rootItem = new TreeItem<>(I18nUtil.get(I18nKeys.CLUSTER_LIST));
@@ -303,7 +298,7 @@ public class MainController implements Initializable {
         logger.info("Cluster selected: {}", displayName);
         
         // Parse cluster name from display name
-        String clusterName = parseClusterNameFromDisplay(displayName);
+        String clusterName = ClusterOperationsHelper.parseClusterNameFromDisplay(displayName);
         
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
         Optional<ClusterConfig> cluster = clusters.stream()
@@ -893,7 +888,7 @@ public class MainController implements Initializable {
 
     private void handleDeleteCluster(String displayName) {
         // Parse cluster name from display name
-        String clusterName = parseClusterNameFromDisplay(displayName);
+        String clusterName = ClusterOperationsHelper.parseClusterNameFromDisplay(displayName);
         
         // Show confirmation dialog
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -927,7 +922,7 @@ public class MainController implements Initializable {
 
     private void handleEditCluster(String displayName) {
         // Parse cluster name from display name
-        String clusterName = parseClusterNameFromDisplay(displayName);
+        String clusterName = ClusterOperationsHelper.parseClusterNameFromDisplay(displayName);
         
         // Find the cluster
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
