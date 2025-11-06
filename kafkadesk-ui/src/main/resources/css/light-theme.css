@@ -344,7 +344,8 @@
 
 /* Toolbar Button Styles */
 .toolbar-button {
-    -fx-background-color: white;
+    -fx-background-color: #F5F5F5;
+    -fx-text-fill: #212121;
     -fx-border-color: #E0E0E0;
     -fx-border-width: 1;
     -fx-border-radius: 3;
@@ -357,11 +358,11 @@
 }
 
 .toolbar-button:hover {
-    -fx-background-color: #F0F0F0;
+    -fx-background-color: #E8E8E8;
     -fx-border-color: #CCCCCC;
 }
 
 .toolbar-button:pressed {
-    -fx-background-color: #E0E0E0;
+    -fx-background-color: #D8D8D8;
     -fx-border-color: #BBBBBB;
 }
