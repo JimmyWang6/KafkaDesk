@@ -9,10 +9,13 @@
             fx:controller="com.kafkadesk.ui.controller.MainController"
             prefHeight="800.0" prefWidth="1200.0">
 
-    <!-- Top: Menu Bar -->
+    <!-- Top: Integrated Header Bar -->
     <top>
-        <VBox>
-            <MenuBar fx:id="menuBar">
+        <HBox styleClass="integrated-header" spacing="8" alignment="CENTER_LEFT"
+              style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0; -fx-padding: 8 12 8 12;">
+            
+            <!-- Menu Bar - Compact -->
+            <MenuBar fx:id="menuBar" style="-fx-background-color: transparent; -fx-border-width: 0;">
                 <Menu fx:id="menuFile">
                     <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
                     <SeparatorMenuItem/>
@@ -29,66 +32,75 @@
                 </Menu>
             </MenuBar>
             
-            <!-- Toolbar -->
-            <ToolBar>
-                <Button fx:id="btnAddCluster" onAction="#handleAddCluster"/>
-                <Separator orientation="VERTICAL"/>
-                <Button fx:id="btnRefresh" onAction="#handleRefreshTopics"/>
-                <Separator orientation="VERTICAL"/>
-                <Button fx:id="btnSettings" onAction="#handleSettings"/>
-            </ToolBar>
-        </VBox>
+            <!-- Spacer to push buttons to the right -->
+            <Region HBox.hgrow="ALWAYS"/>
+            
+            <!-- Quick Action Buttons -->
+            <Button fx:id="btnAddCluster" onAction="#handleAddCluster" 
+                    style="-fx-min-width: 100; -fx-font-size: 13px;"/>
+            <Button fx:id="btnRefresh" onAction="#handleRefreshTopics"
+                    styleClass="button secondary"
+                    style="-fx-min-width: 80; -fx-font-size: 13px;"/>
+            <Button fx:id="btnSettings" onAction="#handleSettings"
+                    styleClass="button secondary"
+                    style="-fx-min-width: 80; -fx-font-size: 13px;"/>
+        </HBox>
     </top>
 
     <!-- Center: Main Work Area -->
     <center>
-        <SplitPane dividerPositions="0.25">
-            <!-- Left: Cluster Tree -->
-            <VBox>
+        <SplitPane dividerPositions="0.2" style="-fx-background-color: #F8F9FA;">
+            <!-- Left: Cluster Sidebar -->
+            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 1 0 0;">
                 <padding>
-                    <Insets top="10" right="10" bottom="10" left="10"/>
+                    <Insets top="12" right="12" bottom="12" left="12"/>
                 </padding>
-                <Label fx:id="lblClusterList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
-                <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS">
+                <Label fx:id="lblClusterList" styleClass="label subheader" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
+                <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
+                          style="-fx-border-color: transparent; -fx-background-color: white;">
                     <VBox.margin>
-                        <Insets top="10"/>
+                        <Insets top="12"/>
                     </VBox.margin>
                 </TreeView>
             </VBox>
 
-            <!-- Right: Main Work Area -->
-            <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+            <!-- Right: Main Content Area -->
+            <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" style="-fx-background-color: white;">
                 
                 <!-- Topic Management Tab -->
                 <Tab fx:id="topicTab">
-                    <SplitPane orientation="VERTICAL" dividerPositions="0.6">
+                    <SplitPane orientation="VERTICAL" dividerPositions="0.6" style="-fx-background-color: white;">
                         <!-- Topic List -->
-                        <VBox>
+                        <VBox style="-fx-background-color: white;">
                             <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
                             </padding>
-                            <Label fx:id="lblTopicList" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
-                            <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS">
+                            <Label fx:id="lblTopicList" styleClass="label subheader" 
+                                   style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
+                            <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS"
+                                      style="-fx-background-color: white;">
                                 <columns>
                                     <TableColumn fx:id="topicNameColumn" prefWidth="300"/>
                                     <TableColumn fx:id="topicPartitionsColumn" prefWidth="100"/>
                                     <TableColumn fx:id="topicReplicationColumn" prefWidth="100"/>
                                 </columns>
                                 <VBox.margin>
-                                    <Insets top="10"/>
+                                    <Insets top="12"/>
                                 </VBox.margin>
                             </TableView>
                         </VBox>
 
                         <!-- Topic Details -->
-                        <VBox>
+                        <VBox style="-fx-background-color: white;">
                             <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
                             </padding>
-                            <Label fx:id="lblTopicDetails" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
-                            <TextArea fx:id="topicDetailsTextArea" editable="false" VBox.vgrow="ALWAYS">
+                            <Label fx:id="lblTopicDetails" styleClass="label subheader"
+                                   style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
+                            <TextArea fx:id="topicDetailsTextArea" editable="false" VBox.vgrow="ALWAYS"
+                                     style="-fx-background-color: #F8F9FA; -fx-border-color: #E0E0E0;">
                                 <VBox.margin>
-                                    <Insets top="10"/>
+                                    <Insets top="12"/>
                                 </VBox.margin>
                             </TextArea>
                         </VBox>
