@@ -107,6 +107,29 @@ public class MainController implements Initializable {
     private static final String TAB_PRODUCER = "tab.producer";
     private static final String TAB_QUERY = "tab.query";
     private static final String TAB_CONSUMER_GROUPS = "tab.consumerGroups";
+    private static final String TAB_CONFIGURATION = "tab.configuration";
+
+    // I18n Keys - Configuration
+    private static final String CONFIG_TITLE = "config.title";
+    private static final String CONFIG_CURRENT_CLUSTER = "config.currentCluster";
+    private static final String CONFIG_NO_CLUSTER_SELECTED = "config.noClusterSelected";
+    private static final String CONFIG_BASIC_SETTINGS = "config.basicSettings";
+    private static final String CONFIG_ADVANCED_SETTINGS = "config.advancedSettings";
+    private static final String CONFIG_CLUSTER_NAME = "config.clusterName";
+    private static final String CONFIG_BOOTSTRAP_SERVERS = "config.bootstrapServers";
+    private static final String CONFIG_SECURITY_PROTOCOL = "config.securityProtocol";
+    private static final String CONFIG_SASL_MECHANISM = "config.saslMechanism";
+    private static final String CONFIG_PROPERTIES = "config.properties";
+    private static final String CONFIG_PROPERTY_KEY = "config.propertyKey";
+    private static final String CONFIG_PROPERTY_VALUE = "config.propertyValue";
+    private static final String CONFIG_ADD_PROPERTY = "config.addProperty";
+    private static final String CONFIG_REMOVE_PROPERTY = "config.removeProperty";
+    private static final String CONFIG_SAVE = "config.save";
+    private static final String CONFIG_CANCEL = "config.cancel";
+    private static final String CONFIG_SAVE_SUCCESS = "config.saveSuccess";
+    private static final String CONFIG_SAVE_FAILED = "config.saveFailed";
+    private static final String CONFIG_VALIDATION_NAME_REQUIRED = "config.validation.nameRequired";
+    private static final String CONFIG_VALIDATION_SERVERS_REQUIRED = "config.validation.serversRequired";
 
     // I18n Keys - Topic
     private static final String TOPIC_LIST = "topic.list";
@@ -211,7 +234,7 @@ public class MainController implements Initializable {
 
     // Tabs
     @FXML private TabPane mainTabPane;
-    @FXML private Tab topicTab, producerTab, queryTab, consumerGroupsTab;
+    @FXML private Tab topicTab, producerTab, queryTab, consumerGroupsTab, configurationTab;
 
     // Topic Management
     @FXML private Label lblTopicList, lblTopicDetails;
@@ -251,6 +274,17 @@ public class MainController implements Initializable {
     @FXML private TableColumn<LagRow, Integer> lagPartitionColumn;
     @FXML private TableColumn<LagRow, Long> lagOffsetColumn, lagValueColumn;
 
+    // Configuration Management
+    @FXML private Label lblConfigTitle, lblCurrentCluster, lblCurrentClusterValue;
+    @FXML private Label lblBasicSettings, lblAdvancedSettings;
+    @FXML private Label lblConfigClusterName, lblConfigBootstrapServers, lblConfigSecurityProtocol, lblConfigSaslMechanism;
+    @FXML private Label lblConfigProperties;
+    @FXML private TextField configClusterNameField, configBootstrapServersField, configSaslMechanismField;
+    @FXML private ComboBox<String> configSecurityProtocolCombo;
+    @FXML private TableView<PropertyRow> configPropertiesTable;
+    @FXML private TableColumn<PropertyRow, String> configPropertyKeyColumn, configPropertyValueColumn;
+    @FXML private Button btnAddProperty, btnRemoveProperty, btnSaveConfig, btnCancelConfig;
+
     // Status bar
     @FXML private Label statusLabel;
 
@@ -261,6 +295,7 @@ public class MainController implements Initializable {
     private final ObservableList<ConsumerGroupRow> consumerGroupList = FXCollections.observableArrayList();
     private final ObservableList<MemberRow> memberList = FXCollections.observableArrayList();
     private final ObservableList<LagRow> lagList = FXCollections.observableArrayList();
+    private final ObservableList<PropertyRow> propertyList = FXCollections.observableArrayList();
     
     private KafkaConsumer<String, String> queryConsumer;
 
@@ -278,6 +313,7 @@ public class MainController implements Initializable {
         initializeProducerView();
         initializeQueryView();
         initializeConsumerGroupView();
+        initializeConfigurationView();
         initializeTabListeners();
         
         updateStatus(I18nUtil.get(STATUS_READY));
@@ -314,6 +350,7 @@ public class MainController implements Initializable {
         producerTab.setText(I18nUtil.get(TAB_PRODUCER));
         queryTab.setText(I18nUtil.get(TAB_QUERY));
         consumerGroupsTab.setText(I18nUtil.get(TAB_CONSUMER_GROUPS));
+        configurationTab.setText(I18nUtil.get(TAB_CONFIGURATION));
 
         // Topic
         lblTopicList.setText(I18nUtil.get(TOPIC_LIST));
@@ -1189,9 +1226,156 @@ public class MainController implements Initializable {
                     loadConsumerGroups();
                 } else if (newTab == queryTab) {
                     updateQueryTopicList();
+                } else if (newTab == configurationTab) {
+                    loadConfigurationView();
                 }
             }
         });
+    }
+
+    private void initializeConfigurationView() {
+        // Set labels
+        lblConfigTitle.setText(I18nUtil.get(CONFIG_TITLE));
+        lblCurrentCluster.setText(I18nUtil.get(CONFIG_CURRENT_CLUSTER));
+        lblBasicSettings.setText(I18nUtil.get(CONFIG_BASIC_SETTINGS));
+        lblAdvancedSettings.setText(I18nUtil.get(CONFIG_ADVANCED_SETTINGS));
+        lblConfigClusterName.setText(I18nUtil.get(CONFIG_CLUSTER_NAME));
+        lblConfigBootstrapServers.setText(I18nUtil.get(CONFIG_BOOTSTRAP_SERVERS));
+        lblConfigSecurityProtocol.setText(I18nUtil.get(CONFIG_SECURITY_PROTOCOL));
+        lblConfigSaslMechanism.setText(I18nUtil.get(CONFIG_SASL_MECHANISM));
+        lblConfigProperties.setText(I18nUtil.get(CONFIG_PROPERTIES));
+        
+        // Set button texts
+        btnAddProperty.setText(I18nUtil.get(CONFIG_ADD_PROPERTY));
+        btnRemoveProperty.setText(I18nUtil.get(CONFIG_REMOVE_PROPERTY));
+        btnSaveConfig.setText(I18nUtil.get(CONFIG_SAVE));
+        btnCancelConfig.setText(I18nUtil.get(CONFIG_CANCEL));
+        
+        // Setup security protocol combo
+        configSecurityProtocolCombo.getItems().addAll("PLAINTEXT", "SASL_PLAINTEXT", "SASL_SSL", "SSL");
+        configSecurityProtocolCombo.setValue("PLAINTEXT");
+        
+        // Setup properties table
+        configPropertyKeyColumn.setText(I18nUtil.get(CONFIG_PROPERTY_KEY));
+        configPropertyValueColumn.setText(I18nUtil.get(CONFIG_PROPERTY_VALUE));
+        configPropertyKeyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
+        configPropertyValueColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+        
+        // Make table cells editable
+        configPropertyKeyColumn.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
+        configPropertyValueColumn.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
+        configPropertiesTable.setEditable(true);
+        
+        configPropertiesTable.setItems(propertyList);
+        configPropertiesTable.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_DATA)));
+        
+        // Set initial state
+        lblCurrentClusterValue.setText(I18nUtil.get(CONFIG_NO_CLUSTER_SELECTED));
+    }
+
+    private void loadConfigurationView() {
+        if (currentCluster == null) {
+            lblCurrentClusterValue.setText(I18nUtil.get(CONFIG_NO_CLUSTER_SELECTED));
+            configClusterNameField.setText("");
+            configBootstrapServersField.setText("");
+            configSecurityProtocolCombo.setValue("PLAINTEXT");
+            configSaslMechanismField.setText("");
+            propertyList.clear();
+            return;
+        }
+        
+        // Load current cluster configuration
+        lblCurrentClusterValue.setText(currentCluster.getName());
+        configClusterNameField.setText(currentCluster.getName());
+        configBootstrapServersField.setText(currentCluster.getBootstrapServers());
+        
+        String protocol = currentCluster.getSecurityProtocol();
+        configSecurityProtocolCombo.setValue(protocol != null && !protocol.isEmpty() ? protocol : "PLAINTEXT");
+        
+        String saslMechanism = currentCluster.getSaslMechanism();
+        configSaslMechanismField.setText(saslMechanism != null ? saslMechanism : "");
+        
+        // Load properties
+        propertyList.clear();
+        if (currentCluster.getProperties() != null) {
+            currentCluster.getProperties().forEach((key, value) -> 
+                propertyList.add(new PropertyRow(key, value))
+            );
+        }
+    }
+
+    @FXML
+    private void handleAddConfigProperty() {
+        propertyList.add(new PropertyRow("", ""));
+    }
+
+    @FXML
+    private void handleRemoveConfigProperty() {
+        PropertyRow selected = configPropertiesTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            propertyList.remove(selected);
+        }
+    }
+
+    @FXML
+    private void handleSaveConfiguration() {
+        if (currentCluster == null) {
+            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(CONFIG_NO_CLUSTER_SELECTED));
+            return;
+        }
+        
+        // Validate inputs
+        String name = configClusterNameField.getText();
+        String servers = configBootstrapServersField.getText();
+        
+        if (name == null || name.trim().isEmpty()) {
+            showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CONFIG_VALIDATION_NAME_REQUIRED));
+            return;
+        }
+        
+        if (servers == null || servers.trim().isEmpty()) {
+            showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(CONFIG_VALIDATION_SERVERS_REQUIRED));
+            return;
+        }
+        
+        try {
+            // Update cluster configuration
+            currentCluster.setName(name.trim());
+            currentCluster.setBootstrapServers(servers.trim());
+            currentCluster.setSecurityProtocol(configSecurityProtocolCombo.getValue());
+            
+            String saslMechanism = configSaslMechanismField.getText();
+            if (saslMechanism != null && !saslMechanism.trim().isEmpty()) {
+                currentCluster.setSaslMechanism(saslMechanism.trim());
+            }
+            
+            // Update properties
+            java.util.Map<String, String> properties = new java.util.HashMap<>();
+            for (PropertyRow row : propertyList) {
+                if (row.getKey() != null && !row.getKey().trim().isEmpty()) {
+                    properties.put(row.getKey().trim(), row.getValue() != null ? row.getValue().trim() : "");
+                }
+            }
+            currentCluster.setProperties(properties);
+            
+            // Save to config manager
+            ConfigManager.getInstance().updateCluster(currentCluster);
+            
+            // Refresh cluster tree
+            initializeClusterTree();
+            
+            showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CONFIG_SAVE_SUCCESS));
+            updateStatus(I18nUtil.get(CONFIG_SAVE_SUCCESS));
+            
+        } catch (Exception e) {
+            logger.error("Failed to save configuration", e);
+            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(CONFIG_SAVE_FAILED, e.getMessage()));
+        }
+    }
+
+    @FXML
+    private void handleCancelConfiguration() {
+        loadConfigurationView();
     }
 
     private void showPartitionDetailsDialog(TopicInfo topic) {
@@ -1350,5 +1534,20 @@ public class MainController implements Initializable {
         public int getPartition() { return partition; }
         public Long getOffset() { return offset; }
         public Long getLag() { return lag; }
+    }
+
+    public static class PropertyRow {
+        private String key;
+        private String value;
+
+        public PropertyRow(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public String getKey() { return key; }
+        public void setKey(String key) { this.key = key; }
+        public String getValue() { return value; }
+        public void setValue(String value) { this.value = value; }
     }
 }
