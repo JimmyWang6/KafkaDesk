@@ -121,6 +121,18 @@ public class MainController implements Initializable {
     private static final String CONFIG_PARAM_OPERATION = "config.parameter.operation";
     private static final String CONFIG_PARAM_EDIT = "config.parameter.edit";
     private static final String CONFIG_PARAM_DESC = "config.parameter.description";
+    
+    // I18n Keys - Kafka Configuration Descriptions
+    private static final String CONFIG_DESC_MIN_INSYNC_REPLICAS = "config.desc.min.insync.replicas";
+    private static final String CONFIG_DESC_UNCLEAN_LEADER_ELECTION = "config.desc.unclean.leader.election.enable";
+    private static final String CONFIG_DESC_LOG_RETENTION_HOURS = "config.desc.log.retention.hours";
+    private static final String CONFIG_DESC_LOG_RETENTION_BYTES = "config.desc.log.retention.bytes";
+    private static final String CONFIG_DESC_LOG_SEGMENT_BYTES = "config.desc.log.segment.bytes";
+    private static final String CONFIG_DESC_COMPRESSION_TYPE = "config.desc.compression.type";
+    private static final String CONFIG_DESC_NUM_PARTITIONS = "config.desc.num.partitions";
+    private static final String CONFIG_DESC_DEFAULT_REPLICATION_FACTOR = "config.desc.default.replication.factor";
+    private static final String CONFIG_DESC_MAX_MESSAGE_BYTES = "config.desc.max.message.bytes";
+    private static final String CONFIG_DESC_REPLICA_LAG_TIME_MAX_MS = "config.desc.replica.lag.time.max.ms";
 
     // I18n Keys - Topic
     private static final String TOPIC_LIST = "topic.list";
@@ -1340,7 +1352,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "min.insync.replicas",
-            "最小同步副本数 / Min in-sync replicas",
+            I18nUtil.get(CONFIG_DESC_MIN_INSYNC_REPLICAS),
             ">=1",
             "1",
             currentCluster.getProperties().getOrDefault("min.insync.replicas", "1")
@@ -1348,7 +1360,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "unclean.leader.election.enable",
-            "是否允许不在ISR中的副本被选举为leader / Allow unclean leader election",
+            I18nUtil.get(CONFIG_DESC_UNCLEAN_LEADER_ELECTION),
             "true/false",
             "false",
             currentCluster.getProperties().getOrDefault("unclean.leader.election.enable", "false")
@@ -1356,7 +1368,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "log.retention.hours",
-            "日志保留时间（小时）/ Log retention hours",
+            I18nUtil.get(CONFIG_DESC_LOG_RETENTION_HOURS),
             ">=1",
             "168",
             currentCluster.getProperties().getOrDefault("log.retention.hours", "168")
@@ -1364,7 +1376,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "log.retention.bytes",
-            "日志保留大小（字节）/ Log retention bytes",
+            I18nUtil.get(CONFIG_DESC_LOG_RETENTION_BYTES),
             ">=-1",
             "-1",
             currentCluster.getProperties().getOrDefault("log.retention.bytes", "-1")
@@ -1372,7 +1384,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "log.segment.bytes",
-            "日志段大小（字节）/ Log segment bytes",
+            I18nUtil.get(CONFIG_DESC_LOG_SEGMENT_BYTES),
             ">=14",
             "1073741824",
             currentCluster.getProperties().getOrDefault("log.segment.bytes", "1073741824")
@@ -1380,7 +1392,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "compression.type",
-            "压缩类型 / Compression type",
+            I18nUtil.get(CONFIG_DESC_COMPRESSION_TYPE),
             "none,gzip,snappy,lz4,zstd",
             "producer",
             currentCluster.getProperties().getOrDefault("compression.type", "producer")
@@ -1388,7 +1400,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "num.partitions",
-            "默认分区数 / Default partitions",
+            I18nUtil.get(CONFIG_DESC_NUM_PARTITIONS),
             ">=1",
             "1",
             currentCluster.getProperties().getOrDefault("num.partitions", "1")
@@ -1396,7 +1408,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "default.replication.factor",
-            "默认副本因子 / Default replication factor",
+            I18nUtil.get(CONFIG_DESC_DEFAULT_REPLICATION_FACTOR),
             ">=1",
             "1",
             currentCluster.getProperties().getOrDefault("default.replication.factor", "1")
@@ -1404,7 +1416,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "max.message.bytes",
-            "最大消息大小（字节）/ Max message bytes",
+            I18nUtil.get(CONFIG_DESC_MAX_MESSAGE_BYTES),
             ">=0",
             "1048588",
             currentCluster.getProperties().getOrDefault("max.message.bytes", "1048588")
@@ -1412,7 +1424,7 @@ public class MainController implements Initializable {
         
         kafkaConfigList.add(new KafkaConfigRow(
             "replica.lag.time.max.ms",
-            "副本最大滞后时间（毫秒）/ Replica lag time max ms",
+            I18nUtil.get(CONFIG_DESC_REPLICA_LAG_TIME_MAX_MS),
             ">=0",
             "30000",
             currentCluster.getProperties().getOrDefault("replica.lag.time.max.ms", "30000")
