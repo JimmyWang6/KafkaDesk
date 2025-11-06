@@ -71,7 +71,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem menuItemAddCluster, menuItemExit, menuItemRefresh, menuItemSettings, menuItemAbout;
     
     // Toolbar components
-    @FXML private Button btnAddCluster, btnRefresh, btnSettings;
+    @FXML private Button btnAddCluster, btnRefresh;
     
     // Cluster tree
     @FXML private Label lblClusterList;
@@ -86,6 +86,7 @@ public class MainController implements Initializable {
     @FXML private TableView<TopicInfo> topicTableView;
     @FXML private TableColumn<TopicInfo, String> topicNameColumn;
     @FXML private TableColumn<TopicInfo, Integer> topicPartitionsColumn, topicReplicationColumn;
+    @FXML private TableColumn<TopicInfo, String> topicRetentionColumn;
     @FXML private TextArea topicDetailsTextArea;
     @FXML private Button btnCreateTopic, btnDeleteTopic;
 
@@ -178,10 +179,9 @@ public class MainController implements Initializable {
         menuHelp.setText(I18nUtil.get(I18nKeys.MENU_HELP));
         menuItemAbout.setText(I18nUtil.get(I18nKeys.MENU_HELP_ABOUT));
 
-        // Toolbar
-        btnAddCluster.setText(I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER));
-        btnRefresh.setText(I18nUtil.get(I18nKeys.TOOLBAR_REFRESH));
-        btnSettings.setText(I18nUtil.get(I18nKeys.TOOLBAR_SETTINGS));
+        // Toolbar with icons
+        btnAddCluster.setText("➕ " + I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER));
+        btnRefresh.setText("🔄 " + I18nUtil.get(I18nKeys.TOOLBAR_REFRESH));
 
         // Cluster
         lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));
@@ -199,8 +199,9 @@ public class MainController implements Initializable {
         topicNameColumn.setText(I18nUtil.get(I18nKeys.TOPIC_NAME));
         topicPartitionsColumn.setText(I18nUtil.get(I18nKeys.TOPIC_PARTITIONS));
         topicReplicationColumn.setText(I18nUtil.get(I18nKeys.TOPIC_REPLICATION));
-        btnCreateTopic.setText(I18nUtil.get(I18nKeys.TOPIC_CREATE));
-        btnDeleteTopic.setText(I18nUtil.get(I18nKeys.TOPIC_DELETE));
+        topicRetentionColumn.setText(I18nUtil.get(I18nKeys.TOPIC_RETENTION));
+        btnCreateTopic.setText("➕ " + I18nUtil.get(I18nKeys.TOPIC_CREATE));
+        btnDeleteTopic.setText("🗑 " + I18nUtil.get(I18nKeys.TOPIC_DELETE));
 
         // Producer
         lblProducerTitle.setText(I18nUtil.get(I18nKeys.PRODUCER_TITLE));
@@ -340,6 +341,7 @@ public class MainController implements Initializable {
         topicNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         topicPartitionsColumn.setCellValueFactory(new PropertyValueFactory<>("partitions"));
         topicReplicationColumn.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
+        topicRetentionColumn.setCellValueFactory(new PropertyValueFactory<>("retentionTime"));
 
         topicTableView.setItems(topicList);
         topicTableView.setPlaceholder(new Label(I18nUtil.get(I18nKeys.PLACEHOLDER_NO_TOPICS)));
@@ -371,17 +373,20 @@ public class MainController implements Initializable {
 
         new Thread(() -> {
             List<String> topicNames = TopicService.getInstance().listTopics(currentCluster.getId());
+            List<TopicInfo> topics = new ArrayList<>();
+            
+            // Fetch full info for each topic
+            for (String topicName : topicNames) {
+                TopicInfo info = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topicName);
+                if (info != null) {
+                    topics.add(info);
+                }
+            }
             
             Platform.runLater(() -> {
                 topicList.clear();
-                for (String topicName : topicNames) {
-                    TopicInfo info = new TopicInfo();
-                    info.setName(topicName);
-                    info.setPartitions(0);
-                    info.setReplicationFactor(0);
-                    topicList.add(info);
-                }
-                updateStatus(I18nUtil.get(I18nKeys.TOPIC_LOADED, topicNames.size()));
+                topicList.addAll(topics);
+                updateStatus(I18nUtil.get(I18nKeys.TOPIC_LOADED, topics.size()));
             });
         }).start();
     }

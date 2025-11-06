@@ -88,6 +88,7 @@ public final class I18nKeys {
     public static final String TOPIC_NAME = "topic.name";
     public static final String TOPIC_PARTITIONS = "topic.partitions";
     public static final String TOPIC_REPLICATION = "topic.replication";
+    public static final String TOPIC_RETENTION = "topic.retention";
     public static final String TOPIC_LOADING = "topic.loading";
     public static final String TOPIC_LOADED = "topic.loaded";
     public static final String TOPIC_CREATE = "topic.create";

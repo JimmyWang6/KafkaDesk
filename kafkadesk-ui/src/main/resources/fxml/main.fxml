@@ -36,12 +36,9 @@
             <Region HBox.hgrow="ALWAYS"/>
             
             <!-- Quick Action Buttons -->
-            <Button fx:id="btnAddCluster" onAction="#handleAddCluster" 
+            <Button fx:id="btnAddCluster" onAction="#handleAddCluster" text="➕ "
                     style="-fx-min-width: 100; -fx-font-size: 13px;"/>
-            <Button fx:id="btnRefresh" onAction="#handleRefreshTopics"
-                    styleClass="button secondary"
-                    style="-fx-min-width: 80; -fx-font-size: 13px;"/>
-            <Button fx:id="btnSettings" onAction="#handleSettings"
+            <Button fx:id="btnRefresh" onAction="#handleRefreshTopics" text="🔄 "
                     styleClass="button secondary"
                     style="-fx-min-width: 80; -fx-font-size: 13px;"/>
         </HBox>
@@ -81,9 +78,9 @@
                                 <Label fx:id="lblTopicList" styleClass="label subheader" 
                                        style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212121;"/>
                                 <Region HBox.hgrow="ALWAYS"/>
-                                <Button fx:id="btnCreateTopic" onAction="#handleCreateTopic"
+                                <Button fx:id="btnCreateTopic" onAction="#handleCreateTopic" text="➕ "
                                         style="-fx-min-width: 100; -fx-font-size: 13px;"/>
-                                <Button fx:id="btnDeleteTopic" onAction="#handleDeleteTopic"
+                                <Button fx:id="btnDeleteTopic" onAction="#handleDeleteTopic" text="🗑 "
                                         styleClass="button secondary"
                                         style="-fx-min-width: 100; -fx-font-size: 13px;"/>
                             </HBox>
@@ -91,9 +88,10 @@
                             <TableView fx:id="topicTableView" VBox.vgrow="ALWAYS"
                                       style="-fx-background-color: white;">
                                 <columns>
-                                    <TableColumn fx:id="topicNameColumn" prefWidth="300"/>
+                                    <TableColumn fx:id="topicNameColumn" prefWidth="250"/>
                                     <TableColumn fx:id="topicPartitionsColumn" prefWidth="100"/>
-                                    <TableColumn fx:id="topicReplicationColumn" prefWidth="100"/>
+                                    <TableColumn fx:id="topicReplicationColumn" prefWidth="120"/>
+                                    <TableColumn fx:id="topicRetentionColumn" prefWidth="150"/>
                                 </columns>
                                 <VBox.margin>
                                     <Insets top="12"/>

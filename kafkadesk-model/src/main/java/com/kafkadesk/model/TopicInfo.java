@@ -13,6 +13,7 @@ public class TopicInfo {
     private String name;
     private int partitions;
     private int replicationFactor;
+    private String retentionTime; // Formatted retention time (e.g., "7 days", "168 hours")
     private Map<String, String> config;
     private List<PartitionInfo> partitionDetails;
 
@@ -51,6 +52,14 @@ public class TopicInfo {
 
     public void setReplicationFactor(int replicationFactor) {
         this.replicationFactor = replicationFactor;
+    }
+
+    public String getRetentionTime() {
+        return retentionTime;
+    }
+
+    public void setRetentionTime(String retentionTime) {
+        this.retentionTime = retentionTime;
     }
 
     public Map<String, String> getConfig() {
