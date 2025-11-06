@@ -22,6 +22,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -59,6 +61,130 @@ import java.util.ResourceBundle;
  */
 public class MainController implements Initializable {
     private static final Logger logger = LoggerFactory.getLogger(MainController.class);
+
+    // I18n Keys - Menu
+    private static final String MENU_FILE = "menu.file";
+    private static final String MENU_FILE_ADD_CLUSTER = "menu.file.addCluster";
+    private static final String MENU_FILE_EXIT = "menu.file.exit";
+    private static final String MENU_VIEW = "menu.view";
+    private static final String MENU_VIEW_REFRESH = "menu.view.refresh";
+    private static final String MENU_TOOLS = "menu.tools";
+    private static final String MENU_TOOLS_SETTINGS = "menu.tools.settings";
+    private static final String MENU_HELP = "menu.help";
+    private static final String MENU_HELP_ABOUT = "menu.help.about";
+
+    // I18n Keys - Toolbar
+    private static final String TOOLBAR_ADD_CLUSTER = "toolbar.addCluster";
+    private static final String TOOLBAR_REFRESH = "toolbar.refresh";
+    private static final String TOOLBAR_SETTINGS = "toolbar.settings";
+
+    // I18n Keys - Cluster
+    private static final String CLUSTER_LIST = "cluster.list";
+    private static final String CLUSTER_ADD_TITLE = "cluster.add.title";
+    private static final String CLUSTER_ADD_HEADER = "cluster.add.header";
+    private static final String CLUSTER_ADD_NAME = "cluster.add.name";
+    private static final String CLUSTER_ADD_SERVERS = "cluster.add.servers";
+    private static final String CLUSTER_ADD_SUCCESS = "cluster.add.success";
+    private static final String CLUSTER_CONNECTING = "cluster.connecting";
+    private static final String CLUSTER_CONNECTED = "cluster.connected";
+    private static final String CLUSTER_FAILED = "cluster.failed";
+    private static final String CLUSTER_DELETE_TITLE = "cluster.delete.title";
+    private static final String CLUSTER_DELETE_CONFIRM = "cluster.delete.confirm";
+    private static final String CLUSTER_DELETE_SUCCESS = "cluster.delete.success";
+
+    // I18n Keys - Tabs
+    private static final String TAB_TOPICS = "tab.topics";
+    private static final String TAB_PRODUCER = "tab.producer";
+    private static final String TAB_QUERY = "tab.query";
+    private static final String TAB_CONSUMER_GROUPS = "tab.consumerGroups";
+
+    // I18n Keys - Topic
+    private static final String TOPIC_LIST = "topic.list";
+    private static final String TOPIC_DETAILS = "topic.details";
+    private static final String TOPIC_NAME = "topic.name";
+    private static final String TOPIC_PARTITIONS = "topic.partitions";
+    private static final String TOPIC_REPLICATION = "topic.replication";
+    private static final String TOPIC_LOADING = "topic.loading";
+    private static final String TOPIC_LOADED = "topic.loaded";
+
+    // I18n Keys - Producer
+    private static final String PRODUCER_TITLE = "producer.title";
+    private static final String PRODUCER_TOPIC = "producer.topic";
+    private static final String PRODUCER_TOPIC_PROMPT = "producer.topic.prompt";
+    private static final String PRODUCER_KEY = "producer.key";
+    private static final String PRODUCER_KEY_PROMPT = "producer.key.prompt";
+    private static final String PRODUCER_VALUE = "producer.value";
+    private static final String PRODUCER_VALUE_PROMPT = "producer.value.prompt";
+    private static final String PRODUCER_SEND = "producer.send";
+    private static final String PRODUCER_SENDING = "producer.sending";
+    private static final String PRODUCER_SUCCESS = "producer.success";
+    private static final String PRODUCER_FAILED = "producer.failed";
+    private static final String PRODUCER_ERROR_TITLE = "producer.error.title";
+    private static final String PRODUCER_ERROR_REQUIRED = "producer.error.required";
+
+    // I18n Keys - Query
+    private static final String QUERY_TOPIC = "query.topic";
+    private static final String QUERY_TOPIC_PROMPT = "query.topic.prompt";
+    private static final String QUERY_PARTITION = "query.partition";
+    private static final String QUERY_PARTITION_ALL = "query.partition.all";
+    private static final String QUERY_OFFSET_FROM = "query.offset.from";
+    private static final String QUERY_OFFSET_TO = "query.offset.to";
+    private static final String QUERY_MAX_RECORDS = "query.maxRecords";
+    private static final String QUERY_SEARCH = "query.search";
+    private static final String QUERY_CLEAR = "query.clear";
+    private static final String QUERY_EXPORT = "query.export";
+    private static final String QUERY_RESULTS = "query.results";
+    private static final String QUERY_DETAILS = "query.details";
+    private static final String QUERY_OFFSET = "query.offset";
+    private static final String QUERY_KEY = "query.key";
+    private static final String QUERY_VALUE = "query.value";
+    private static final String QUERY_TIMESTAMP = "query.timestamp";
+    private static final String QUERY_SEARCHING = "query.searching";
+    private static final String QUERY_FOUND = "query.found";
+    private static final String QUERY_NO_CONNECTION = "query.noConnection";
+
+    // I18n Keys - Consumer Groups
+    private static final String CONSUMER_GROUP_LIST = "consumerGroup.list";
+    private static final String CONSUMER_GROUP_DETAILS = "consumerGroup.details";
+    private static final String CONSUMER_GROUP_ID = "consumerGroup.groupId";
+    private static final String CONSUMER_GROUP_STATE = "consumerGroup.state";
+    private static final String CONSUMER_GROUP_COORDINATOR = "consumerGroup.coordinator";
+    private static final String CONSUMER_GROUP_MEMBERS = "consumerGroup.members";
+    private static final String CONSUMER_GROUP_MEMBER_ID = "consumerGroup.member.memberId";
+    private static final String CONSUMER_GROUP_MEMBER_CLIENT_ID = "consumerGroup.member.clientId";
+    private static final String CONSUMER_GROUP_MEMBER_HOST = "consumerGroup.member.host";
+    private static final String CONSUMER_GROUP_MEMBER_ASSIGNMENTS = "consumerGroup.member.assignments";
+    private static final String CONSUMER_GROUP_OFFSET = "consumerGroup.offset";
+    private static final String CONSUMER_GROUP_LAG = "consumerGroup.lag";
+    private static final String CONSUMER_GROUP_LOADING = "consumerGroup.loading";
+    private static final String CONSUMER_GROUP_LOADED = "consumerGroup.loaded";
+
+    // I18n Keys - Settings
+    private static final String SETTINGS_TITLE = "settings.title";
+    private static final String SETTINGS_LANGUAGE = "settings.language";
+
+    // I18n Keys - Status
+    private static final String STATUS_READY = "status.ready";
+
+    // I18n Keys - Common
+    private static final String COMMON_DELETE = "common.delete";
+    private static final String COMMON_SUCCESS = "common.success";
+    private static final String COMMON_INFO = "common.info";
+
+    // I18n Keys - Dialog
+    private static final String DIALOG_ERROR_TITLE = "dialog.error.title";
+    private static final String DIALOG_ABOUT_TITLE = "dialog.about.title";
+    private static final String DIALOG_ABOUT_HEADER = "dialog.about.header";
+    private static final String DIALOG_ABOUT_CONTENT = "dialog.about.content";
+
+    // I18n Keys - Placeholder
+    private static final String PLACEHOLDER_NO_TOPICS = "placeholder.noTopics";
+    private static final String PLACEHOLDER_NO_MESSAGES = "placeholder.noMessages";
+    private static final String PLACEHOLDER_NO_CONSUMER_GROUPS = "placeholder.noConsumerGroups";
+    private static final String PLACEHOLDER_NO_DATA = "placeholder.noData";
+
+    // I18n Keys - Error
+    private static final String ERROR_QUERY_FAILED = "error.queryFailed";
 
     // Menu components
     @FXML private MenuBar menuBar;
@@ -141,8 +267,9 @@ public class MainController implements Initializable {
         initializeProducerView();
         initializeQueryView();
         initializeConsumerGroupView();
+        initializeTabListeners();
         
-        updateStatus(I18nUtil.get("status.ready"));
+        updateStatus(I18nUtil.get(STATUS_READY));
     }
 
     /**
@@ -150,98 +277,126 @@ public class MainController implements Initializable {
      */
     private void initializeUI() {
         // Menu
-        menuFile.setText(I18nUtil.get("menu.file"));
-        menuItemAddCluster.setText(I18nUtil.get("menu.file.addCluster"));
-        menuItemExit.setText(I18nUtil.get("menu.file.exit"));
+        menuFile.setText(I18nUtil.get(MENU_FILE));
+        menuItemAddCluster.setText(I18nUtil.get(MENU_FILE_ADD_CLUSTER));
+        menuItemExit.setText(I18nUtil.get(MENU_FILE_EXIT));
         
-        menuView.setText(I18nUtil.get("menu.view"));
-        menuItemRefresh.setText(I18nUtil.get("menu.view.refresh"));
+        menuView.setText(I18nUtil.get(MENU_VIEW));
+        menuItemRefresh.setText(I18nUtil.get(MENU_VIEW_REFRESH));
         
-        menuTools.setText(I18nUtil.get("menu.tools"));
-        menuItemSettings.setText(I18nUtil.get("menu.tools.settings"));
+        menuTools.setText(I18nUtil.get(MENU_TOOLS));
+        menuItemSettings.setText(I18nUtil.get(MENU_TOOLS_SETTINGS));
         
-        menuHelp.setText(I18nUtil.get("menu.help"));
-        menuItemAbout.setText(I18nUtil.get("menu.help.about"));
+        menuHelp.setText(I18nUtil.get(MENU_HELP));
+        menuItemAbout.setText(I18nUtil.get(MENU_HELP_ABOUT));
 
         // Toolbar
-        btnAddCluster.setText(I18nUtil.get("toolbar.addCluster"));
-        btnRefresh.setText(I18nUtil.get("toolbar.refresh"));
-        btnSettings.setText(I18nUtil.get("toolbar.settings"));
+        btnAddCluster.setText(I18nUtil.get(TOOLBAR_ADD_CLUSTER));
+        btnRefresh.setText(I18nUtil.get(TOOLBAR_REFRESH));
+        btnSettings.setText(I18nUtil.get(TOOLBAR_SETTINGS));
 
         // Cluster
-        lblClusterList.setText(I18nUtil.get("cluster.list"));
+        lblClusterList.setText(I18nUtil.get(CLUSTER_LIST));
 
         // Tabs
-        topicTab.setText(I18nUtil.get("tab.topics"));
-        producerTab.setText(I18nUtil.get("tab.producer"));
-        queryTab.setText(I18nUtil.get("tab.query"));
-        consumerGroupsTab.setText(I18nUtil.get("tab.consumerGroups"));
+        topicTab.setText(I18nUtil.get(TAB_TOPICS));
+        producerTab.setText(I18nUtil.get(TAB_PRODUCER));
+        queryTab.setText(I18nUtil.get(TAB_QUERY));
+        consumerGroupsTab.setText(I18nUtil.get(TAB_CONSUMER_GROUPS));
 
         // Topic
-        lblTopicList.setText(I18nUtil.get("topic.list"));
-        lblTopicDetails.setText(I18nUtil.get("topic.details"));
-        topicNameColumn.setText(I18nUtil.get("topic.name"));
-        topicPartitionsColumn.setText(I18nUtil.get("topic.partitions"));
-        topicReplicationColumn.setText(I18nUtil.get("topic.replication"));
+        lblTopicList.setText(I18nUtil.get(TOPIC_LIST));
+        lblTopicDetails.setText(I18nUtil.get(TOPIC_DETAILS));
+        topicNameColumn.setText(I18nUtil.get(TOPIC_NAME));
+        topicPartitionsColumn.setText(I18nUtil.get(TOPIC_PARTITIONS));
+        topicReplicationColumn.setText(I18nUtil.get(TOPIC_REPLICATION));
 
         // Producer
-        lblProducerTitle.setText(I18nUtil.get("producer.title"));
-        lblProducerTopic.setText(I18nUtil.get("producer.topic"));
-        lblProducerKey.setText(I18nUtil.get("producer.key"));
-        lblProducerValue.setText(I18nUtil.get("producer.value"));
-        producerTopicField.setPromptText(I18nUtil.get("producer.topic.prompt"));
-        producerKeyField.setPromptText(I18nUtil.get("producer.key.prompt"));
-        producerMessageTextArea.setPromptText(I18nUtil.get("producer.value.prompt"));
-        btnSendMessage.setText(I18nUtil.get("producer.send"));
+        lblProducerTitle.setText(I18nUtil.get(PRODUCER_TITLE));
+        lblProducerTopic.setText(I18nUtil.get(PRODUCER_TOPIC));
+        lblProducerKey.setText(I18nUtil.get(PRODUCER_KEY));
+        lblProducerValue.setText(I18nUtil.get(PRODUCER_VALUE));
+        producerTopicField.setPromptText(I18nUtil.get(PRODUCER_TOPIC_PROMPT));
+        producerKeyField.setPromptText(I18nUtil.get(PRODUCER_KEY_PROMPT));
+        producerMessageTextArea.setPromptText(I18nUtil.get(PRODUCER_VALUE_PROMPT));
+        btnSendMessage.setText(I18nUtil.get(PRODUCER_SEND));
 
         // Query
-        lblQueryTopic.setText(I18nUtil.get("query.topic"));
-        lblQueryPartition.setText(I18nUtil.get("query.partition"));
-        lblQueryOffsetFrom.setText(I18nUtil.get("query.offset.from"));
-        lblQueryOffsetTo.setText(I18nUtil.get("query.offset.to"));
-        lblQueryMaxRecords.setText(I18nUtil.get("query.maxRecords"));
-        lblQueryResults.setText(I18nUtil.get("query.results"));
-        lblQueryDetails.setText(I18nUtil.get("query.details"));
-        queryTopicComboBox.setPromptText(I18nUtil.get("query.topic.prompt"));
-        btnQuerySearch.setText(I18nUtil.get("query.search"));
-        btnQueryClear.setText(I18nUtil.get("query.clear"));
-        btnQueryExport.setText(I18nUtil.get("query.export"));
-        queryOffsetColumn.setText(I18nUtil.get("query.offset"));
-        queryKeyColumn.setText(I18nUtil.get("query.key"));
-        queryValueColumn.setText(I18nUtil.get("query.value"));
-        queryTimestampColumn.setText(I18nUtil.get("query.timestamp"));
+        lblQueryTopic.setText(I18nUtil.get(QUERY_TOPIC));
+        lblQueryPartition.setText(I18nUtil.get(QUERY_PARTITION));
+        lblQueryOffsetFrom.setText(I18nUtil.get(QUERY_OFFSET_FROM));
+        lblQueryOffsetTo.setText(I18nUtil.get(QUERY_OFFSET_TO));
+        lblQueryMaxRecords.setText(I18nUtil.get(QUERY_MAX_RECORDS));
+        lblQueryResults.setText(I18nUtil.get(QUERY_RESULTS));
+        lblQueryDetails.setText(I18nUtil.get(QUERY_DETAILS));
+        queryTopicComboBox.setPromptText(I18nUtil.get(QUERY_TOPIC_PROMPT));
+        btnQuerySearch.setText(I18nUtil.get(QUERY_SEARCH));
+        btnQueryClear.setText(I18nUtil.get(QUERY_CLEAR));
+        btnQueryExport.setText(I18nUtil.get(QUERY_EXPORT));
+        queryOffsetColumn.setText(I18nUtil.get(QUERY_OFFSET));
+        queryKeyColumn.setText(I18nUtil.get(QUERY_KEY));
+        queryValueColumn.setText(I18nUtil.get(QUERY_VALUE));
+        queryTimestampColumn.setText(I18nUtil.get(QUERY_TIMESTAMP));
 
         // Consumer Groups
-        lblConsumerGroupList.setText(I18nUtil.get("consumerGroup.list"));
-        lblConsumerGroupDetails.setText(I18nUtil.get("consumerGroup.details"));
-        consumerGroupIdColumn.setText(I18nUtil.get("consumerGroup.groupId"));
-        consumerGroupStateColumn.setText(I18nUtil.get("consumerGroup.state"));
-        consumerGroupCoordinatorColumn.setText(I18nUtil.get("consumerGroup.coordinator"));
-        consumerGroupMembersColumn.setText(I18nUtil.get("consumerGroup.members"));
+        lblConsumerGroupList.setText(I18nUtil.get(CONSUMER_GROUP_LIST));
+        lblConsumerGroupDetails.setText(I18nUtil.get(CONSUMER_GROUP_DETAILS));
+        consumerGroupIdColumn.setText(I18nUtil.get(CONSUMER_GROUP_ID));
+        consumerGroupStateColumn.setText(I18nUtil.get(CONSUMER_GROUP_STATE));
+        consumerGroupCoordinatorColumn.setText(I18nUtil.get(CONSUMER_GROUP_COORDINATOR));
+        consumerGroupMembersColumn.setText(I18nUtil.get(CONSUMER_GROUP_MEMBERS));
         
-        memberIdColumn.setText(I18nUtil.get("consumerGroup.member.memberId"));
-        memberClientIdColumn.setText(I18nUtil.get("consumerGroup.member.clientId"));
-        memberHostColumn.setText(I18nUtil.get("consumerGroup.member.host"));
-        memberAssignmentsColumn.setText(I18nUtil.get("consumerGroup.member.assignments"));
+        memberIdColumn.setText(I18nUtil.get(CONSUMER_GROUP_MEMBER_ID));
+        memberClientIdColumn.setText(I18nUtil.get(CONSUMER_GROUP_MEMBER_CLIENT_ID));
+        memberHostColumn.setText(I18nUtil.get(CONSUMER_GROUP_MEMBER_HOST));
+        memberAssignmentsColumn.setText(I18nUtil.get(CONSUMER_GROUP_MEMBER_ASSIGNMENTS));
         
-        lagTopicColumn.setText(I18nUtil.get("topic.name"));
-        lagPartitionColumn.setText(I18nUtil.get("query.partition"));
-        lagOffsetColumn.setText(I18nUtil.get("consumerGroup.offset"));
-        lagValueColumn.setText(I18nUtil.get("consumerGroup.lag"));
+        lagTopicColumn.setText(I18nUtil.get(TOPIC_NAME));
+        lagPartitionColumn.setText(I18nUtil.get(QUERY_PARTITION));
+        lagOffsetColumn.setText(I18nUtil.get(CONSUMER_GROUP_OFFSET));
+        lagValueColumn.setText(I18nUtil.get(CONSUMER_GROUP_LAG));
+    }
+
+    private String parseClusterNameFromDisplay(String displayName) {
+        if (displayName.contains(" (")) {
+            return displayName.substring(0, displayName.indexOf(" ("));
+        }
+        return displayName;
     }
 
     private void initializeClusterTree() {
-        TreeItem<String> rootItem = new TreeItem<>(I18nUtil.get("cluster.list"));
+        TreeItem<String> rootItem = new TreeItem<>(I18nUtil.get(CLUSTER_LIST));
         rootItem.setExpanded(true);
 
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
         for (ClusterConfig cluster : clusters) {
-            TreeItem<String> clusterItem = new TreeItem<>(cluster.getName());
+            String displayName = cluster.getName() + " (" + cluster.getBootstrapServers() + ")";
+            TreeItem<String> clusterItem = new TreeItem<>(displayName);
+            clusterItem.setExpanded(false);
             rootItem.getChildren().add(clusterItem);
         }
 
         clusterTreeView.setRoot(rootItem);
         clusterTreeView.setShowRoot(true);
+
+        // Add context menu for cluster items
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem deleteItem = new MenuItem(I18nUtil.get(COMMON_DELETE));
+        deleteItem.setOnAction(e -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && selectedItem != rootItem && selectedItem.getParent() == rootItem) {
+                handleDeleteCluster(selectedItem.getValue());
+            }
+        });
+        contextMenu.getItems().add(deleteItem);
+
+        // Show context menu only for cluster items (not root)
+        clusterTreeView.setOnContextMenuRequested(event -> {
+            TreeItem<String> selectedItem = clusterTreeView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && selectedItem != rootItem && selectedItem.getParent() == rootItem) {
+                contextMenu.show(clusterTreeView, event.getScreenX(), event.getScreenY());
+            }
+        });
 
         clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && newVal.getParent() != null && newVal.getParent() == rootItem) {
@@ -250,8 +405,11 @@ public class MainController implements Initializable {
         });
     }
 
-    private void onClusterSelected(String clusterName) {
-        logger.info("Cluster selected: {}", clusterName);
+    private void onClusterSelected(String displayName) {
+        logger.info("Cluster selected: {}", displayName);
+        
+        // Parse cluster name from display name
+        String clusterName = parseClusterNameFromDisplay(displayName);
         
         List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
         Optional<ClusterConfig> cluster = clusters.stream()
@@ -265,21 +423,22 @@ public class MainController implements Initializable {
     }
 
     private void connectToCluster(ClusterConfig config) {
-        updateStatus(I18nUtil.get("cluster.connecting", config.getName()));
+        updateStatus(I18nUtil.get(CLUSTER_CONNECTING, config.getName()));
 
         new Thread(() -> {
             boolean connected = ClusterService.getInstance().connect(config);
             
             Platform.runLater(() -> {
                 if (connected) {
-                    updateStatus(I18nUtil.get("cluster.connected", config.getName()));
+                    updateStatus(I18nUtil.get(CLUSTER_CONNECTED, config.getName()));
+                    showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_CONNECTED, config.getName()));
                     loadTopics();
                     loadConsumerGroups();
                     updateQueryTopicList();
                 } else {
-                    updateStatus(I18nUtil.get("cluster.failed", config.getName()));
-                    showError(I18nUtil.get("dialog.error.title"), 
-                            I18nUtil.get("error.connectionFailed"));
+                    updateStatus(I18nUtil.get(CLUSTER_FAILED, config.getName()));
+                    showError(I18nUtil.get(DIALOG_ERROR_TITLE), 
+                            I18nUtil.get(CLUSTER_FAILED, config.getName()));
                 }
             });
         }).start();
@@ -291,10 +450,22 @@ public class MainController implements Initializable {
         topicReplicationColumn.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
 
         topicTableView.setItems(topicList);
+        topicTableView.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_TOPICS)));
 
+        // Single click selection
         topicTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 showTopicDetails(newVal);
+            }
+        });
+        
+        // Double click to show partition details dialog
+        topicTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                TopicInfo selectedTopic = topicTableView.getSelectionModel().getSelectedItem();
+                if (selectedTopic != null) {
+                    showPartitionDetailsDialog(selectedTopic);
+                }
             }
         });
     }
@@ -304,7 +475,7 @@ public class MainController implements Initializable {
             return;
         }
 
-        updateStatus(I18nUtil.get("topic.loading"));
+        updateStatus(I18nUtil.get(TOPIC_LOADING));
 
         new Thread(() -> {
             List<String> topicNames = TopicService.getInstance().listTopics(currentCluster.getId());
@@ -318,7 +489,7 @@ public class MainController implements Initializable {
                     info.setReplicationFactor(0);
                     topicList.add(info);
                 }
-                updateStatus(I18nUtil.get("topic.loaded", topicNames.size()));
+                updateStatus(I18nUtil.get(TOPIC_LOADED, topicNames.size()));
             });
         }).start();
     }
@@ -341,10 +512,17 @@ public class MainController implements Initializable {
                     topicTableView.refresh();
 
                     StringBuilder details = new StringBuilder();
-                    details.append(I18nUtil.get("topic.name")).append(": ").append(fullInfo.getName()).append("\n");
-                    details.append(I18nUtil.get("topic.partitions")).append(": ").append(fullInfo.getPartitions()).append("\n");
-                    details.append(I18nUtil.get("topic.replication")).append(": ").append(fullInfo.getReplicationFactor()).append("\n\n");
-                    details.append("Configuration:\n");
+                    details.append(I18nUtil.get(TOPIC_NAME)).append(": ").append(fullInfo.getName()).append("\n");
+                    details.append(I18nUtil.get(TOPIC_PARTITIONS)).append(": ").append(fullInfo.getPartitions()).append("\n");
+                    details.append(I18nUtil.get(TOPIC_REPLICATION)).append(": ").append(fullInfo.getReplicationFactor()).append("\n");
+                    
+                    // Get message count
+                    long totalMessages = getTopicMessageCount(fullInfo.getName());
+                    if (totalMessages >= 0) {
+                        details.append("Total Messages: ").append(totalMessages).append("\n");
+                    }
+                    
+                    details.append("\nConfiguration:\n");
                     fullInfo.getConfig().forEach((key, value) -> 
                         details.append("  ").append(key).append(": ").append(value).append("\n")
                     );
@@ -353,6 +531,48 @@ public class MainController implements Initializable {
                 }
             });
         }).start();
+    }
+    
+    private long getTopicMessageCount(String topicName) {
+        if (currentCluster == null) {
+            return -1;
+        }
+        
+        try {
+            KafkaConsumer<String, String> consumer = ConsumerService.getInstance().createConsumer(
+                currentCluster.getBootstrapServers(),
+                "kafkadesk-count-" + System.currentTimeMillis()
+            );
+            
+            TopicInfo info = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topicName);
+            if (info == null) {
+                ConsumerService.getInstance().closeConsumer(consumer);
+                return -1;
+            }
+            
+            List<Integer> partitions = new ArrayList<>();
+            for (int i = 0; i < info.getPartitions(); i++) {
+                partitions.add(i);
+            }
+            
+            ConsumerService.getInstance().assignPartitions(consumer, topicName, partitions);
+            
+            long totalMessages = 0;
+            for (int partition : partitions) {
+                TopicPartition tp = new TopicPartition(topicName, partition);
+                consumer.seekToBeginning(Collections.singleton(tp));
+                long beginning = consumer.position(tp);
+                consumer.seekToEnd(Collections.singleton(tp));
+                long end = consumer.position(tp);
+                totalMessages += (end - beginning);
+            }
+            
+            ConsumerService.getInstance().closeConsumer(consumer);
+            return totalMessages;
+        } catch (Exception e) {
+            logger.error("Failed to get message count for topic: " + topicName, e);
+            return -1;
+        }
     }
 
     private void initializeProducerView() {
@@ -366,16 +586,16 @@ public class MainController implements Initializable {
         String key = producerKeyField.getText();
 
         if (topic.isEmpty() || message.isEmpty()) {
-            showError(I18nUtil.get("producer.error.title"), I18nUtil.get("producer.error.required"));
+            showError(I18nUtil.get(PRODUCER_ERROR_TITLE), I18nUtil.get(PRODUCER_ERROR_REQUIRED));
             return;
         }
 
         if (currentCluster == null) {
-            showError(I18nUtil.get("dialog.error.title"), I18nUtil.get("query.noConnection"));
+            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(QUERY_NO_CONNECTION));
             return;
         }
 
-        updateStatus(I18nUtil.get("producer.sending"));
+        updateStatus(I18nUtil.get(PRODUCER_SENDING));
 
         new Thread(() -> {
             try {
@@ -389,16 +609,16 @@ public class MainController implements Initializable {
                 ProducerService.getInstance().sendMessage(currentCluster.getBootstrapServers(), msg);
 
                 Platform.runLater(() -> {
-                    updateStatus(I18nUtil.get("producer.success"));
-                    showInfo(I18nUtil.get("common.success"), I18nUtil.get("producer.success"));
+                    updateStatus(I18nUtil.get(PRODUCER_SUCCESS));
+                    showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(PRODUCER_SUCCESS));
                     producerMessageTextArea.clear();
                 });
             } catch (Exception e) {
                 logger.error("Failed to send message", e);
                 Platform.runLater(() -> {
-                    updateStatus(I18nUtil.get("producer.failed", e.getMessage()));
-                    showError(I18nUtil.get("dialog.error.title"), 
-                            I18nUtil.get("producer.failed", e.getMessage()));
+                    updateStatus(I18nUtil.get(PRODUCER_FAILED, e.getMessage()));
+                    showError(I18nUtil.get(DIALOG_ERROR_TITLE), 
+                            I18nUtil.get(PRODUCER_FAILED, e.getMessage()));
                 });
             }
         }).start();
@@ -412,6 +632,7 @@ public class MainController implements Initializable {
         queryTimestampColumn.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
 
         queryTableView.setItems(messageList);
+        queryTableView.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_MESSAGES)));
         
         queryTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -419,8 +640,18 @@ public class MainController implements Initializable {
             }
         });
         
-        queryPartitionComboBox.getItems().add(I18nUtil.get("query.partition.all"));
-        queryPartitionComboBox.setValue(I18nUtil.get("query.partition.all"));
+        // Make topic combo box editable for easier selection
+        queryTopicComboBox.setEditable(true);
+        
+        // Add listener for topic selection to update partitions
+        queryTopicComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                updatePartitionList(newVal);
+            }
+        });
+        
+        queryPartitionComboBox.getItems().add(I18nUtil.get(QUERY_PARTITION_ALL));
+        queryPartitionComboBox.setValue(I18nUtil.get(QUERY_PARTITION_ALL));
     }
 
     private void updateQueryTopicList() {
@@ -428,21 +659,21 @@ public class MainController implements Initializable {
             return;
         }
 
+        String previousSelection = queryTopicComboBox.getValue();
         queryTopicComboBox.getItems().clear();
         queryTopicComboBox.getItems().addAll(
             TopicService.getInstance().listTopics(currentCluster.getId())
         );
         
-        queryTopicComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                updatePartitionList(newVal);
-            }
-        });
+        // Restore previous selection if it still exists
+        if (previousSelection != null && queryTopicComboBox.getItems().contains(previousSelection)) {
+            queryTopicComboBox.setValue(previousSelection);
+        }
     }
 
     private void updatePartitionList(String topic) {
         queryPartitionComboBox.getItems().clear();
-        queryPartitionComboBox.getItems().add(I18nUtil.get("query.partition.all"));
+        queryPartitionComboBox.getItems().add(I18nUtil.get(QUERY_PARTITION_ALL));
         
         TopicInfo info = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topic);
         if (info != null) {
@@ -450,24 +681,24 @@ public class MainController implements Initializable {
                 queryPartitionComboBox.getItems().add(String.valueOf(i));
             }
         }
-        queryPartitionComboBox.setValue(I18nUtil.get("query.partition.all"));
+        queryPartitionComboBox.setValue(I18nUtil.get(QUERY_PARTITION_ALL));
     }
 
     @FXML
     private void handleQueryMessages() {
         String topic = queryTopicComboBox.getValue();
         if (topic == null || topic.isEmpty()) {
-            showError(I18nUtil.get("dialog.error.title"), I18nUtil.get("producer.error.required"));
+            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(PRODUCER_ERROR_REQUIRED));
             return;
         }
 
         if (currentCluster == null) {
-            showError(I18nUtil.get("dialog.error.title"), I18nUtil.get("query.noConnection"));
+            showError(I18nUtil.get(DIALOG_ERROR_TITLE), I18nUtil.get(QUERY_NO_CONNECTION));
             return;
         }
 
         messageList.clear();
-        updateStatus(I18nUtil.get("query.searching"));
+        updateStatus(I18nUtil.get(QUERY_SEARCHING));
 
         new Thread(() -> {
             try {
@@ -482,7 +713,7 @@ public class MainController implements Initializable {
                 );
 
                 List<Integer> partitions = new ArrayList<>();
-                if (partitionStr.equals(I18nUtil.get("query.partition.all"))) {
+                if (partitionStr.equals(I18nUtil.get(QUERY_PARTITION_ALL))) {
                     TopicInfo info = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topic);
                     if (info != null) {
                         for (int i = 0; i < info.getPartitions(); i++) {
@@ -534,7 +765,7 @@ public class MainController implements Initializable {
 
                 int finalCount = recordCount;
                 Platform.runLater(() -> {
-                    updateStatus(I18nUtil.get("query.found", finalCount));
+                    updateStatus(I18nUtil.get(QUERY_FOUND, finalCount));
                 });
 
                 ConsumerService.getInstance().closeConsumer(queryConsumer);
@@ -543,9 +774,9 @@ public class MainController implements Initializable {
             } catch (Exception e) {
                 logger.error("Failed to query messages", e);
                 Platform.runLater(() -> {
-                    updateStatus(I18nUtil.get("error.queryFailed"));
-                    showError(I18nUtil.get("dialog.error.title"), 
-                            I18nUtil.get("error.queryFailed") + ": " + e.getMessage());
+                    updateStatus(I18nUtil.get(ERROR_QUERY_FAILED));
+                    showError(I18nUtil.get(DIALOG_ERROR_TITLE), 
+                            I18nUtil.get(ERROR_QUERY_FAILED) + ": " + e.getMessage());
                 });
             }
         }).start();
@@ -560,7 +791,7 @@ public class MainController implements Initializable {
     @FXML
     private void handleExportQuery() {
         // TODO: Implement export functionality
-        showInfo(I18nUtil.get("common.info"), "Export functionality coming soon");
+        showInfo(I18nUtil.get(COMMON_INFO), "Export functionality coming soon");
     }
 
     private void showMessageDetails(MessageRow row) {
@@ -579,6 +810,7 @@ public class MainController implements Initializable {
         consumerGroupMembersColumn.setCellValueFactory(new PropertyValueFactory<>("memberCount"));
 
         consumerGroupTableView.setItems(consumerGroupList);
+        consumerGroupTableView.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_CONSUMER_GROUPS)));
 
         memberIdColumn.setCellValueFactory(new PropertyValueFactory<>("memberId"));
         memberClientIdColumn.setCellValueFactory(new PropertyValueFactory<>("clientId"));
@@ -586,6 +818,7 @@ public class MainController implements Initializable {
         memberAssignmentsColumn.setCellValueFactory(new PropertyValueFactory<>("assignments"));
 
         consumerGroupMembersTableView.setItems(memberList);
+        consumerGroupMembersTableView.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_DATA)));
 
         lagTopicColumn.setCellValueFactory(new PropertyValueFactory<>("topic"));
         lagPartitionColumn.setCellValueFactory(new PropertyValueFactory<>("partition"));
@@ -593,6 +826,7 @@ public class MainController implements Initializable {
         lagValueColumn.setCellValueFactory(new PropertyValueFactory<>("lag"));
 
         consumerGroupLagTableView.setItems(lagList);
+        consumerGroupLagTableView.setPlaceholder(new Label(I18nUtil.get(PLACEHOLDER_NO_DATA)));
 
         consumerGroupTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -606,7 +840,7 @@ public class MainController implements Initializable {
             return;
         }
 
-        updateStatus(I18nUtil.get("consumerGroup.loading"));
+        updateStatus(I18nUtil.get(CONSUMER_GROUP_LOADING));
 
         new Thread(() -> {
             List<String> groupIds = ConsumerGroupService.getInstance().listConsumerGroups(currentCluster.getId());
@@ -617,7 +851,7 @@ public class MainController implements Initializable {
                     ConsumerGroupRow row = new ConsumerGroupRow(groupId, "", "", 0);
                     consumerGroupList.add(row);
                 }
-                updateStatus(I18nUtil.get("consumerGroup.loaded", groupIds.size()));
+                updateStatus(I18nUtil.get(CONSUMER_GROUP_LOADED, groupIds.size()));
                 
                 // Load details for each group in background
                 loadConsumerGroupDetails();
@@ -692,25 +926,59 @@ public class MainController implements Initializable {
     @FXML
     private void handleAddCluster() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle(I18nUtil.get("cluster.add.title"));
-        dialog.setHeaderText(I18nUtil.get("cluster.add.header"));
-        dialog.setContentText(I18nUtil.get("cluster.add.name"));
+        dialog.setTitle(I18nUtil.get(CLUSTER_ADD_TITLE));
+        dialog.setHeaderText(I18nUtil.get(CLUSTER_ADD_HEADER));
+        dialog.setContentText(I18nUtil.get(CLUSTER_ADD_NAME));
 
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(name -> {
             TextInputDialog serversDialog = new TextInputDialog("localhost:9092");
-            serversDialog.setTitle(I18nUtil.get("cluster.add.title"));
-            serversDialog.setHeaderText(I18nUtil.get("cluster.add.header"));
-            serversDialog.setContentText(I18nUtil.get("cluster.add.servers"));
+            serversDialog.setTitle(I18nUtil.get(CLUSTER_ADD_TITLE));
+            serversDialog.setHeaderText(I18nUtil.get(CLUSTER_ADD_HEADER));
+            serversDialog.setContentText(I18nUtil.get(CLUSTER_ADD_SERVERS));
 
             Optional<String> serversResult = serversDialog.showAndWait();
             serversResult.ifPresent(servers -> {
                 ClusterConfig config = new ClusterConfig(name, servers);
                 ConfigManager.getInstance().addCluster(config);
                 initializeClusterTree();
-                showInfo(I18nUtil.get("common.success"), I18nUtil.get("cluster.add.success", name));
+                showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_ADD_SUCCESS, name));
             });
         });
+    }
+
+    private void handleDeleteCluster(String displayName) {
+        // Parse cluster name from display name
+        String clusterName = parseClusterNameFromDisplay(displayName);
+        
+        // Show confirmation dialog
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(I18nUtil.get(CLUSTER_DELETE_TITLE));
+        alert.setHeaderText(I18nUtil.get(CLUSTER_DELETE_CONFIRM, clusterName));
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Find and delete the cluster
+            List<ClusterConfig> clusters = ConfigManager.getInstance().getClusters();
+            Optional<ClusterConfig> cluster = clusters.stream()
+                    .filter(c -> c.getName().equals(clusterName))
+                    .findFirst();
+            
+            if (cluster.isPresent()) {
+                ConfigManager.getInstance().deleteCluster(cluster.get().getId());
+                
+                // Clear current cluster if it was deleted
+                if (currentCluster != null && currentCluster.getId().equals(cluster.get().getId())) {
+                    currentCluster = null;
+                    topicList.clear();
+                    consumerGroupList.clear();
+                    messageList.clear();
+                }
+                
+                initializeClusterTree();
+                showInfo(I18nUtil.get(COMMON_SUCCESS), I18nUtil.get(CLUSTER_DELETE_SUCCESS, clusterName));
+            }
+        }
     }
 
     @FXML
@@ -723,7 +991,7 @@ public class MainController implements Initializable {
     private void handleSettings() {
         // Create settings dialog
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle(I18nUtil.get("settings.title"));
+        dialog.setTitle(I18nUtil.get(SETTINGS_TITLE));
 
         // Create form
         GridPane grid = new GridPane();
@@ -741,7 +1009,7 @@ public class MainController implements Initializable {
             languageCombo.setValue("English");
         }
 
-        grid.add(new Label(I18nUtil.get("settings.language")), 0, 0);
+        grid.add(new Label(I18nUtil.get(SETTINGS_LANGUAGE)), 0, 0);
         grid.add(languageCombo, 1, 0);
 
         dialog.getDialogPane().setContent(grid);
@@ -757,7 +1025,7 @@ public class MainController implements Initializable {
             ConfigManager.getInstance().saveConfig();
             
             // Show info to restart
-            showInfo(I18nUtil.get("common.info"), 
+            showInfo(I18nUtil.get(COMMON_INFO), 
                     "Please restart the application for language changes to take effect.");
         }
     }
@@ -765,9 +1033,9 @@ public class MainController implements Initializable {
     @FXML
     private void handleAbout() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(I18nUtil.get("dialog.about.title"));
-        alert.setHeaderText(I18nUtil.get("dialog.about.header"));
-        alert.setContentText(I18nUtil.get("dialog.about.content"));
+        alert.setTitle(I18nUtil.get(DIALOG_ABOUT_TITLE));
+        alert.setHeaderText(I18nUtil.get(DIALOG_ABOUT_HEADER));
+        alert.setContentText(I18nUtil.get(DIALOG_ABOUT_CONTENT));
         alert.showAndWait();
     }
 
@@ -776,6 +1044,73 @@ public class MainController implements Initializable {
         if (stage != null) {
             stage.close();
         }
+    }
+
+    private void initializeTabListeners() {
+        mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null && currentCluster != null) {
+                if (newTab == topicTab) {
+                    loadTopics();
+                } else if (newTab == consumerGroupsTab) {
+                    loadConsumerGroups();
+                } else if (newTab == queryTab) {
+                    updateQueryTopicList();
+                }
+            }
+        });
+    }
+
+    private void showPartitionDetailsDialog(TopicInfo topic) {
+        if (currentCluster == null) {
+            return;
+        }
+
+        new Thread(() -> {
+            TopicInfo fullInfo = TopicService.getInstance().getTopicInfo(currentCluster.getId(), topic.getName());
+            
+            Platform.runLater(() -> {
+                if (fullInfo == null || fullInfo.getPartitionDetails().isEmpty()) {
+                    showError(I18nUtil.get(DIALOG_ERROR_TITLE), "Failed to load partition details");
+                    return;
+                }
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle(I18nUtil.get(TOPIC_DETAILS) + " - " + topic.getName());
+                alert.setHeaderText("Partition Details");
+                
+                StringBuilder details = new StringBuilder();
+                details.append(String.format("Topic: %s\n", fullInfo.getName()));
+                details.append(String.format("Partitions: %d\n", fullInfo.getPartitions()));
+                details.append(String.format("Replication Factor: %d\n\n", fullInfo.getReplicationFactor()));
+                details.append("Partition Information:\n");
+                details.append("─".repeat(60)).append("\n");
+                
+                for (TopicInfo.PartitionInfo partitionInfo : fullInfo.getPartitionDetails()) {
+                    details.append(String.format("\nPartition %d:\n", partitionInfo.getPartition()));
+                    if (partitionInfo.getLeader() != null) {
+                        details.append(String.format("  Leader: %s\n", partitionInfo.getLeader()));
+                    }
+                    details.append(String.format("  Replicas: %s\n", 
+                        partitionInfo.getReplicas().stream()
+                            .map(TopicInfo.Node::toString)
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("None")));
+                    details.append(String.format("  ISR: %s\n", 
+                        partitionInfo.getIsr().stream()
+                            .map(TopicInfo.Node::toString)
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("None")));
+                }
+                
+                TextArea textArea = new TextArea(details.toString());
+                textArea.setEditable(false);
+                textArea.setPrefRowCount(20);
+                textArea.setPrefColumnCount(60);
+                
+                alert.getDialogPane().setContent(textArea);
+                alert.showAndWait();
+            });
+        }).start();
     }
 
     private void updateStatus(String message) {

@@ -5,6 +5,7 @@ import com.kafkadesk.core.service.ClusterService;
 import com.kafkadesk.core.service.ConsumerService;
 import com.kafkadesk.core.service.ProducerService;
 import com.kafkadesk.ui.controller.MainController;
+import com.kafkadesk.ui.util.I18nUtil;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -18,13 +19,17 @@ import org.slf4j.LoggerFactory;
  */
 public class KafkaDeskApplication extends Application {
     private static final Logger logger = LoggerFactory.getLogger(KafkaDeskApplication.class);
-    private static final String APP_TITLE = "KafkaDesk - Kafka 桌面客户端";
     private static final String MAIN_FXML = "/fxml/main.fxml";
+    private static final String APP_TITLE_KEY = "app.title";
 
     @Override
     public void start(Stage primaryStage) {
         try {
             logger.info("Starting KafkaDesk application...");
+
+            // Initialize i18n
+            String language = ConfigManager.getInstance().getConfig().getPreferences().getLanguage();
+            I18nUtil.setLocale(language);
 
             // Load main interface
             FXMLLoader loader = new FXMLLoader(getClass().getResource(MAIN_FXML));
@@ -39,7 +44,7 @@ public class KafkaDeskApplication extends Application {
                     .getConfig()
                     .getWindow();
 
-            primaryStage.setTitle(APP_TITLE);
+            primaryStage.setTitle(I18nUtil.get(APP_TITLE_KEY));
             primaryStage.setScene(scene);
             primaryStage.setWidth(windowConfig.getWidth());
             primaryStage.setHeight(windowConfig.getHeight());
@@ -47,8 +52,13 @@ public class KafkaDeskApplication extends Application {
 
             // Set window icon (if available)
             try {
-                Image icon = new Image(getClass().getResourceAsStream("/images/icons/app-icon.png"));
-                primaryStage.getIcons().add(icon);
+                var iconStream = getClass().getResourceAsStream("/images/icons/app-icon.png");
+                if (iconStream != null) {
+                    Image icon = new Image(iconStream);
+                    primaryStage.getIcons().add(icon);
+                } else {
+                    logger.warn("Application icon not found");
+                }
             } catch (Exception e) {
                 logger.warn("Failed to load application icon", e);
             }
