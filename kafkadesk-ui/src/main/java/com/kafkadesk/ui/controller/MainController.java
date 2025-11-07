@@ -720,23 +720,15 @@ public class MainController implements Initializable {
         }
 
         private Node createOverviewContent() {
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with cluster name and connection status
+            HBox header = createContentHeader("Cluster Overview");
+            
+            // Content area
             VBox vbox = new VBox(20);
             vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
-            
-            // Header with cluster name
-            HBox header = new HBox(12);
-            header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            header.setStyle("-fx-padding: 0 0 20 0;");
-            
-            Label titleLabel = new Label("Cluster Overview");
-            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
-            
-            Label connectionBadge = new Label("● Connected");
-            connectionBadge.setStyle("-fx-background-color: linear-gradient(to right, #10b981 0%, #059669 100%); " +
-                                   "-fx-text-fill: white; -fx-padding: 6 14 6 14; -fx-background-radius: 20; " +
-                                   "-fx-font-size: 12px; -fx-font-weight: 600;");
-            
-            header.getChildren().addAll(titleLabel, connectionBadge);
             
             // Initialize labels if not already done
             if (overviewBrokerCount == null) {
@@ -771,8 +763,48 @@ public class MainController implements Initializable {
                 metricsGrid.getColumnConstraints().add(col);
             }
             
-            vbox.getChildren().addAll(header, metricsGrid);
-            return vbox;
+            vbox.getChildren().add(metricsGrid);
+            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
+            
+            mainContainer.getChildren().addAll(header, vbox);
+            return mainContainer;
+        }
+        
+        private HBox createContentHeader(String title) {
+            HBox header = new HBox(12);
+            header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            header.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+                          "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Title
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            // Connection status badge
+            HBox statusContainer = new HBox(6);
+            statusContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            statusContainer.setStyle("-fx-background-color: linear-gradient(to right, #10b981 0%, #059669 100%); " +
+                                   "-fx-padding: 6 14 6 14; -fx-background-radius: 20;");
+            
+            // Status dot
+            Region statusDot = new Region();
+            statusDot.setStyle("-fx-background-color: white; -fx-min-width: 8px; -fx-min-height: 8px; " +
+                             "-fx-max-width: 8px; -fx-max-height: 8px; -fx-background-radius: 50%;");
+            
+            Label statusText = new Label("Connected");
+            statusText.setStyle("-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: 600;");
+            
+            statusContainer.getChildren().addAll(statusDot, statusText);
+            
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            
+            // Cluster name label
+            Label clusterNameLabel = new Label(cluster.getName());
+            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #5a6c7d; -fx-font-weight: 500;");
+            
+            header.getChildren().addAll(titleLabel, statusContainer, spacer, clusterNameLabel);
+            return header;
         }
         
         private VBox createMetricCard(String icon, String label, Label valueLabel) {
@@ -814,6 +846,13 @@ public class MainController implements Initializable {
         }
 
         private Node createBrokersContent() {
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with cluster name and connection status
+            HBox header = createContentHeader("Brokers");
+            
+            // Content area
             VBox vbox = new VBox(0);
             vbox.setStyle("-fx-background-color: #f8fafc;");
             
@@ -866,11 +905,20 @@ public class MainController implements Initializable {
             tableContainer.getChildren().addAll(tableHeader, brokersTableView);
             vbox.getChildren().add(tableContainer);
             VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
+            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
             
-            return vbox;
+            mainContainer.getChildren().addAll(header, vbox);
+            return mainContainer;
         }
 
         private Node createTopicsContent() {
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with cluster name and connection status
+            HBox header = createContentHeader("Topics");
+            
+            // Content area
             VBox vbox = new VBox(0);
             vbox.setStyle("-fx-background-color: #f8fafc;");
             
@@ -939,8 +987,10 @@ public class MainController implements Initializable {
             tableContainer.getChildren().addAll(tableHeader, topicsTableView);
             vbox.getChildren().add(tableContainer);
             VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
+            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
             
-            return vbox;
+            mainContainer.getChildren().addAll(header, vbox);
+            return mainContainer;
         }
         
         /**
