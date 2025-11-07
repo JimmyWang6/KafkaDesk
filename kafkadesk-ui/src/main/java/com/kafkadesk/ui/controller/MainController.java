@@ -754,6 +754,8 @@ public class MainController implements Initializable {
         public Node getOverviewContent() {
             if (overviewContent == null) {
                 overviewContent = createOverviewContent();
+                // Load data immediately when overview is first accessed
+                loadOverviewData();
             }
             return overviewContent;
         }
