@@ -450,3 +450,69 @@
     -fx-background-color: #D8D8D8;
     -fx-border-color: #BBBBBB;
 }
+
+/* Tree Icons */
+.tree-icon {
+    -fx-min-width: 18px;
+    -fx-min-height: 18px;
+    -fx-pref-width: 18px;
+    -fx-pref-height: 18px;
+    -fx-alignment: center;
+    -fx-font-size: 14px;
+}
+
+/* Metric Icons (for cards) */
+.metric-icon {
+    -fx-font-size: 24px;
+    -fx-padding: 0 0 10 0;
+}
+
+/* Action Icons (for tables) */
+.action-icon {
+    -fx-cursor: hand;
+    -fx-padding: 6;
+    -fx-background-radius: 6;
+    -fx-font-size: 16px;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-alignment: center;
+}
+
+.action-icon:hover {
+    -fx-background-color: #f0f3f7;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+/* Broker ID Badge */
+.broker-id {
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-pref-width: 32px;
+    -fx-pref-height: 32px;
+    -fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-font-weight: 700;
+    -fx-font-size: 14px;
+    -fx-alignment: center;
+}
+
+/* Status Dot (for clusters) */
+.status-dot {
+    -fx-min-width: 8px;
+    -fx-min-height: 8px;
+    -fx-pref-width: 8px;
+    -fx-pref-height: 8px;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 0);
+}
+
+.status-dot.online {
+    -fx-background-color: #10b981;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.5), 8, 0, 0, 0);
+}
+
+.status-dot.offline {
+    -fx-background-color: #ef4444;
+}
