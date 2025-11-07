@@ -876,13 +876,11 @@ public class MainController implements Initializable {
             Button btnCreateTopic = new Button("➕");
             btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
             btnCreateTopic.getStyleClass().add("toolbar-button");
-            btnCreateTopic.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4; -fx-cursor: hand;");
             btnCreateTopic.setOnAction(e -> handleCreateTopic());
             
             Button btnDeleteTopic = new Button("🗑");
             btnDeleteTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_DELETE)));
             btnDeleteTopic.getStyleClass().add("toolbar-button");
-            btnDeleteTopic.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4; -fx-cursor: hand;");
             btnDeleteTopic.setOnAction(e -> handleDeleteTopic());
             
             toolbar.getChildren().addAll(btnCreateTopic, btnDeleteTopic);
