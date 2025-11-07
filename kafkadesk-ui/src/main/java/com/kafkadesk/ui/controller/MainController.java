@@ -1751,7 +1751,7 @@ public class MainController implements Initializable {
             headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
                                    "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
             
-            // Top row: Title, spacer, cluster name
+            // Top row: Title and action buttons
             HBox topRow = new HBox(12);
             topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             
@@ -1761,16 +1761,17 @@ public class MainController implements Initializable {
             Region spacer1 = new Region();
             HBox.setHgrow(spacer1, javafx.scene.layout.Priority.ALWAYS);
             
-            Label clusterNameLabel = new Label(cluster.getName());
-            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #718096; -fx-font-weight: 600;");
+            // Refresh button
+            Button btnRefreshHeader = new Button("⟳ Refresh");
+            btnRefreshHeader.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                    "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                                    "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                                    "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 12, 0, 0, 4);");
+            btnRefreshHeader.setOnAction(e -> refresh());
             
-            topRow.getChildren().addAll(titleLabel, spacer1, clusterNameLabel);
+            topRow.getChildren().addAll(titleLabel, spacer1, btnRefreshHeader);
             
-            // Second row: Search bar and Refresh button
-            HBox searchRow = new HBox(12);
-            searchRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            
-            // Search container
+            // Search bar
             HBox searchContainer = new HBox(0);
             searchContainer.setMaxWidth(400);
             searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
@@ -1801,17 +1802,7 @@ public class MainController implements Initializable {
             
             searchContainer.getChildren().add(searchStack);
             
-            // Refresh button
-            Button btnRefresh = new Button("⟳ Refresh");
-            btnRefresh.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
-                              "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
-                              "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
-                              "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 12, 0, 0, 4);");
-            btnRefresh.setOnAction(e -> refresh());
-            
-            searchRow.getChildren().addAll(searchContainer, btnRefresh);
-            
-            headerContainer.getChildren().addAll(topRow, searchRow);
+            headerContainer.getChildren().addAll(topRow, searchContainer);
             
             // Content area
             VBox vbox = new VBox(20);
