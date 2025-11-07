@@ -1,39 +1,10 @@
 /* KafkaDesk Light Theme - Optimized Design */
 
-/* CSS Variables for consistent theming */
+/* Root styles */
 .root {
     /* Font Family */
     -fx-font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", "Roboto", "Arial", sans-serif;
     -fx-font-size: 13px;
-    
-    /* Color Palette */
-    --primary-color: #1976D2;
-    --primary-hover: #1565C0;
-    --primary-pressed: #0D47A1;
-    --success-color: #4CAF50;
-    --warning-color: #FF9800;
-    --error-color: #F44336;
-    --info-color: #2196F3;
-    
-    /* Neutral Colors */
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #F8F9FA;
-    --border-color: #E0E0E0;
-    --text-primary: #212121;
-    --text-secondary: #666666;
-    --text-disabled: #BDBDBD;
-    
-    /* Spacing */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 20px;
-    
-    /* Borders */
-    --border-radius: 4px;
-    --border-radius-lg: 8px;
-    
     -fx-base: #ffffff;
     -fx-background: #F8F9FA;
 }
@@ -173,12 +144,17 @@
     -fx-text-fill: #212121;
 }
 
-.tree-cell:hover {
+.tree-cell:filled:hover {
     -fx-background-color: #F5F5F5;
 }
 
 .tree-cell:selected:hover {
     -fx-background-color: #BBDEFB;
+}
+
+/* Disable hover effect on empty tree cells */
+.tree-cell:empty:hover {
+    -fx-background-color: white;
 }
 
 /* Tab Pane - Modern tabs */
@@ -370,3 +346,59 @@
     -fx-padding: 6 10 6 10;
 }
 
+
+/* Toolbar Button Styles */
+.toolbar-button {
+    -fx-background-color: #F5F5F5;
+    -fx-text-fill: #212121;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-cursor: hand;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-pref-width: 40px;
+    -fx-pref-height: 40px;
+    -fx-font-size: 24px;
+    -fx-padding: 0px;
+    -fx-alignment: center;
+}
+
+.toolbar-button:hover {
+    -fx-background-color: #E8E8E8;
+    -fx-border-color: #CCCCCC;
+}
+
+.toolbar-button:pressed {
+    -fx-background-color: #D8D8D8;
+    -fx-border-color: #BBBBBB;
+}
+
+/* Toolbar Icon Labels - Better emoji rendering */
+.toolbar-icon {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-min-width: 42px;
+    -fx-min-height: 42px;
+    -fx-pref-width: 42px;
+    -fx-pref-height: 42px;
+    -fx-font-size: 28px;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.toolbar-icon:hover {
+    -fx-background-color: #E8E8E8;
+    -fx-border-color: #CCCCCC;
+}
+
+/* Simulate pressed state via CSS when active */
+.toolbar-icon:pressed {
+    -fx-background-color: #D8D8D8;
+    -fx-border-color: #BBBBBB;
+}

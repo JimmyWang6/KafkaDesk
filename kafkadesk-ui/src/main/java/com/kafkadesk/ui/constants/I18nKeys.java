@@ -51,10 +51,13 @@ public final class I18nKeys {
     public static final String CLUSTER_EDIT_ERROR_PORT_INVALID = "cluster.edit.error.portInvalid";
 
     // I18n Keys - Tabs
+    public static final String TAB_OVERVIEW = "tab.overview";
+    public static final String TAB_BROKERS = "tab.brokers";
     public static final String TAB_TOPICS = "tab.topics";
     public static final String TAB_PRODUCER = "tab.producer";
     public static final String TAB_QUERY = "tab.query";
     public static final String TAB_CONSUMER_GROUPS = "tab.consumerGroups";
+    public static final String TAB_ACL = "tab.acl";
     public static final String TAB_CONFIGURATION = "tab.configuration";
 
     // I18n Keys - Configuration
@@ -183,4 +186,26 @@ public final class I18nKeys {
 
     // I18n Keys - Error
     public static final String ERROR_QUERY_FAILED = "error.queryFailed";
+    
+    // I18n Keys - Overview
+    public static final String OVERVIEW_TITLE = "overview.title";
+    public static final String OVERVIEW_CLUSTER_INFO = "overview.clusterInfo";
+    public static final String OVERVIEW_BROKER_COUNT = "overview.brokerCount";
+    public static final String OVERVIEW_TOPIC_COUNT = "overview.topicCount";
+    public static final String OVERVIEW_PARTITION_COUNT = "overview.partitionCount";
+    
+    // I18n Keys - Brokers
+    public static final String BROKER_LIST = "broker.list";
+    public static final String BROKER_ID = "broker.id";
+    public static final String BROKER_HOST = "broker.host";
+    public static final String BROKER_PORT = "broker.port";
+    public static final String BROKER_RACK = "broker.rack";
+    
+    // I18n Keys - ACL
+    public static final String ACL_LIST = "acl.list";
+    public static final String ACL_RESOURCE_TYPE = "acl.resourceType";
+    public static final String ACL_RESOURCE_NAME = "acl.resourceName";
+    public static final String ACL_PRINCIPAL = "acl.principal";
+    public static final String ACL_OPERATION = "acl.operation";
+    public static final String ACL_PERMISSION = "acl.permission";
 }
