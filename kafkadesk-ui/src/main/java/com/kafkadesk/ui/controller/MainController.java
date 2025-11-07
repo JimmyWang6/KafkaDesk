@@ -741,7 +741,7 @@ public class MainController implements Initializable {
             metricsGrid.setVgap(20);
             
             // Create metric cards
-            VBox brokersCard = createMetricCard("🖥️", "Total Brokers", overviewBrokerCount);
+            VBox brokersCard = createMetricCard("🖥", "Total Brokers", overviewBrokerCount);
             VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
             VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
             VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
@@ -1108,7 +1108,7 @@ public class MainController implements Initializable {
             metricsGrid.setVgap(20);
             
             // Create metric cards
-            VBox brokersCard = createMetricCard("🖥️", "Total Brokers", overviewBrokerCount);
+            VBox brokersCard = createMetricCard("🖥", "Total Brokers", overviewBrokerCount);
             VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
             VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
             VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
@@ -1489,7 +1489,7 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.30));
+            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
             
             TableColumn<TopicInfo, Integer> partitionsCol = new TableColumn<>("Partitions");
             partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
@@ -1506,7 +1506,7 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.12));
+            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
             TableColumn<TopicInfo, Integer> replicationCol = new TableColumn<>("Replication");
             replicationCol.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
@@ -1523,11 +1523,11 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.12));
+            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
             TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention (hrs)");
             retentionCol.setCellValueFactory(new PropertyValueFactory<>("retentionTime"));
-            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
+            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.20));
             
             // Actions column with delete button
             TableColumn<TopicInfo, Void> actionsCol = new TableColumn<>("Actions");
@@ -1565,7 +1565,7 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            actionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.10));
+            actionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
             topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol, retentionCol, actionsCol);
             
@@ -1743,34 +1743,282 @@ public class MainController implements Initializable {
         }
 
         private Node createConsumerGroupsContent() {
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white;");
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with title, search bar, and actions
+            VBox headerContainer = new VBox(15);
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+                                   "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Top row: Title, spacer, cluster name
+            HBox topRow = new HBox(12);
+            topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            
+            Label titleLabel = new Label("Consumer Groups");
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            Region spacer1 = new Region();
+            HBox.setHgrow(spacer1, javafx.scene.layout.Priority.ALWAYS);
+            
+            Label clusterNameLabel = new Label(cluster.getName());
+            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #718096; -fx-font-weight: 600;");
+            
+            topRow.getChildren().addAll(titleLabel, spacer1, clusterNameLabel);
+            
+            // Second row: Search bar and Refresh button
+            HBox searchRow = new HBox(12);
+            searchRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            
+            // Search container
+            HBox searchContainer = new HBox(0);
+            searchContainer.setMaxWidth(400);
+            searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                   "-fx-border-radius: 8; -fx-background-radius: 8;");
+            
+            TextField searchField = new TextField();
+            searchField.setPromptText("Search consumer groups...");
+            searchField.setStyle("-fx-background-color: transparent; -fx-border-width: 0; " +
+                               "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
+            searchField.setPrefWidth(360);
+            searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    searchContainer.setStyle("-fx-border-color: #667eea; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8; " +
+                                           "-fx-effect: dropshadow(gaussian, rgba(102,126,234,0.1), 3, 0, 0, 0);");
+                } else {
+                    searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8;");
+                }
+            });
+            
+            Label searchIcon = new Label("🔍");
+            searchIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #8492a6; -fx-padding: 0 12 0 0;");
+            
+            StackPane searchStack = new StackPane();
+            searchStack.getChildren().addAll(searchField, searchIcon);
+            StackPane.setAlignment(searchIcon, javafx.geometry.Pos.CENTER_RIGHT);
+            
+            searchContainer.getChildren().add(searchStack);
+            
+            // Refresh button
+            Button btnRefresh = new Button("⟳ Refresh");
+            btnRefresh.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                              "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                              "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                              "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 12, 0, 0, 4);");
+            btnRefresh.setOnAction(e -> refresh());
+            
+            searchRow.getChildren().addAll(searchContainer, btnRefresh);
+            
+            headerContainer.getChildren().addAll(topRow, searchRow);
+            
+            // Content area
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
+            
+            // Metrics cards - 4 cards for consumer groups
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards with mock data
+            VBox totalGroupsCard = createMetricCard("👥", "Total Groups", new Label("23"));
+            VBox activeMembersCard = createMetricCard("✅", "Active Members", new Label("47"));
+            VBox totalLagCard = createMetricCard("⏱", "Total Lag", new Label("2,345"));
+            VBox partitionsAssignedCard = createMetricCard("📊", "Partitions Assigned", new Label("184"));
+            
+            // Add cards to grid - 2x2 layout
+            metricsGrid.add(totalGroupsCard, 0, 0);
+            metricsGrid.add(activeMembersCard, 1, 0);
+            metricsGrid.add(totalLagCard, 0, 1);
+            metricsGrid.add(partitionsAssignedCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 2; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(50);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Container for table
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
             
             consumerGroupTableView = new TableView<>();
             consumerGroupTableView.setItems(consumerGroupList);
-            consumerGroupTableView.setStyle("-fx-background-color: white;");
+            consumerGroupTableView.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+            consumerGroupTableView.setFixedCellSize(60);
             
-            TableColumn<ConsumerGroupRow, String> groupIdCol = new TableColumn<>("Group ID");
+            // Bind table height to item count
+            consumerGroupTableView.prefHeightProperty().bind(
+                consumerGroupTableView.fixedCellSizeProperty()
+                    .multiply(javafx.beans.binding.Bindings.size(consumerGroupTableView.getItems()).add(1.5))
+            );
+            
+            // Group Name Column
+            TableColumn<ConsumerGroupRow, String> groupIdCol = new TableColumn<>("Group Name");
             groupIdCol.setCellValueFactory(new PropertyValueFactory<>("groupId"));
-            groupIdCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.40));
+            groupIdCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: 700; -fx-text-fill: #667eea;");
+                    }
+                }
+            });
+            groupIdCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.25));
             
-            TableColumn<ConsumerGroupRow, String> stateCol = new TableColumn<>("State");
+            // Status Column with colored badges
+            TableColumn<ConsumerGroupRow, String> stateCol = new TableColumn<>("Status");
             stateCol.setCellValueFactory(new PropertyValueFactory<>("state"));
-            stateCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.20));
+            stateCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        Label statusLabel = new Label(item);
+                        String style;
+                        if ("Active".equalsIgnoreCase(item) || "Stable".equalsIgnoreCase(item)) {
+                            style = "-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
+                                   "-fx-text-fill: #065f46; -fx-border-color: #6ee7b7; -fx-border-width: 1; " +
+                                   "-fx-padding: 4 12; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                                   "-fx-font-size: 11px; -fx-font-weight: 700;";
+                        } else if ("Empty".equalsIgnoreCase(item)) {
+                            style = "-fx-background-color: linear-gradient(to right, #fef3c7 0%, #fde68a 100%); " +
+                                   "-fx-text-fill: #92400e; -fx-border-color: #fcd34d; -fx-border-width: 1; " +
+                                   "-fx-padding: 4 12; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                                   "-fx-font-size: 11px; -fx-font-weight: 700;";
+                        } else {
+                            style = "-fx-background-color: linear-gradient(to right, #fecaca 0%, #fca5a5 100%); " +
+                                   "-fx-text-fill: #991b1b; -fx-border-color: #f87171; -fx-border-width: 1; " +
+                                   "-fx-padding: 4 12; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                                   "-fx-font-size: 11px; -fx-font-weight: 700;";
+                        }
+                        statusLabel.setStyle(style);
+                        setGraphic(statusLabel);
+                    }
+                }
+            });
+            stateCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
             
-            TableColumn<ConsumerGroupRow, String> coordinatorCol = new TableColumn<>("Coordinator");
-            coordinatorCol.setCellValueFactory(new PropertyValueFactory<>("coordinator"));
-            coordinatorCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.25));
-            
+            // Members Column
             TableColumn<ConsumerGroupRow, Integer> membersCol = new TableColumn<>("Members");
             membersCol.setCellValueFactory(new PropertyValueFactory<>("memberCount"));
-            membersCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
+            membersCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: 700;");
+                    }
+                }
+            });
+            membersCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.12));
             
-            consumerGroupTableView.getColumns().addAll(groupIdCol, stateCol, coordinatorCol, membersCol);
-            VBox.setVgrow(consumerGroupTableView, javafx.scene.layout.Priority.ALWAYS);
+            // Lag Column
+            TableColumn<ConsumerGroupRow, String> lagCol = new TableColumn<>("Lag");
+            lagCol.setCellValueFactory(new PropertyValueFactory<>("coordinator")); // Reusing coordinator field for mock lag data
+            lagCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        // Mock lag data
+                        setText("124");
+                        setStyle("-fx-font-weight: 600;");
+                    }
+                }
+            });
+            lagCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.10));
             
-            vbox.getChildren().add(consumerGroupTableView);
-            return vbox;
+            // Topics Column
+            TableColumn<ConsumerGroupRow, String> topicsCol = new TableColumn<>("Topics");
+            topicsCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        // Mock topics data
+                        setText("topic1, topic2, topic3");
+                        setStyle("-fx-text-fill: #4a5568; -fx-font-size: 12px;");
+                    }
+                }
+            });
+            topicsCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.23));
+            
+            // Actions column
+            TableColumn<ConsumerGroupRow, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, Void>() {
+                private final Button viewBtn = new Button("👁");
+                private final Button deleteBtn = new Button("🗑");
+                {
+                    viewBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                   "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    viewBtn.setOnMouseEntered(e -> {
+                        viewBtn.setStyle("-fx-background-color: #e0e7ff; -fx-border-color: transparent; " +
+                                       "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                    });
+                    viewBtn.setOnMouseExited(e -> {
+                        viewBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                       "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    });
+                    
+                    deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                     "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    deleteBtn.setOnMouseEntered(e -> {
+                        deleteBtn.setStyle("-fx-background-color: #fee; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                    });
+                    deleteBtn.setOnMouseExited(e -> {
+                        deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    });
+                }
+                
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actionBox = new HBox(5);
+                        actionBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        actionBox.getChildren().addAll(viewBtn, deleteBtn);
+                        setGraphic(actionBox);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
+            
+            consumerGroupTableView.getColumns().addAll(groupIdCol, stateCol, membersCol, lagCol, topicsCol, actionsCol);
+            
+            tableContainer.getChildren().add(consumerGroupTableView);
+            
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
+            
+            mainContainer.getChildren().addAll(headerContainer, vbox);
+            return mainContainer;
         }
 
         private Node createAclContent() {
