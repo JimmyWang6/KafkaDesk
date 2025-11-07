@@ -967,7 +967,11 @@ public class MainController implements Initializable {
             
             brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
                                                   partitionsCol, leadersCol, diskUsageCol, actionsCol);
-            brokersTableView.setFixedCellSize(60);  // Set fixed cell size for consistent row heights
+            brokersTableView.setFixedCellSize(60);
+            // Set max height based on number of items (header + rows)
+            brokersTableView.prefHeightProperty().bind(
+                brokersTableView.fixedCellSizeProperty().multiply(javafx.beans.binding.Bindings.size(brokersTableView.getItems()).add(1.5))
+            );
             
             tableContainer.getChildren().addAll(tableHeader, brokersTableView);
             
@@ -1034,6 +1038,8 @@ public class MainController implements Initializable {
             // Value
             valueLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: 700; " +
                               "-fx-text-fill: #667eea;");
+            valueLabel.setMaxWidth(Double.MAX_VALUE);
+            valueLabel.setWrapText(true);
             
             card.getChildren().addAll(iconLabel, metricLabel, valueLabel);
             
@@ -1313,7 +1319,11 @@ public class MainController implements Initializable {
             
             brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
                                                   partitionsCol, leadersCol, diskUsageCol, actionsCol);
-            brokersTableView.setFixedCellSize(60);  // Set fixed cell size for consistent row heights
+            brokersTableView.setFixedCellSize(60);
+            // Set max height based on number of items (header + rows)
+            brokersTableView.prefHeightProperty().bind(
+                brokersTableView.fixedCellSizeProperty().multiply(javafx.beans.binding.Bindings.size(brokersTableView.getItems()).add(1.5))
+            );
             
             tableContainer.getChildren().addAll(tableHeader, brokersTableView);
             

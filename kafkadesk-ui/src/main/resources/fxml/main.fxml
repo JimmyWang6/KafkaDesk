@@ -15,7 +15,7 @@
         <VBox style="-fx-background-color: #FFFFFF;">
             <!-- Menu Bar -->
             <HBox spacing="8" alignment="CENTER_LEFT"
-                  style="-fx-background-color: #FFFFFF; -fx-padding: 8 20 8 20; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;">
+                  style="-fx-background-color: #FFFFFF; -fx-padding: 8 20 8 0; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;">
                 <MenuBar fx:id="menuBar" style="-fx-background-color: transparent; -fx-border-width: 0;">
                     <Menu fx:id="menuFile">
                         <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
@@ -43,7 +43,7 @@
             <VBox prefWidth="260" minWidth="260" maxWidth="260" 
                   style="-fx-background-color: #f8fafc; -fx-border-color: #e1e8ed; -fx-border-width: 0 1 0 0;">
                 <padding>
-                    <Insets top="15" right="0" bottom="15" left="0"/>
+                    <Insets top="0" right="0" bottom="15" left="0"/>
                 </padding>
                 
                 <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
