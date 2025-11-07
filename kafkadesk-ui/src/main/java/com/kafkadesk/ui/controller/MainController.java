@@ -655,12 +655,14 @@ public class MainController implements Initializable {
         private TableView<TopicInfo> topicsTableView;
         private TextArea topicDetailsTextArea;
         private final ObservableList<TopicInfo> topicList = FXCollections.observableArrayList();
+        private javafx.collections.transformation.FilteredList<TopicInfo> filteredTopicList;
         
         // Data components for consumer groups
         private TableView<ConsumerGroupRow> consumerGroupTableView;
         private TableView<MemberRow> consumerGroupMembersTableView;
         private TableView<LagRow> consumerGroupLagTableView;
         private final ObservableList<ConsumerGroupRow> consumerGroupList = FXCollections.observableArrayList();
+        private javafx.collections.transformation.FilteredList<ConsumerGroupRow> filteredConsumerGroupList;
         private final ObservableList<MemberRow> memberList = FXCollections.observableArrayList();
         private final ObservableList<LagRow> lagList = FXCollections.observableArrayList();
         
@@ -1338,17 +1340,15 @@ public class MainController implements Initializable {
                                "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
             searchField.setPrefWidth(360);
             
-            // Add search functionality
+            // Add search functionality using FilteredList for better performance
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue == null || newValue.trim().isEmpty()) {
-                    topicsTableView.setItems(topicList);
-                } else {
+                filteredTopicList.setPredicate(topic -> {
+                    if (newValue == null || newValue.trim().isEmpty()) {
+                        return true;
+                    }
                     String searchText = newValue.toLowerCase().trim();
-                    ObservableList<TopicInfo> filteredList = topicList.filtered(topic -> 
-                        topic.getName().toLowerCase().contains(searchText)
-                    );
-                    topicsTableView.setItems(filteredList);
-                }
+                    return topic.getName().toLowerCase().contains(searchText);
+                });
             });
             
             searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -1409,7 +1409,8 @@ public class MainController implements Initializable {
                                   "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
             
             topicsTableView = new TableView<>();
-            topicsTableView.setItems(topicList);
+            filteredTopicList = new javafx.collections.transformation.FilteredList<>(topicList, p -> true);
+            topicsTableView.setItems(filteredTopicList);
             topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
             topicsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
             topicsTableView.setFixedCellSize(60);
@@ -1733,17 +1734,15 @@ public class MainController implements Initializable {
                                "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
             searchField.setPrefWidth(360);
             
-            // Add search functionality
+            // Add search functionality using FilteredList for better performance
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue == null || newValue.trim().isEmpty()) {
-                    consumerGroupTableView.setItems(consumerGroupList);
-                } else {
+                filteredConsumerGroupList.setPredicate(group -> {
+                    if (newValue == null || newValue.trim().isEmpty()) {
+                        return true;
+                    }
                     String searchText = newValue.toLowerCase().trim();
-                    ObservableList<ConsumerGroupRow> filteredList = consumerGroupList.filtered(group -> 
-                        group.getGroupId().toLowerCase().contains(searchText)
-                    );
-                    consumerGroupTableView.setItems(filteredList);
-                }
+                    return group.getGroupId().toLowerCase().contains(searchText);
+                });
             });
             
             searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -1804,7 +1803,8 @@ public class MainController implements Initializable {
                                   "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
             
             consumerGroupTableView = new TableView<>();
-            consumerGroupTableView.setItems(consumerGroupList);
+            filteredConsumerGroupList = new javafx.collections.transformation.FilteredList<>(consumerGroupList, p -> true);
+            consumerGroupTableView.setItems(filteredConsumerGroupList);
             consumerGroupTableView.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
             consumerGroupTableView.setFixedCellSize(60);
             
