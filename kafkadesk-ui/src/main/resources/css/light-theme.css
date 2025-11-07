@@ -14,9 +14,36 @@
 /* Menu Bar - Integrated with toolbar */
 .menu-bar {
     -fx-background-color: #FFFFFF;
-    -fx-border-color: #E0E0E0;
+    -fx-border-color: #e1e8ed;
     -fx-border-width: 0 0 1 0;
-    -fx-padding: 4 8 4 8;
+    -fx-padding: 8 20 8 20;
+}
+
+.menu {
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 6;
+}
+
+.menu .label {
+    -fx-text-fill: #5a6c7d;
+    -fx-font-weight: 500;
+    -fx-font-size: 14px;
+}
+
+.menu:hover {
+    -fx-background-color: #f0f3f7;
+}
+
+.menu:hover .label {
+    -fx-text-fill: #667eea;
+}
+
+.menu:showing {
+    -fx-background-color: #f0f3f7;
+}
+
+.menu:showing .label {
+    -fx-text-fill: #667eea;
 }
 
 .menu-item:focused {
@@ -137,34 +164,39 @@
 
 /* Tree View - Cleaner appearance */
 .tree-view {
-    -fx-background-color: white;
-    -fx-border-color: #E0E0E0;
-    -fx-border-radius: 4;
+    -fx-background-color: #f8fafc;
+    -fx-border-color: transparent;
+    -fx-border-radius: 0;
 }
 
 .tree-cell {
-    -fx-padding: 8 8 8 8;
-    -fx-background-color: white;
+    -fx-padding: 10 20 10 35;
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-color: transparent;
+    -fx-text-fill: #4a5568;
+    -fx-font-size: 14px;
 }
 
 .tree-cell:selected {
     -fx-background-color: linear-gradient(to right, #e0e7ff 0%, #f0f3ff 100%);
     -fx-text-fill: #667eea;
-    -fx-font-weight: bold;
+    -fx-font-weight: 600;
+    -fx-border-left-color: #667eea;
 }
 
 .tree-cell:filled:hover {
     -fx-background-color: #eef2f7;
+    -fx-border-left-color: #667eea;
 }
 
 .tree-cell:selected:hover {
     -fx-background-color: linear-gradient(to right, #d0d7ef 0%, #e0e3ef 100%);
 }
-}
 
 /* Disable hover effect on empty tree cells */
 .tree-cell:empty:hover {
-    -fx-background-color: white;
+    -fx-background-color: transparent;
 }
 
 /* Tab Pane - Modern tabs */

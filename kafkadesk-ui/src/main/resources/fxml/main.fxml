@@ -7,22 +7,15 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.kafkadesk.ui.controller.MainController"
-            prefHeight="800.0" prefWidth="1200.0">
+            prefHeight="800.0" prefWidth="1200.0"
+            style="-fx-background-color: #ffffff;">
 
-    <!-- Top: Header with Toolbar and Menu Bar -->
+    <!-- Top: Menu Bar (simplified, no separate toolbar) -->
     <top>
-        <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
-            <!-- Toolbar - Icon Labels (clickable) -->
-            <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 8 12 8 12; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
-                <Label fx:id="btnAddCluster" text="➕"
-                       styleClass="toolbar-icon"/>
-                <Label fx:id="btnRefresh" text="🔄"
-                       styleClass="toolbar-icon"/>
-            </HBox>
-            
+        <VBox style="-fx-background-color: #FFFFFF;">
             <!-- Menu Bar -->
-            <HBox styleClass="integrated-header" spacing="8" alignment="CENTER_LEFT"
-                  style="-fx-background-color: #FFFFFF; -fx-padding: 4 12 4 12;">
+            <HBox spacing="8" alignment="CENTER_LEFT"
+                  style="-fx-background-color: #FFFFFF; -fx-padding: 8 20 8 20; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;">
                 <MenuBar fx:id="menuBar" style="-fx-background-color: transparent; -fx-border-width: 0;">
                     <Menu fx:id="menuFile">
                         <MenuItem fx:id="menuItemAddCluster" onAction="#handleAddCluster"/>
@@ -43,38 +36,23 @@
         </VBox>
     </top>
 
-    <!-- Center: Main Work Area with Cluster Tree on Left -->
+    <!-- Center: Main Work Area with Sidebar -->
     <center>
-        <SplitPane dividerPositions="0.2" style="-fx-background-color: #F8F9FA;">
-            <!-- Left: Cluster TreeView with Fixed Width -->
-            <VBox prefWidth="250" minWidth="250" maxWidth="250" 
-                  style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-border-width: 0 0.5 0 0;">
+        <SplitPane dividerPositions="0.22" style="-fx-background-color: #f5f7fa;">
+            <!-- Left: Sidebar with sections -->
+            <VBox prefWidth="260" minWidth="260" maxWidth="260" 
+                  style="-fx-background-color: #f8fafc; -fx-border-color: #e1e8ed; -fx-border-width: 0 1 0 0;">
                 <padding>
-                    <Insets top="12" right="12" bottom="12" left="12"/>
+                    <Insets top="15" right="0" bottom="15" left="0"/>
                 </padding>
                 
-                <!-- Search Box -->
-                <HBox spacing="0" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3;">
-                    <TextField fx:id="searchField" promptText="Search clusters..." 
-                               style="-fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 6 8 6 8;"
-                               HBox.hgrow="ALWAYS">
-                        <HBox.margin>
-                            <Insets/>
-                        </HBox.margin>
-                    </TextField>
-                    <Label text="🔍" style="-fx-padding: 6 10; -fx-text-fill: #666; -fx-font-size: 20px; -fx-min-width: 36px; -fx-min-height: 36px; -fx-alignment: center;"/>
-                </HBox>
-                
                 <TreeView fx:id="clusterTreeView" VBox.vgrow="ALWAYS" 
-                          style="-fx-border-color: transparent; -fx-background-color: white;">
-                    <VBox.margin>
-                        <Insets top="12"/>
-                    </VBox.margin>
+                          style="-fx-border-color: transparent; -fx-background-color: #f8fafc;">
                 </TreeView>
             </VBox>
 
             <!-- Right: Content Area -->
-            <StackPane fx:id="contentArea" style="-fx-background-color: white;">
+            <StackPane fx:id="contentArea" style="-fx-background-color: #ffffff;">
                 <!-- Content will be shown here based on tree selection -->
             </StackPane>
         </SplitPane>
@@ -82,8 +60,9 @@
 
     <!-- Bottom: Status Bar -->
     <bottom>
-        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #f0f0f0; -fx-padding: 5;">
-            <Label fx:id="statusLabel"/>
+        <HBox alignment="CENTER_LEFT" spacing="10" 
+              style="-fx-background: linear-gradient(to right, #667eea 0%, #764ba2 100%); -fx-padding: 8 20 8 20;">
+            <Label fx:id="statusLabel" style="-fx-text-fill: white; -fx-font-weight: 500; -fx-font-size: 12px;"/>
         </HBox>
     </bottom>
 </BorderPane>

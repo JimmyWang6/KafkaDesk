@@ -46,12 +46,7 @@ public class MainController implements Initializable {
     @FXML private Menu menuFile, menuView, menuTools, menuHelp;
     @FXML private MenuItem menuItemAddCluster, menuItemExit, menuItemRefresh, menuItemSettings, menuItemAbout;
     
-    // Toolbar components (now Labels for better icon display)
-    @FXML private Label btnAddCluster, btnRefresh;
-    
     // Cluster tree (left side)
-    // @FXML private Label lblClusterList;  // Removed - buttons now replace the label
-    @FXML private TextField searchField;
     @FXML private TreeView<String> clusterTreeView;
 
     // Content area (right side)
@@ -106,18 +101,6 @@ public class MainController implements Initializable {
         
         menuHelp.setText(I18nUtil.get(I18nKeys.MENU_HELP));
         menuItemAbout.setText(I18nUtil.get(I18nKeys.MENU_HELP_ABOUT));
-
-        // Toolbar with icons only - set up click handlers
-        btnAddCluster.setText("➕");
-        btnAddCluster.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER)));
-        btnAddCluster.setOnMouseClicked(event -> handleAddCluster());
-        
-        btnRefresh.setText("🔄");
-        btnRefresh.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_REFRESH)));
-        btnRefresh.setOnMouseClicked(event -> handleRefreshTopics());
-
-        // Cluster
-        // lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));  // Removed - no longer needed
     }
 
     /**
@@ -142,9 +125,6 @@ public class MainController implements Initializable {
 
         // Add context menu for cluster items
         setupContextMenu();
-        
-        // Setup search filter
-        setupSearchFilter();
 
         // Handle tree item selection - single click selects, double click opens
         clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -171,56 +151,6 @@ public class MainController implements Initializable {
                 }
             }
         });
-    }
-    
-    /**
-     * Setup search filter for cluster list
-     */
-    private void setupSearchFilter() {
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filterClusterTree(newValue);
-        });
-    }
-    
-    /**
-     * Filter cluster tree based on search text
-     */
-    private void filterClusterTree(String searchText) {
-        if (searchText == null || searchText.trim().isEmpty()) {
-            // Show all clusters
-            for (TreeItem<String> clusterItem : clusterTreeItems.values()) {
-                clusterItem.setExpanded(false);
-                if (!rootTreeItem.getChildren().contains(clusterItem)) {
-                    rootTreeItem.getChildren().add(clusterItem);
-                }
-            }
-        } else {
-            String lowerSearch = searchText.toLowerCase().trim();
-            
-            // Filter clusters based on name or IP
-            List<TreeItem<String>> matchingClusters = new ArrayList<>();
-            for (Map.Entry<String, TreeItem<String>> entry : clusterTreeItems.entrySet()) {
-                TreeItemData data = treeItemDataMap.get(entry.getValue());
-                if (data != null && data.getClusterConfig() != null) {
-                    ClusterConfig config = data.getClusterConfig();
-                    String name = config.getName().toLowerCase();
-                    String servers = config.getBootstrapServers().toLowerCase();
-                    
-                    if (name.contains(lowerSearch) || servers.contains(lowerSearch)) {
-                        matchingClusters.add(entry.getValue());
-                    }
-                }
-            }
-            
-            // Update tree to show only matching clusters
-            rootTreeItem.getChildren().clear();
-            rootTreeItem.getChildren().addAll(matchingClusters);
-            
-            // Expand matching clusters to show sub-items
-            for (TreeItem<String> item : matchingClusters) {
-                item.setExpanded(true);
-            }
-        }
     }
 
     private void addClusterToTree(TreeItem<String> rootItem, ClusterConfig cluster) {
