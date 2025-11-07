@@ -1364,7 +1364,7 @@ public class MainController implements Initializable {
             
             // Header with title, actions, and search bar
             VBox headerContainer = new VBox(15);
-            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 45 20 30; " +
                                    "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
             
             // Top row: Title and action buttons
@@ -1748,7 +1748,7 @@ public class MainController implements Initializable {
             
             // Header with title, search bar, and actions
             VBox headerContainer = new VBox(15);
-            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 45 20 30; " +
                                    "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
             
             // Top row: Title and action buttons
