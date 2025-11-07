@@ -673,6 +673,9 @@ public class MainController implements Initializable {
         // Data for brokers
         private TableView<BrokerRow> brokersTableView;
         private final ObservableList<BrokerRow> brokerList = FXCollections.observableArrayList();
+        private Label brokersTopicCount;
+        private Label brokersPartitionCount;
+        private Label brokersConsumerGroupCount;
 
         public ClusterContentManager(ClusterConfig cluster, MainController mainController) {
             this.cluster = cluster;
@@ -1096,37 +1099,39 @@ public class MainController implements Initializable {
             
             // Initialize labels if not already done
             if (overviewBrokerCount == null) {
-                overviewBrokerCount = new Label("3");  // Mock data
+                overviewBrokerCount = new Label("0");
             }
-            if (overviewTopicCount == null) {
-                overviewTopicCount = new Label("47");  // Mock data
+            if (brokersTopicCount == null) {
+                brokersTopicCount = new Label("0");
+            }
+            if (brokersPartitionCount == null) {
+                brokersPartitionCount = new Label("0");
+            }
+            if (brokersConsumerGroupCount == null) {
+                brokersConsumerGroupCount = new Label("0");
             }
             
-            // Metrics cards - 5 cards in total as per mockup
+            // Metrics cards - 4 cards (removed Messages/sec)
             GridPane metricsGrid = new GridPane();
             metricsGrid.setHgap(20);
             metricsGrid.setVgap(20);
             
             // Create metric cards
             VBox brokersCard = createMetricCard("🖥", "Total Brokers", overviewBrokerCount);
-            VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
-            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
-            VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
-            VBox consumerGroupsCard = createMetricCard("👥", "Consumer Groups", new Label("23"));  // Mock data
+            VBox topicsCard = createMetricCard("📄", "Total Topics", brokersTopicCount);
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", brokersPartitionCount);
+            VBox consumerGroupsCard = createMetricCard("👥", "Consumer Groups", brokersConsumerGroupCount);
             
-            // First row: 3 cards
+            // 2x2 layout
             metricsGrid.add(brokersCard, 0, 0);
             metricsGrid.add(topicsCard, 1, 0);
-            metricsGrid.add(partitionsCard, 2, 0);
-            
-            // Second row: 2 cards
-            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(partitionsCard, 0, 1);
             metricsGrid.add(consumerGroupsCard, 1, 1);
             
             // Make metric cards expand
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 2; i++) {
                 ColumnConstraints col = new ColumnConstraints();
-                col.setPercentWidth(33.33);
+                col.setPercentWidth(50);
                 col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
                 metricsGrid.getColumnConstraints().add(col);
             }
@@ -1168,7 +1173,10 @@ public class MainController implements Initializable {
                         setText(null);
                     } else {
                         Label badge = new Label(String.valueOf(item));
-                        badge.getStyleClass().add("broker-id");
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                     "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: 700; " +
+                                     "-fx-min-width: 32px; -fx-min-height: 32px; -fx-max-width: 32px; -fx-max-height: 32px; " +
+                                     "-fx-alignment: center; -fx-background-radius: 8; -fx-border-radius: 8;");
                         setGraphic(badge);
                         setText(null);
                         setAlignment(javafx.geometry.Pos.CENTER);
@@ -1189,7 +1197,7 @@ public class MainController implements Initializable {
                     } else {
                         setText(item);
                         setStyle("-fx-font-weight: bold;");
-                        setWrapText(true);  // Enable text wrapping
+                        setWrapText(true);
                     }
                 }
             });
@@ -1198,29 +1206,6 @@ public class MainController implements Initializable {
             TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
             portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
             portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
-            
-            // Status Column with badge
-            TableColumn<BrokerRow, String> statusCol = new TableColumn<>("Status");
-            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-            statusCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setGraphic(null);
-                        setText(null);
-                    } else {
-                        Label badge = new Label("● ONLINE");
-                        badge.setStyle("-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
-                                     "-fx-text-fill: #065f46; -fx-padding: 5 12 5 12; -fx-background-radius: 20; " +
-                                     "-fx-font-size: 11px; -fx-font-weight: 700; -fx-border-color: #6ee7b7; " +
-                                     "-fx-border-width: 1; -fx-border-radius: 20;");
-                        setGraphic(badge);
-                        setText(null);
-                    }
-                }
-            });
-            statusCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
             
             // Controller Column
             TableColumn<BrokerRow, Boolean> controllerCol = new TableColumn<>("Controller");
@@ -1236,7 +1221,7 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            controllerCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            controllerCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
             
             // Partitions Column
             TableColumn<BrokerRow, Integer> partitionsCol = new TableColumn<>("Partitions");
@@ -1254,7 +1239,7 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            partitionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            partitionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
             
             TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
             leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
@@ -1339,9 +1324,9 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
             
-            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
+            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, controllerCol, 
                                                   partitionsCol, leadersCol, diskUsageCol, actionsCol);
             brokersTableView.setFixedCellSize(60);
             // Set max height based on number of items (header + rows)
@@ -2048,11 +2033,86 @@ public class MainController implements Initializable {
 
         private void loadBrokers() {
             new Thread(() -> {
-                Platform.runLater(() -> {
-                    brokerList.clear();
-                    // Sample data - in real implementation, this would fetch actual broker data
-                    brokerList.add(new BrokerRow(0, "localhost", 9092, "rack1", "45%", 12, 24));
-                });
+                try {
+                    // Get cluster info which includes brokers and controller
+                    Map<String, Object> clusterInfo = ClusterService.getInstance().getClusterInfo(cluster.getId());
+                    
+                    if (clusterInfo != null) {
+                        Collection<org.apache.kafka.common.Node> nodes = 
+                            (Collection<org.apache.kafka.common.Node>) clusterInfo.get("nodes");
+                        org.apache.kafka.common.Node controller = 
+                            (org.apache.kafka.common.Node) clusterInfo.get("controller");
+                        
+                        int controllerId = controller != null ? controller.id() : -1;
+                        
+                        // Get topics to calculate partitions per broker
+                        List<String> topicNames = TopicService.getInstance().listTopics(cluster.getId());
+                        Map<Integer, Integer> brokerPartitionCount = new HashMap<>();
+                        Map<Integer, Integer> brokerLeaderCount = new HashMap<>();
+                        int totalPartitions = 0;
+                        
+                        for (String topicName : topicNames) {
+                            TopicInfo topicInfo = TopicService.getInstance().getTopicInfo(cluster.getId(), topicName);
+                            if (topicInfo != null) {
+                                totalPartitions += topicInfo.getPartitions();
+                                // For now, distribute partitions evenly across brokers as we don't have detailed partition info
+                                // In a real implementation, you'd get actual partition assignments from Kafka
+                            }
+                        }
+                        
+                        // Get consumer groups count
+                        List<String> consumerGroups = ConsumerGroupService.getInstance().listConsumerGroups(cluster.getId());
+                        
+                        final int finalTotalPartitions = totalPartitions;
+                        final int finalConsumerGroupsCount = consumerGroups.size();
+                        
+                        Platform.runLater(() -> {
+                            brokerList.clear();
+                            
+                            if (nodes != null && !nodes.isEmpty()) {
+                                int avgPartitionsPerBroker = nodes.size() > 0 ? finalTotalPartitions / nodes.size() : 0;
+                                int avgLeadersPerBroker = avgPartitionsPerBroker; // Simplified: assume leaders = partitions
+                                
+                                for (org.apache.kafka.common.Node node : nodes) {
+                                    boolean isController = (node.id() == controllerId);
+                                    brokerList.add(new BrokerRow(
+                                        node.id(),
+                                        node.host(),
+                                        node.port(),
+                                        node.rack() != null ? node.rack() : "default",
+                                        "N/A",  // Disk usage not available from Kafka API
+                                        avgLeadersPerBroker,
+                                        avgPartitionsPerBroker,
+                                        isController,
+                                        avgPartitionsPerBroker
+                                    ));
+                                }
+                                
+                                // Update metrics
+                                if (overviewBrokerCount != null) {
+                                    overviewBrokerCount.setText(String.valueOf(nodes.size()));
+                                }
+                                if (brokersTopicCount != null) {
+                                    brokersTopicCount.setText(String.valueOf(topicNames.size()));
+                                }
+                                if (brokersPartitionCount != null) {
+                                    brokersPartitionCount.setText(String.valueOf(finalTotalPartitions));
+                                }
+                                if (brokersConsumerGroupCount != null) {
+                                    brokersConsumerGroupCount.setText(String.valueOf(finalConsumerGroupsCount));
+                                }
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to load brokers", e);
+                    Platform.runLater(() -> {
+                        brokerList.clear();
+                        if (overviewBrokerCount != null) {
+                            overviewBrokerCount.setText("Error");
+                        }
+                    });
+                }
             }).start();
         }
 
@@ -2246,8 +2306,10 @@ public class MainController implements Initializable {
         private final String diskUsage;
         private final int leaders;
         private final int replicas;
+        private final boolean controller;
+        private final int partitions;
 
-        public BrokerRow(int id, String host, int port, String rack, String diskUsage, int leaders, int replicas) {
+        public BrokerRow(int id, String host, int port, String rack, String diskUsage, int leaders, int replicas, boolean controller, int partitions) {
             this.id = id;
             this.host = host;
             this.port = port;
@@ -2255,6 +2317,8 @@ public class MainController implements Initializable {
             this.diskUsage = diskUsage;
             this.leaders = leaders;
             this.replicas = replicas;
+            this.controller = controller;
+            this.partitions = partitions;
         }
 
         public int getId() { return id; }
@@ -2264,6 +2328,8 @@ public class MainController implements Initializable {
         public String getDiskUsage() { return diskUsage; }
         public int getLeaders() { return leaders; }
         public int getReplicas() { return replicas; }
+        public boolean isController() { return controller; }
+        public int getPartitions() { return partitions; }
     }
 
     public static class ConsumerGroupRow {
