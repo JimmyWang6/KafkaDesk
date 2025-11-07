@@ -516,3 +516,13 @@
 .status-dot.offline {
     -fx-background-color: #ef4444;
 }
+
+/* Table Cell Styling */
+.table-cell {
+    -fx-padding: 8 10 8 10;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-row-cell {
+    -fx-cell-size: 60px;
+}

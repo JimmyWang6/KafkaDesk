@@ -967,7 +967,7 @@ public class MainController implements Initializable {
             
             brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
                                                   partitionsCol, leadersCol, diskUsageCol, actionsCol);
-            VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
+            brokersTableView.setFixedCellSize(60);  // Set fixed cell size for consistent row heights
             
             tableContainer.getChildren().addAll(tableHeader, brokersTableView);
             
@@ -1254,13 +1254,18 @@ public class MainController implements Initializable {
                         setText(null);
                     } else {
                         VBox container = new VBox(4);
+                        container.setMaxWidth(Double.MAX_VALUE);
+                        container.setPadding(new Insets(5, 0, 5, 0));
+                        
                         Label text = new Label("47.3 GB / 100 GB (47%)");  // Mock data
                         text.setStyle("-fx-font-size: 12px;");
-                        text.setWrapText(true);  // Enable text wrapping
+                        text.setWrapText(true);
+                        text.setMaxWidth(Double.MAX_VALUE);
                         
                         // Progress bar
                         HBox progressBar = new HBox();
-                        progressBar.setStyle("-fx-background-color: #e1e8ed; -fx-background-radius: 10; -fx-pref-height: 6;");
+                        progressBar.setStyle("-fx-background-color: #e1e8ed; -fx-background-radius: 10; -fx-pref-height: 6; -fx-max-height: 6;");
+                        progressBar.setMaxWidth(Double.MAX_VALUE);
                         
                         Region fill = new Region();
                         fill.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
@@ -1273,6 +1278,7 @@ public class MainController implements Initializable {
                         
                         setGraphic(container);
                         setText(null);
+                        setPadding(new Insets(5, 10, 5, 10));
                     }
                 }
             });
@@ -1307,7 +1313,7 @@ public class MainController implements Initializable {
             
             brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
                                                   partitionsCol, leadersCol, diskUsageCol, actionsCol);
-            VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
+            brokersTableView.setFixedCellSize(60);  // Set fixed cell size for consistent row heights
             
             tableContainer.getChildren().addAll(tableHeader, brokersTableView);
             
