@@ -1362,8 +1362,71 @@ public class MainController implements Initializable {
             VBox mainContainer = new VBox(0);
             mainContainer.setStyle("-fx-background-color: #ffffff;");
             
-            // Header without Connected badge - just title and cluster name
-            HBox header = createSimpleHeader("Topic Management");
+            // Header with title, actions, and search bar
+            VBox headerContainer = new VBox(15);
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+                                   "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Top row: Title and action buttons
+            HBox topRow = new HBox(12);
+            topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            
+            Label titleLabel = new Label("Topic Management");
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            Region spacer1 = new Region();
+            HBox.setHgrow(spacer1, javafx.scene.layout.Priority.ALWAYS);
+            
+            // Action buttons
+            Button btnRefreshHeader = new Button("⟳ Refresh");
+            btnRefreshHeader.setStyle("-fx-background-color: #ffffff; -fx-text-fill: #667eea; " +
+                                    "-fx-border-color: #667eea; -fx-border-width: 2; " +
+                                    "-fx-font-size: 13px; -fx-font-weight: 600; " +
+                                    "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                                    "-fx-cursor: hand;");
+            btnRefreshHeader.setOnAction(e -> refresh());
+            
+            Button btnCreateTopicHeader = new Button("➕ Create Topic");
+            btnCreateTopicHeader.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                        "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                                        "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                                        "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 12, 0, 0, 4);");
+            btnCreateTopicHeader.setOnAction(e -> handleCreateTopic());
+            
+            topRow.getChildren().addAll(titleLabel, spacer1, btnRefreshHeader, btnCreateTopicHeader);
+            
+            // Search bar
+            HBox searchContainer = new HBox(0);
+            searchContainer.setMaxWidth(400);
+            searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                   "-fx-border-radius: 8; -fx-background-radius: 8;");
+            
+            TextField searchField = new TextField();
+            searchField.setPromptText("Search topics...");
+            searchField.setStyle("-fx-background-color: transparent; -fx-border-width: 0; " +
+                               "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
+            searchField.setPrefWidth(360);
+            searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    searchContainer.setStyle("-fx-border-color: #667eea; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8; " +
+                                           "-fx-effect: dropshadow(gaussian, rgba(102,126,234,0.1), 3, 0, 0, 0);");
+                } else {
+                    searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8;");
+                }
+            });
+            
+            Label searchIcon = new Label("🔍");
+            searchIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #8492a6; -fx-padding: 0 12 0 0;");
+            
+            StackPane searchStack = new StackPane();
+            searchStack.getChildren().addAll(searchField, searchIcon);
+            StackPane.setAlignment(searchIcon, javafx.geometry.Pos.CENTER_RIGHT);
+            
+            searchContainer.getChildren().add(searchStack);
+            
+            headerContainer.getChildren().addAll(topRow, searchContainer);
             
             // Content area
             VBox vbox = new VBox(20);
@@ -1393,27 +1456,6 @@ public class MainController implements Initializable {
                 col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
                 metricsGrid.getColumnConstraints().add(col);
             }
-            
-            // Action buttons bar at the top of table
-            HBox actionBar = new HBox(12);
-            actionBar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            actionBar.setStyle("-fx-padding: 0 0 15 0;");
-            
-            Button btnRefresh = new Button("⟳ Refresh");
-            btnRefresh.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
-                              "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
-                              "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
-                              "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 4, 0, 0, 2);");
-            btnRefresh.setOnAction(e -> refresh());
-            
-            Button btnCreateTopic = new Button("➕ Create Topic");
-            btnCreateTopic.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
-                                   "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
-                                   "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
-                                   "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 4, 0, 0, 2);");
-            btnCreateTopic.setOnAction(e -> handleCreateTopic());
-            
-            actionBar.getChildren().addAll(btnRefresh, btnCreateTopic);
             
             // Container for table without header row
             VBox tableContainer = new VBox(0);
@@ -1539,9 +1581,9 @@ public class MainController implements Initializable {
             
             tableContainer.getChildren().add(topicsTableView);
             
-            vbox.getChildren().addAll(metricsGrid, actionBar, tableContainer);
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
             
-            mainContainer.getChildren().addAll(header, vbox);
+            mainContainer.getChildren().addAll(headerContainer, vbox);
             return mainContainer;
         }
         
