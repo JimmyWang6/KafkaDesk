@@ -776,7 +776,7 @@ public class MainController implements Initializable {
             // Table header
             HBox tableHeader = new HBox();
             tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
-            Label tableTitle = new Label("🖥️ Active Brokers");
+            Label tableTitle = new Label("🖥 Active Brokers");
             tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
             tableHeader.getChildren().add(tableTitle);
             
@@ -942,37 +942,10 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
-            
-            // Actions Column
-            TableColumn<BrokerRow, Void> actionsCol = new TableColumn<>("Actions");
-            actionsCol.setCellFactory(col -> new TableCell<BrokerRow, Void>() {
-                @Override
-                protected void updateItem(Void item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty) {
-                        setGraphic(null);
-                    } else {
-                        HBox actions = new HBox(8);
-                        actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                        
-                        Label infoIcon = new Label("ℹ️");
-                        infoIcon.getStyleClass().add("action-icon");
-                        infoIcon.setTooltip(new Tooltip("View Details"));
-                        
-                        Label logsIcon = new Label("📋");
-                        logsIcon.getStyleClass().add("action-icon");
-                        logsIcon.setTooltip(new Tooltip("View Logs"));
-                        
-                        actions.getChildren().addAll(infoIcon, logsIcon);
-                        setGraphic(actions);
-                    }
-                }
-            });
-            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.20));
             
             brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
-                                                  partitionsCol, leadersCol, diskUsageCol, actionsCol);
+                                                  partitionsCol, leadersCol, diskUsageCol);
             brokersTableView.setFixedCellSize(60);
             // Set max height based on number of items (header + rows)
             brokersTableView.prefHeightProperty().bind(
@@ -1145,7 +1118,7 @@ public class MainController implements Initializable {
             // Table header
             HBox tableHeader = new HBox();
             tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
-            Label tableTitle = new Label("🖥️ Active Brokers");
+            Label tableTitle = new Label("🖥 Active Brokers");
             tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
             tableHeader.getChildren().add(tableTitle);
             
@@ -1297,37 +1270,10 @@ public class MainController implements Initializable {
                     }
                 }
             });
-            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
-            
-            // Actions Column
-            TableColumn<BrokerRow, Void> actionsCol = new TableColumn<>("Actions");
-            actionsCol.setCellFactory(col -> new TableCell<BrokerRow, Void>() {
-                @Override
-                protected void updateItem(Void item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty) {
-                        setGraphic(null);
-                    } else {
-                        HBox actions = new HBox(8);
-                        actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                        
-                        Label infoIcon = new Label("ℹ️");
-                        infoIcon.getStyleClass().add("action-icon");
-                        infoIcon.setTooltip(new Tooltip("View Details"));
-                        
-                        Label logsIcon = new Label("📋");
-                        logsIcon.getStyleClass().add("action-icon");
-                        logsIcon.setTooltip(new Tooltip("View Logs"));
-                        
-                        actions.getChildren().addAll(infoIcon, logsIcon);
-                        setGraphic(actions);
-                    }
-                }
-            });
-            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.20));
             
             brokersTableView.getColumns().addAll(idCol, hostCol, portCol, controllerCol, 
-                                                  partitionsCol, leadersCol, diskUsageCol, actionsCol);
+                                                  partitionsCol, leadersCol, diskUsageCol);
             brokersTableView.setFixedCellSize(60);
             // Set max height based on number of items (header + rows)
             brokersTableView.prefHeightProperty().bind(
@@ -1442,7 +1388,7 @@ public class MainController implements Initializable {
                 metricsGrid.getColumnConstraints().add(col);
             }
             
-            // Container for table without header row
+            // Container for table with header
             VBox tableContainer = new VBox(0);
             tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
                                   "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
@@ -1450,7 +1396,8 @@ public class MainController implements Initializable {
             
             topicsTableView = new TableView<>();
             topicsTableView.setItems(topicList);
-            topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+            topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+            topicsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
             topicsTableView.setFixedCellSize(60);
             
             // Bind table height to item count
@@ -1530,9 +1477,10 @@ public class MainController implements Initializable {
                                          "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
                     });
                     deleteBtn.setOnAction(e -> {
+                        // Get the topic from this specific row, not the selection model
                         TopicInfo topic = getTableView().getItems().get(getIndex());
                         if (topic != null) {
-                            handleDeleteTopic();
+                            handleDeleteTopic(topic);
                         }
                     });
                 }
@@ -2263,22 +2211,21 @@ public class MainController implements Initializable {
             }
         }
 
-        private void handleDeleteTopic() {
-            TopicInfo selectedTopic = topicsTableView.getSelectionModel().getSelectedItem();
-            if (selectedTopic == null) {
+        private void handleDeleteTopic(TopicInfo topicToDelete) {
+            if (topicToDelete == null) {
                 mainController.showError(I18nUtil.get(I18nKeys.COMMON_ERROR), I18nUtil.get(I18nKeys.TOPIC_DELETE_NO_SELECTION));
                 return;
             }
             
             Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
             confirmAlert.setTitle(I18nUtil.get(I18nKeys.TOPIC_DELETE_TITLE));
-            confirmAlert.setContentText(I18nUtil.get(I18nKeys.TOPIC_DELETE_CONFIRM, selectedTopic.getName()));
+            confirmAlert.setContentText(I18nUtil.get(I18nKeys.TOPIC_DELETE_CONFIRM, topicToDelete.getName()));
             confirmAlert.initOwner(mainController.stage);
             mainController.centerDialogOnStage(confirmAlert);
             
             Optional<ButtonType> result = confirmAlert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                boolean success = TopicService.getInstance().deleteTopic(cluster.getId(), selectedTopic.getName());
+                boolean success = TopicService.getInstance().deleteTopic(cluster.getId(), topicToDelete.getName());
                 
                 if (success) {
                     mainController.showInfo(I18nUtil.get(I18nKeys.COMMON_SUCCESS), I18nUtil.get(I18nKeys.TOPIC_DELETE_SUCCESS));
