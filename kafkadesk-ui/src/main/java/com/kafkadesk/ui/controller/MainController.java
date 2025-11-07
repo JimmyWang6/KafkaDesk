@@ -801,7 +801,10 @@ public class MainController implements Initializable {
                         setText(null);
                     } else {
                         Label badge = new Label(String.valueOf(item));
-                        badge.getStyleClass().add("broker-id");
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                     "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: 700; " +
+                                     "-fx-min-width: 32px; -fx-min-height: 32px; -fx-max-width: 32px; -fx-max-height: 32px; " +
+                                     "-fx-alignment: center; -fx-background-radius: 8; -fx-border-radius: 8;");
                         setGraphic(badge);
                         setText(null);
                     }
@@ -1016,6 +1019,27 @@ public class MainController implements Initializable {
             clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #5a6c7d; -fx-font-weight: 500;");
             
             header.getChildren().addAll(titleLabel, statusContainer, spacer, clusterNameLabel);
+            return header;
+        }
+        
+        private HBox createSimpleHeader(String title) {
+            HBox header = new HBox(15);
+            header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            header.setStyle("-fx-background-color: white; -fx-padding: 20 30 20 30; " +
+                          "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Title label
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            
+            // Cluster name label
+            Label clusterNameLabel = new Label(cluster.getName());
+            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #5a6c7d; -fx-font-weight: 500;");
+            
+            header.getChildren().addAll(titleLabel, spacer, clusterNameLabel);
             return header;
         }
         
@@ -1338,62 +1362,170 @@ public class MainController implements Initializable {
             VBox mainContainer = new VBox(0);
             mainContainer.setStyle("-fx-background-color: #ffffff;");
             
-            // Header with cluster name and connection status
-            HBox header = createContentHeader("Topics");
+            // Header without Connected badge - just title and cluster name
+            HBox header = createSimpleHeader("Topic Management");
             
             // Content area
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: #f8fafc;");
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
             
-            // Container for table with header
+            // Metrics cards - 4 cards for topics
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards with mock data
+            VBox topicsCard = createMetricCard("📄", "Total Topics", new Label("47"));
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));
+            VBox messagesCard = createMetricCard("📨", "Total Messages", new Label("2.4M"));
+            VBox sizeCard = createMetricCard("💾", "Total Size", new Label("143 GB"));
+            
+            // Add cards to grid - 2x2 layout
+            metricsGrid.add(topicsCard, 0, 0);
+            metricsGrid.add(partitionsCard, 1, 0);
+            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(sizeCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 2; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(50);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Action buttons bar at the top of table
+            HBox actionBar = new HBox(12);
+            actionBar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            actionBar.setStyle("-fx-padding: 0 0 15 0;");
+            
+            Button btnRefresh = new Button("⟳ Refresh");
+            btnRefresh.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                              "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                              "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                              "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 4, 0, 0, 2);");
+            btnRefresh.setOnAction(e -> refresh());
+            
+            Button btnCreateTopic = new Button("➕ Create Topic");
+            btnCreateTopic.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                   "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                                   "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                                   "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 4, 0, 0, 2);");
+            btnCreateTopic.setOnAction(e -> handleCreateTopic());
+            
+            actionBar.getChildren().addAll(btnRefresh, btnCreateTopic);
+            
+            // Container for table without header row
             VBox tableContainer = new VBox(0);
             tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
                                   "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
                                   "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
-            VBox.setMargin(tableContainer, new Insets(30, 30, 30, 30));
-            
-            // Table header with action buttons
-            HBox tableHeader = new HBox(8);
-            tableHeader.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
-            
-            Label tableTitle = new Label("📊 Topics");
-            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
-            HBox.setHgrow(tableTitle, javafx.scene.layout.Priority.ALWAYS);
-            
-            Button btnCreateTopic = new Button("➕");
-            btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
-            btnCreateTopic.getStyleClass().add("toolbar-button");
-            btnCreateTopic.setOnAction(e -> handleCreateTopic());
-            
-            Button btnDeleteTopic = new Button("🗑");
-            btnDeleteTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_DELETE)));
-            btnDeleteTopic.getStyleClass().add("toolbar-button");
-            btnDeleteTopic.setOnAction(e -> handleDeleteTopic());
-            
-            tableHeader.getChildren().addAll(tableTitle, btnCreateTopic, btnDeleteTopic);
             
             topicsTableView = new TableView<>();
             topicsTableView.setItems(topicList);
-            topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+            topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+            topicsTableView.setFixedCellSize(60);
+            
+            // Bind table height to item count
+            topicsTableView.prefHeightProperty().bind(
+                topicsTableView.fixedCellSizeProperty()
+                    .multiply(javafx.beans.binding.Bindings.size(topicsTableView.getItems()).add(1.5))
+            );
             
             TableColumn<TopicInfo, String> nameCol = new TableColumn<>("Topic Name");
             nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
+            nameCol.setCellFactory(col -> new TableCell<TopicInfo, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: 600; -fx-text-fill: #1a202c;");
+                    }
+                }
+            });
+            nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.30));
             
             TableColumn<TopicInfo, Integer> partitionsCol = new TableColumn<>("Partitions");
             partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
-            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
+            partitionsCol.setCellFactory(col -> new TableCell<TopicInfo, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: 700;");
+                    }
+                }
+            });
+            partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.12));
             
             TableColumn<TopicInfo, Integer> replicationCol = new TableColumn<>("Replication");
             replicationCol.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
-            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
+            replicationCol.setCellFactory(col -> new TableCell<TopicInfo, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: 700;");
+                    }
+                }
+            });
+            replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.12));
             
-            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention Time (hours)");
+            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention (hrs)");
             retentionCol.setCellValueFactory(new PropertyValueFactory<>("retentionTime"));
-            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
+            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
-            topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol, retentionCol);
+            // Actions column with delete button
+            TableColumn<TopicInfo, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<TopicInfo, Void>() {
+                private final Button deleteBtn = new Button("🗑");
+                {
+                    deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                     "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    deleteBtn.setOnMouseEntered(e -> {
+                        deleteBtn.setStyle("-fx-background-color: #fee; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                    });
+                    deleteBtn.setOnMouseExited(e -> {
+                        deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    });
+                    deleteBtn.setOnAction(e -> {
+                        TopicInfo topic = getTableView().getItems().get(getIndex());
+                        if (topic != null) {
+                            handleDeleteTopic();
+                        }
+                    });
+                }
+                
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actionBox = new HBox(5);
+                        actionBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        actionBox.getChildren().add(deleteBtn);
+                        setGraphic(actionBox);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.10));
+            
+            topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol, retentionCol, actionsCol);
             
             // Double-click to show topic details
             topicsTableView.setOnMouseClicked(event -> {
@@ -1405,12 +1537,9 @@ public class MainController implements Initializable {
                 }
             });
             
-            VBox.setVgrow(topicsTableView, javafx.scene.layout.Priority.ALWAYS);
+            tableContainer.getChildren().add(topicsTableView);
             
-            tableContainer.getChildren().addAll(tableHeader, topicsTableView);
-            vbox.getChildren().add(tableContainer);
-            VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
-            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
+            vbox.getChildren().addAll(metricsGrid, actionBar, tableContainer);
             
             mainContainer.getChildren().addAll(header, vbox);
             return mainContainer;
