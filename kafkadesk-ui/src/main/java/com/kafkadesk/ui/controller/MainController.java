@@ -28,6 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -719,48 +720,112 @@ public class MainController implements Initializable {
         }
 
         private Node createOverviewContent() {
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white; -fx-padding: 20;");
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
             
-            GridPane grid = new GridPane();
-            grid.setHgap(15);
-            grid.setVgap(12);
-            grid.setStyle("-fx-background-color: white;");
+            // Header with cluster name
+            HBox header = new HBox(12);
+            header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            header.setStyle("-fx-padding: 0 0 20 0;");
             
-            overviewClusterName = new Label(cluster.getName());
-            overviewBootstrapServers = new Label(cluster.getBootstrapServers());
-            overviewBrokerCount = new Label("Loading...");
-            overviewTopicCount = new Label("Loading...");
+            Label titleLabel = new Label("Cluster Overview");
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
             
-            Label lblClusterName = new Label("Cluster Name:");
-            lblClusterName.setStyle("-fx-font-weight: bold;");
-            Label lblBootstrap = new Label("Bootstrap Servers:");
-            lblBootstrap.setStyle("-fx-font-weight: bold;");
-            Label lblBrokerCount = new Label("Broker Count:");
-            lblBrokerCount.setStyle("-fx-font-weight: bold;");
-            Label lblTopicCount = new Label("Topic Count:");
-            lblTopicCount.setStyle("-fx-font-weight: bold;");
+            Label connectionBadge = new Label("● Connected");
+            connectionBadge.setStyle("-fx-background-color: linear-gradient(to right, #10b981 0%, #059669 100%); " +
+                                   "-fx-text-fill: white; -fx-padding: 6 14 6 14; -fx-background-radius: 20; " +
+                                   "-fx-font-size: 12px; -fx-font-weight: 600;");
             
-            grid.add(lblClusterName, 0, 0);
-            grid.add(overviewClusterName, 1, 0);
-            grid.add(lblBootstrap, 0, 1);
-            grid.add(overviewBootstrapServers, 1, 1);
-            grid.add(lblBrokerCount, 0, 2);
-            grid.add(overviewBrokerCount, 1, 2);
-            grid.add(lblTopicCount, 0, 3);
-            grid.add(overviewTopicCount, 1, 3);
+            header.getChildren().addAll(titleLabel, connectionBadge);
             
-            vbox.getChildren().add(grid);
+            // Metrics cards
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards
+            VBox brokersCard = createMetricCard("🖥️", "Total Brokers", overviewBrokerCount);
+            VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
+            VBox clusterCard = createMetricCard("⚡", "Cluster", new Label(cluster.getName()));
+            VBox serverCard = createMetricCard("🌐", "Bootstrap Server", new Label(cluster.getBootstrapServers()));
+            
+            metricsGrid.add(brokersCard, 0, 0);
+            metricsGrid.add(topicsCard, 1, 0);
+            metricsGrid.add(clusterCard, 2, 0);
+            metricsGrid.add(serverCard, 0, 1);
+            GridPane.setColumnSpan(serverCard, 2);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(33.33);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            vbox.getChildren().addAll(header, metricsGrid);
             return vbox;
+        }
+        
+        private VBox createMetricCard(String icon, String label, Label valueLabel) {
+            VBox card = new VBox(10);
+            card.setStyle("-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 12; " +
+                         "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            card.setMinHeight(120);
+            
+            // Icon
+            Label iconLabel = new Label(icon);
+            iconLabel.setStyle("-fx-font-size: 24px;");
+            
+            // Label
+            Label metricLabel = new Label(label);
+            metricLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-weight: 600; " +
+                                "-fx-text-transform: uppercase; -fx-letter-spacing: 0.5;");
+            
+            // Value
+            valueLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: 700; " +
+                              "-fx-text-fill: #667eea;");
+            
+            card.getChildren().addAll(iconLabel, metricLabel, valueLabel);
+            
+            // Hover effect
+            card.setOnMouseEntered(e -> {
+                card.setStyle("-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 12; " +
+                             "-fx-border-color: #667eea; -fx-border-width: 1; -fx-border-radius: 12; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 8, 0, 0, 4); " +
+                             "-fx-translate-y: -4;");
+            });
+            card.setOnMouseExited(e -> {
+                card.setStyle("-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 12; " +
+                             "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            });
+            
+            return card;
         }
 
         private Node createBrokersContent() {
             VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white;");
+            vbox.setStyle("-fx-background-color: #f8fafc;");
+            
+            // Container for table with header
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            VBox.setMargin(tableContainer, new Insets(30, 30, 30, 30));
+            
+            // Table header
+            HBox tableHeader = new HBox();
+            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
+            Label tableTitle = new Label("🖥️ Active Brokers");
+            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            tableHeader.getChildren().add(tableTitle);
             
             brokersTableView = new TableView<>();
             brokersTableView.setItems(brokerList);
-            brokersTableView.setStyle("-fx-background-color: white;");
+            brokersTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
             brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
             
             TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
@@ -790,18 +855,32 @@ public class MainController implements Initializable {
             brokersTableView.getColumns().addAll(hostCol, portCol, idCol, diskUsageCol, leadersCol, replicasCol);
             VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
             
-            vbox.getChildren().add(brokersTableView);
+            tableContainer.getChildren().addAll(tableHeader, brokersTableView);
+            vbox.getChildren().add(tableContainer);
+            VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
+            
             return vbox;
         }
 
         private Node createTopicsContent() {
             VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white;");
+            vbox.setStyle("-fx-background-color: #f8fafc;");
             
-            // Toolbar with action buttons
-            HBox toolbar = new HBox(8);
-            toolbar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-            toolbar.setStyle("-fx-padding: 8; -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;");
+            // Container for table with header
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            VBox.setMargin(tableContainer, new Insets(30, 30, 30, 30));
+            
+            // Table header with action buttons
+            HBox tableHeader = new HBox(8);
+            tableHeader.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
+            
+            Label tableTitle = new Label("📊 Topics");
+            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            HBox.setHgrow(tableTitle, javafx.scene.layout.Priority.ALWAYS);
             
             Button btnCreateTopic = new Button("➕");
             btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
@@ -813,11 +892,11 @@ public class MainController implements Initializable {
             btnDeleteTopic.getStyleClass().add("toolbar-button");
             btnDeleteTopic.setOnAction(e -> handleDeleteTopic());
             
-            toolbar.getChildren().addAll(btnCreateTopic, btnDeleteTopic);
+            tableHeader.getChildren().addAll(tableTitle, btnCreateTopic, btnDeleteTopic);
             
             topicsTableView = new TableView<>();
             topicsTableView.setItems(topicList);
-            topicsTableView.setStyle("-fx-background-color: white;");
+            topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
             
             TableColumn<TopicInfo, String> nameCol = new TableColumn<>("Topic Name");
             nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -848,7 +927,10 @@ public class MainController implements Initializable {
             });
             
             VBox.setVgrow(topicsTableView, javafx.scene.layout.Priority.ALWAYS);
-            vbox.getChildren().addAll(toolbar, topicsTableView);
+            
+            tableContainer.getChildren().addAll(tableHeader, topicsTableView);
+            vbox.getChildren().add(tableContainer);
+            VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
             
             return vbox;
         }
