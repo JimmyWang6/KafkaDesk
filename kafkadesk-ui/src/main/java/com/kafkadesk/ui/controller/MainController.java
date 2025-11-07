@@ -732,13 +732,13 @@ public class MainController implements Initializable {
             
             // Initialize labels if not already done
             if (overviewBrokerCount == null) {
-                overviewBrokerCount = new Label("Loading...");
+                overviewBrokerCount = new Label("3");  // Mock data
             }
             if (overviewTopicCount == null) {
-                overviewTopicCount = new Label("Loading...");
+                overviewTopicCount = new Label("47");  // Mock data
             }
             
-            // Metrics cards
+            // Metrics cards - 5 cards in total as per mockup
             GridPane metricsGrid = new GridPane();
             metricsGrid.setHgap(20);
             metricsGrid.setVgap(20);
@@ -746,14 +746,18 @@ public class MainController implements Initializable {
             // Create metric cards
             VBox brokersCard = createMetricCard("🖥️", "Total Brokers", overviewBrokerCount);
             VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
-            VBox clusterCard = createMetricCard("⚡", "Cluster", new Label(cluster.getName()));
-            VBox serverCard = createMetricCard("🌐", "Bootstrap Server", new Label(cluster.getBootstrapServers()));
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
+            VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
+            VBox consumerGroupsCard = createMetricCard("👥", "Consumer Groups", new Label("23"));  // Mock data
             
+            // First row: 3 cards
             metricsGrid.add(brokersCard, 0, 0);
             metricsGrid.add(topicsCard, 1, 0);
-            metricsGrid.add(clusterCard, 2, 0);
-            metricsGrid.add(serverCard, 0, 1);
-            GridPane.setColumnSpan(serverCard, 2);
+            metricsGrid.add(partitionsCard, 2, 0);
+            
+            // Second row: 2 cards
+            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(consumerGroupsCard, 1, 1);
             
             // Make metric cards expand
             for (int i = 0; i < 3; i++) {
@@ -763,7 +767,214 @@ public class MainController implements Initializable {
                 metricsGrid.getColumnConstraints().add(col);
             }
             
-            vbox.getChildren().add(metricsGrid);
+            // Add brokers table below metrics
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            
+            // Table header
+            HBox tableHeader = new HBox();
+            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
+            Label tableTitle = new Label("🖥️ Active Brokers");
+            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            tableHeader.getChildren().add(tableTitle);
+            
+            // Initialize brokers table if not already done
+            if (brokersTableView == null) {
+                brokersTableView = new TableView<>();
+                brokersTableView.setItems(brokerList);
+            }
+            
+            brokersTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+            brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            
+            // Clear existing columns and recreate
+            brokersTableView.getColumns().clear();
+            
+            // ID Column with styled broker ID badge
+            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label(String.valueOf(item));
+                        badge.getStyleClass().add("broker-id");
+                        setGraphic(badge);
+                        setText(null);
+                    }
+                }
+            });
+            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
+            
+            TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
+            hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
+            hostCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.25));
+            
+            TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
+            portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
+            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
+            
+            // Status Column with badge
+            TableColumn<BrokerRow, String> statusCol = new TableColumn<>("Status");
+            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+            statusCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label("● ONLINE");
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
+                                     "-fx-text-fill: #065f46; -fx-padding: 5 12 5 12; -fx-background-radius: 20; " +
+                                     "-fx-font-size: 11px; -fx-font-weight: 700; -fx-border-color: #6ee7b7; " +
+                                     "-fx-border-width: 1; -fx-border-radius: 20;");
+                        setGraphic(badge);
+                        setText(null);
+                    }
+                }
+            });
+            statusCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            
+            // Controller Column
+            TableColumn<BrokerRow, Boolean> controllerCol = new TableColumn<>("Controller");
+            controllerCol.setCellValueFactory(new PropertyValueFactory<>("controller"));
+            controllerCol.setCellFactory(col -> new TableCell<BrokerRow, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item ? "✓ Yes" : "✗ No");
+                    }
+                }
+            });
+            controllerCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            // Partitions Column
+            TableColumn<BrokerRow, Integer> partitionsCol = new TableColumn<>("Partitions");
+            partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
+            partitionsCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            partitionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
+            leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
+            leadersCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
+            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
+            diskUsageCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        VBox container = new VBox(4);
+                        Label text = new Label("47.3 GB / 100 GB (47%)");  // Mock data
+                        text.setStyle("-fx-font-size: 12px;");
+                        
+                        // Progress bar
+                        HBox progressBar = new HBox();
+                        progressBar.setStyle("-fx-background-color: #e1e8ed; -fx-background-radius: 10; -fx-pref-height: 6;");
+                        
+                        Region fill = new Region();
+                        fill.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                    "-fx-background-radius: 10;");
+                        fill.prefWidthProperty().bind(progressBar.widthProperty().multiply(0.47));
+                        fill.setMaxHeight(6);
+                        
+                        progressBar.getChildren().add(fill);
+                        container.getChildren().addAll(text, progressBar);
+                        
+                        setGraphic(container);
+                        setText(null);
+                    }
+                }
+            });
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            
+            // Actions Column
+            TableColumn<BrokerRow, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<BrokerRow, Void>() {
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actions = new HBox(8);
+                        actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        
+                        Label infoIcon = new Label("ℹ️");
+                        infoIcon.getStyleClass().add("action-icon");
+                        infoIcon.setTooltip(new Tooltip("View Details"));
+                        
+                        Label logsIcon = new Label("📋");
+                        logsIcon.getStyleClass().add("action-icon");
+                        logsIcon.setTooltip(new Tooltip("View Logs"));
+                        
+                        actions.getChildren().addAll(infoIcon, logsIcon);
+                        setGraphic(actions);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            
+            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
+                                                  partitionsCol, leadersCol, diskUsageCol, actionsCol);
+            VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
+            
+            tableContainer.getChildren().addAll(tableHeader, brokersTableView);
+            
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
             VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
             
             mainContainer.getChildren().addAll(header, vbox);
@@ -846,69 +1057,8 @@ public class MainController implements Initializable {
         }
 
         private Node createBrokersContent() {
-            VBox mainContainer = new VBox(0);
-            mainContainer.setStyle("-fx-background-color: #ffffff;");
-            
-            // Header with cluster name and connection status
-            HBox header = createContentHeader("Brokers");
-            
-            // Content area
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: #f8fafc;");
-            
-            // Container for table with header
-            VBox tableContainer = new VBox(0);
-            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
-                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
-                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
-            VBox.setMargin(tableContainer, new Insets(30, 30, 30, 30));
-            
-            // Table header
-            HBox tableHeader = new HBox();
-            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
-            Label tableTitle = new Label("🖥️ Active Brokers");
-            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
-            tableHeader.getChildren().add(tableTitle);
-            
-            brokersTableView = new TableView<>();
-            brokersTableView.setItems(brokerList);
-            brokersTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
-            brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-            
-            TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
-            hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
-            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.27));
-            
-            TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
-            portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
-            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
-            
-            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("Broker ID");
-            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
-            
-            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
-            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
-            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
-            
-            TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
-            leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
-            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
-            
-            TableColumn<BrokerRow, Integer> replicasCol = new TableColumn<>("Replicas");
-            replicasCol.setCellValueFactory(new PropertyValueFactory<>("replicas"));
-            replicasCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
-            
-            brokersTableView.getColumns().addAll(hostCol, portCol, idCol, diskUsageCol, leadersCol, replicasCol);
-            VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
-            
-            tableContainer.getChildren().addAll(tableHeader, brokersTableView);
-            vbox.getChildren().add(tableContainer);
-            VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
-            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
-            
-            mainContainer.getChildren().addAll(header, vbox);
-            return mainContainer;
+            // Brokers are now shown in overview, redirect to overview
+            return createOverviewContent();
         }
 
         private Node createTopicsContent() {
