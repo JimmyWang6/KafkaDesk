@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KafkaDesk - Topic & Consumer Views</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .window {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            color: white;
+        }
+
+        .title {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-switcher {
+            display: flex;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .view-btn {
+            padding: 6px 16px;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .view-btn.active {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Menu Bar */
+        .menu-bar {
+            height: 45px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 25px;
+            border-bottom: 1px solid #e1e8ed;
+            font-size: 14px;
+        }
+
+        .menu-item {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            color: #5a6c7d;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: #f0f3f7;
+            color: #667eea;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #f8fafc;
+            border-right: 1px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin: 15px 0;
+        }
+
+        .section-header {
+            padding: 8px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #8492a6;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+
+        .tree-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #4a5568;
+            border-left: 3px solid transparent;
+        }
+
+        .tree-item:hover {
+            background: #eef2f7;
+            border-left-color: #667eea;
+        }
+
+        .tree-item.active {
+            background: linear-gradient(90deg, #e0e7ff 0%, #f0f3ff 100%);
+            color: #667eea;
+            font-weight: 600;
+            border-left-color: #667eea;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        .content-header {
+            padding: 20px 30px;
+            background: #ffffff;
+            border-bottom: 2px solid #f0f3f7;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #667eea;
+            border: 2px solid #667eea;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f3ff;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .search-bar {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8492a6;
+        }
+
+        /* Content Body */
+        .content-body {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        /* View Container */
+        .view-container {
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e1e8ed;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: #f8fafc;
+        }
+
+        .data-table th {
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .data-table td {
+            padding: 16px 24px;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f3f7;
+            color: #2d3748;
+        }
+
+        .data-table tbody tr {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8fafc;
+            transform: translateX(2px);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-green {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .badge-blue {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .badge-orange {
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+            color: #9a3412;
+            border: 1px solid #fb923c;
+        }
+
+        .badge-red {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+
+        .badge-purple {
+            background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+            color: #6b21a8;
+            border: 1px solid #c084fc;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e1e8ed;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Partition Viewer */
+        .partition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .partition-card {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e1e8ed;
+            transition: all 0.3s;
+        }
+
+        .partition-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .partition-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .partition-id {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .leader-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .partition-info {
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .partition-info div {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .partition-info strong {
+            color: #1a202c;
+        }
+
+        /* Consumer Group Details */
+        .group-details {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e1e8ed;
+            margin-bottom: 25px;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f3f7;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            width: 200px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 13px;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        /* Lag Indicator */
+        .lag-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lag-bar {
+            width: 80px;
+            height: 6px;
+            background: #e1e8ed;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .lag-fill {
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .lag-low { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+        .lag-medium { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+        .lag-high { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+
+        /* Action Icons */
+        .action-icons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-icon {
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .action-icon:hover {
+            background: #f0f3f7;
+            transform: scale(1.1);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 12px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .status-left {
+            display: flex;
+            gap: 25px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <div class="title">
+                <span>⚡</span>
+                <span>KafkaDesk - Production-US-East</span>
+            </div>
+            <div class="view-switcher">
+                <button class="view-btn active" onclick="switchView('topics')">📊 Topics</button>
+                <button class="view-btn" onclick="switchView('consumers')">👥 Consumers</button>
+            </div>
+            <div class="window-controls">
+                <div class="window-btn"></div>
+                <div class="window-btn"></div>
+                <div class="window-btn"></div>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-item">📁 File</div>
+            <div class="menu-item">✏️ Edit</div>
+            <div class="menu-item">👁️ View</div>
+            <div class="menu-item">🔧 Tools</div>
+            <div class="menu-item">❓ Help</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="section-header">Topics</div>
+                    <div class="tree-item active">
+                        <span>📄</span>
+                        <span>customer-orders</span>
+                    </div>
+                    <div class="tree-item">
+                        <span>📄</span>
+                        <span>payment-events</span>
+                    </div>
+                    <div class="tree-item">
+                        <span>📄</span>
+                        <span>user-activities</span>
+                    </div>
+                    <div class="tree-item">
+                        <span>📄</span>
+                        <span>inventory-updates</span>
+                    </div>
+                    <div class="tree-item">
+                        <span>📄</span>
+                        <span>notification-queue</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-header">Consumer Groups</div>
+                    <div class="tree-item">
+                        <span>👥</span>
+                        <span>order-processor-grp</span>
+                    </div>
+                    <div class="tree-item">
+                        <span>👥</span>
+                        <span>analytics-consumer</span>
+                    </div>
+                    <div class="tree-item">
+                        <span>👥</span>
+                        <span>backup-service</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- TOPICS VIEW -->
+                <div id="topicsView" class="view-container active">
+                    <div class="content-header">
+                        <div class="header-top">
+                            <div class="header-title">📊 Topics Management</div>
+                            <div class="header-actions">
+                                <button class="btn btn-secondary">⟳ Refresh</button>
+                                <button class="btn">➕ Create Topic</button>
+                            </div>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Search topics...">
+                            <span class="search-icon">🔍</span>
+                        </div>
+                    </div>
+
+                    <div class="content-body">
+                        <!-- Stats -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Total Topics</div>
+                                <div class="stat-value">47</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total Partitions</div>
+                                <div class="stat-value">184</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total Messages</div>
+                                <div class="stat-value">2.4M</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total Size</div>
+                                <div class="stat-value">143 GB</div>
+                            </div>
+                        </div>
+
+                        <!-- Topics Table -->
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Topic Name</th>
+                                        <th>Partitions</th>
+                                        <th>Replication</th>
+                                        <th>Messages</th>
+                                        <th>Size</th>
+                                        <th>Retention</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="showTopicDetails('customer-orders')">
+                                        <td><strong>customer-orders</strong></td>
+                                        <td>12</td>
+                                        <td>3</td>
+                                        <td>847,234</td>
+                                        <td>42.3 GB</td>
+                                        <td>7 days</td>
+                                        <td><span class="badge badge-green">● HEALTHY</span></td>
+                                        <td>
+                                            <div class="action-icons">
+                                                <span class="action-icon" title="View Details">ℹ️</span>
+                                                <span class="action-icon" title="Produce Message">✉️</span>
+                                                <span class="action-icon" title="Consume Messages">📥</span>
+                                                <span class="action-icon" title="Edit Config">⚙️</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>payment-events</strong></td>
+                                        <td>8</td>
+                                        <td>3</td>
+                                        <td>523,891</td>
+                                        <td>28.7 GB</td>
+                                        <td>14 days</td>
+                                        <td><span class="badge badge-green">● HEALTHY</span></td>
+                                        <td>
+                                            <div class="action-icons">
+                                                <span class="action-icon">ℹ️</span>
+                                                <span class="action-icon">✉️</span>
+                                                <span class="action-icon">📥</span>
+                                                <span class="action-icon">⚙️</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>user-activities</strong></td>
+                                        <td>16</td>
+                                        <td>2</td>
+                                        <td>1,234,567</td>
+                                        <td>65.2 GB</td>
+                                        <td>3 days</td>
+                                        <td><span class="badge badge-orange">⚠ UNDER-REPLICATED</span></td>
+                                        <td>
+                                            <div class="action-icons">
+                                                <span class="action-icon">ℹ️</span>
+                                                <span class="action-icon">✉️</span>
+                                                <span class="action-icon">📥</span>
+                                                <span class="action-icon">⚙️</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>inventory-updates</strong></td>
+                                        <td>6</td>
+                                        <td>3</td>
+                                        <td>98,456</td>
+                                        <td>5.8 GB</td>
+                                        <td>30 days</td>
+                                        <td><span class="badge badge-green">● HEALTHY</span></td>
+                                        <td>
+                                            <div class="action-icons">
+                                                <span class="action-icon">ℹ️</span>
+                                                <span class="action-icon">✉️</span>
+                                                <span class="action-icon">📥</span>
+                                                <span class="action-icon">⚙️</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>notification-queue</strong></td>
+                                        <td>4</td>
+                                        <td>3</td>
+                                        <td>345,678</td>
+                                        <td>12.1 GB</td>
+                                        <td>1 day</td>
+                                        <td><span class="badge badge-green">● HEALTHY</span></td>
+                                        <td>
+                                            <div class="action-icons">
+                                                <span class="action-icon">ℹ️</span>
+                                                <span class="action-icon">✉️</span>
+                                                <span class="action-icon">📥</span>
+                                                <span class="action-icon">⚙️</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Partition Details (shown when clicking a topic) -->
+                        <div id="partitionDetails" style="display: none; margin-top: 30px;">
+                            <h3 style="margin-bottom: 20px; font-size: 18px; color: #1a202c;">
+                                📊 Partition Details - customer-orders
+                            </h3>
+                            <div class="partition-grid">
+                                <div class="partition-card">
+                                    <div class="partition-header">
+                                        <div class="partition-id">Partition 0</div>
+                                        <div class="leader-badge">LEADER</div>
+                                    </div>
+                                    <div class="partition-info">
+                                        <div><span>Leader:</span> <strong>Broker 0</strong></div>
+                                        <div><span>Replicas:</span> <strong>0, 1, 2</strong></div>
+                                        <div><span>ISR:</span> <strong>0, 1, 2</strong></div>
+                                        <div><span>Messages:</span> <strong>70,603</strong></div>
+                                        <div><span>Size:</span> <strong>3.5 GB</strong></div>
+                                    </div>
+                                </div>
+                                <div class="partition-card">
+                                    <div class="partition-header">
+                                        <div class="partition-id">Partition 1</div>
+                                    </div>
+                                    <div class="partition-info">
+                                        <div><span>Leader:</span> <strong>Broker 1</strong></div>
+                                        <div><span>Replicas:</span> <strong>1, 2, 0</strong></div>
+                                        <div><span>ISR:</span> <strong>1, 2, 0</strong></div>
+                                        <div><span>Messages:</span> <strong>70,519</strong></div>
+                                        <div><span>Size:</span> <strong>3.5 GB</strong></div>
+                                    </div>
+                                </div>
+                                <div class="partition-card">
+                                    <div class="partition-header">
+                                        <div class="partition-id">Partition 2</div>
+                                        <div class="leader-badge">LEADER</div>
+                                    </div>
+                                    <div class="partition-info">
+                                        <div><span>Leader:</span> <strong>Broker 2</strong></div>
+                                        <div><span>Replicas:</span> <strong>2, 0, 1</strong></div>
+                                        <div><span>ISR:</span> <strong>2, 0, 1</strong></div>
+                                        <div><span>Messages:</span> <strong>70,686</strong></div>
+                                        <div><span>Size:</span> <strong>3.5 GB</strong></div>
+                                    </div>
+                                </div>
+                                <div class="partition-card">
+                                    <div class="partition-header">
+                                        <div class="partition-id">Partition 3</div>
+                                    </div>
+                                    <div class="partition-info">
+                                        <div><span>Leader:</span> <strong>Broker 0</strong></div>
+                                        <div><span>Replicas:</span> <strong>0, 2, 1</strong></div>
+                                        <div><span>ISR:</span> <strong>0, 2, 1</strong></div>
+                                        <div><span>Messages:</span> <strong>70,426</strong></div>
+                                        <div><span>Size:</span> <strong>3.5 GB</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONSUMERS VIEW -->
+                <div id="consumersView" class="view-container">
+                    <div class="content-header">
+                        <div class="header-top">
+                            <div class="header-title">👥 Consumer Groups</div>
+                            <div class="header-actions">
+                                <button class="btn btn-secondary">⟳ Refresh</button>
+                                <button class="btn btn-danger">🗑️ Delete Group</button>
+                            </div>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Search consumer groups...">
+                            <span class="search-icon">🔍</span>
+                        </div>
+                    </div>
+
+                    <div class="content-body">
+                        <!-- Consumer Groups Table -->
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                

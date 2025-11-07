@@ -28,6 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,12 +47,7 @@ public class MainController implements Initializable {
     @FXML private Menu menuFile, menuView, menuTools, menuHelp;
     @FXML private MenuItem menuItemAddCluster, menuItemExit, menuItemRefresh, menuItemSettings, menuItemAbout;
     
-    // Toolbar components (now Labels for better icon display)
-    @FXML private Label btnAddCluster, btnRefresh;
-    
     // Cluster tree (left side)
-    // @FXML private Label lblClusterList;  // Removed - buttons now replace the label
-    @FXML private TextField searchField;
     @FXML private TreeView<String> clusterTreeView;
 
     // Content area (right side)
@@ -106,18 +102,6 @@ public class MainController implements Initializable {
         
         menuHelp.setText(I18nUtil.get(I18nKeys.MENU_HELP));
         menuItemAbout.setText(I18nUtil.get(I18nKeys.MENU_HELP_ABOUT));
-
-        // Toolbar with icons only - set up click handlers
-        btnAddCluster.setText("➕");
-        btnAddCluster.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_ADD_CLUSTER)));
-        btnAddCluster.setOnMouseClicked(event -> handleAddCluster());
-        
-        btnRefresh.setText("🔄");
-        btnRefresh.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOOLBAR_REFRESH)));
-        btnRefresh.setOnMouseClicked(event -> handleRefreshTopics());
-
-        // Cluster
-        // lblClusterList.setText(I18nUtil.get(I18nKeys.CLUSTER_LIST));  // Removed - no longer needed
     }
 
     /**
@@ -142,9 +126,6 @@ public class MainController implements Initializable {
 
         // Add context menu for cluster items
         setupContextMenu();
-        
-        // Setup search filter
-        setupSearchFilter();
 
         // Handle tree item selection - single click selects, double click opens
         clusterTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -172,56 +153,6 @@ public class MainController implements Initializable {
             }
         });
     }
-    
-    /**
-     * Setup search filter for cluster list
-     */
-    private void setupSearchFilter() {
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filterClusterTree(newValue);
-        });
-    }
-    
-    /**
-     * Filter cluster tree based on search text
-     */
-    private void filterClusterTree(String searchText) {
-        if (searchText == null || searchText.trim().isEmpty()) {
-            // Show all clusters
-            for (TreeItem<String> clusterItem : clusterTreeItems.values()) {
-                clusterItem.setExpanded(false);
-                if (!rootTreeItem.getChildren().contains(clusterItem)) {
-                    rootTreeItem.getChildren().add(clusterItem);
-                }
-            }
-        } else {
-            String lowerSearch = searchText.toLowerCase().trim();
-            
-            // Filter clusters based on name or IP
-            List<TreeItem<String>> matchingClusters = new ArrayList<>();
-            for (Map.Entry<String, TreeItem<String>> entry : clusterTreeItems.entrySet()) {
-                TreeItemData data = treeItemDataMap.get(entry.getValue());
-                if (data != null && data.getClusterConfig() != null) {
-                    ClusterConfig config = data.getClusterConfig();
-                    String name = config.getName().toLowerCase();
-                    String servers = config.getBootstrapServers().toLowerCase();
-                    
-                    if (name.contains(lowerSearch) || servers.contains(lowerSearch)) {
-                        matchingClusters.add(entry.getValue());
-                    }
-                }
-            }
-            
-            // Update tree to show only matching clusters
-            rootTreeItem.getChildren().clear();
-            rootTreeItem.getChildren().addAll(matchingClusters);
-            
-            // Expand matching clusters to show sub-items
-            for (TreeItem<String> item : matchingClusters) {
-                item.setExpanded(true);
-            }
-        }
-    }
 
     private void addClusterToTree(TreeItem<String> rootItem, ClusterConfig cluster) {
         String displayName = cluster.getName();
@@ -230,10 +161,7 @@ public class MainController implements Initializable {
         treeItemDataMap.put(clusterItem, clusterData);
         clusterItem.setExpanded(false);
         
-        // Add sub-items for cluster functions
-        TreeItem<String> overviewItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_OVERVIEW));
-        treeItemDataMap.put(overviewItem, new TreeItemData(TYPE_OVERVIEW, cluster.getId(), cluster));
-        
+        // Add sub-items for cluster functions (removed Overview, Brokers now shows the combined view)
         TreeItem<String> brokersItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_BROKERS));
         treeItemDataMap.put(brokersItem, new TreeItemData(TYPE_BROKERS, cluster.getId(), cluster));
         
@@ -246,7 +174,7 @@ public class MainController implements Initializable {
         TreeItem<String> aclItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_ACL));
         treeItemDataMap.put(aclItem, new TreeItemData(TYPE_ACL, cluster.getId(), cluster));
         
-        clusterItem.getChildren().addAll(overviewItem, brokersItem, topicsItem, consumerGroupsItem, aclItem);
+        clusterItem.getChildren().addAll(brokersItem, topicsItem, consumerGroupsItem, aclItem);
         
         rootItem.getChildren().add(clusterItem);
         clusterTreeItems.put(cluster.getId(), clusterItem);
@@ -754,6 +682,8 @@ public class MainController implements Initializable {
         public Node getOverviewContent() {
             if (overviewContent == null) {
                 overviewContent = createOverviewContent();
+                // Load data immediately when overview is first accessed
+                loadOverviewData();
             }
             return overviewContent;
         }
@@ -787,125 +717,857 @@ public class MainController implements Initializable {
         }
 
         private Node createOverviewContent() {
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white; -fx-padding: 20;");
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
             
-            GridPane grid = new GridPane();
-            grid.setHgap(15);
-            grid.setVgap(12);
-            grid.setStyle("-fx-background-color: white;");
+            // Header with cluster name and connection status
+            HBox header = createContentHeader("Cluster Overview");
             
-            overviewClusterName = new Label(cluster.getName());
-            overviewBootstrapServers = new Label(cluster.getBootstrapServers());
-            overviewBrokerCount = new Label("Loading...");
-            overviewTopicCount = new Label("Loading...");
+            // Content area
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
             
-            Label lblClusterName = new Label("Cluster Name:");
-            lblClusterName.setStyle("-fx-font-weight: bold;");
-            Label lblBootstrap = new Label("Bootstrap Servers:");
-            lblBootstrap.setStyle("-fx-font-weight: bold;");
-            Label lblBrokerCount = new Label("Broker Count:");
-            lblBrokerCount.setStyle("-fx-font-weight: bold;");
-            Label lblTopicCount = new Label("Topic Count:");
-            lblTopicCount.setStyle("-fx-font-weight: bold;");
+            // Initialize labels if not already done
+            if (overviewBrokerCount == null) {
+                overviewBrokerCount = new Label("3");  // Mock data
+            }
+            if (overviewTopicCount == null) {
+                overviewTopicCount = new Label("47");  // Mock data
+            }
             
-            grid.add(lblClusterName, 0, 0);
-            grid.add(overviewClusterName, 1, 0);
-            grid.add(lblBootstrap, 0, 1);
-            grid.add(overviewBootstrapServers, 1, 1);
-            grid.add(lblBrokerCount, 0, 2);
-            grid.add(overviewBrokerCount, 1, 2);
-            grid.add(lblTopicCount, 0, 3);
-            grid.add(overviewTopicCount, 1, 3);
+            // Metrics cards - 5 cards in total as per mockup
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
             
-            vbox.getChildren().add(grid);
-            return vbox;
-        }
-
-        private Node createBrokersContent() {
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white;");
+            // Create metric cards
+            VBox brokersCard = createMetricCard("🖥", "Total Brokers", overviewBrokerCount);
+            VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
+            VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
+            VBox consumerGroupsCard = createMetricCard("👥", "Consumer Groups", new Label("23"));  // Mock data
             
-            brokersTableView = new TableView<>();
-            brokersTableView.setItems(brokerList);
-            brokersTableView.setStyle("-fx-background-color: white;");
+            // First row: 3 cards
+            metricsGrid.add(brokersCard, 0, 0);
+            metricsGrid.add(topicsCard, 1, 0);
+            metricsGrid.add(partitionsCard, 2, 0);
+            
+            // Second row: 2 cards
+            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(consumerGroupsCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(33.33);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Add brokers table below metrics
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            
+            // Table header
+            HBox tableHeader = new HBox();
+            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
+            Label tableTitle = new Label("🖥️ Active Brokers");
+            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            tableHeader.getChildren().add(tableTitle);
+            
+            // Initialize brokers table if not already done
+            if (brokersTableView == null) {
+                brokersTableView = new TableView<>();
+                brokersTableView.setItems(brokerList);
+            }
+            
+            brokersTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
             brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            
+            // Clear existing columns and recreate
+            brokersTableView.getColumns().clear();
+            
+            // ID Column with styled broker ID badge
+            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label(String.valueOf(item));
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                     "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: 700; " +
+                                     "-fx-min-width: 32px; -fx-min-height: 32px; -fx-max-width: 32px; -fx-max-height: 32px; " +
+                                     "-fx-alignment: center; -fx-background-radius: 8; -fx-border-radius: 8;");
+                        setGraphic(badge);
+                        setText(null);
+                    }
+                }
+            });
+            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
             
             TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
             hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
-            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.27));
+            hostCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.25));
             
             TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
             portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
-            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
             
-            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("Broker ID");
-            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            // Status Column with badge
+            TableColumn<BrokerRow, String> statusCol = new TableColumn<>("Status");
+            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+            statusCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label("● ONLINE");
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
+                                     "-fx-text-fill: #065f46; -fx-padding: 5 12 5 12; -fx-background-radius: 20; " +
+                                     "-fx-font-size: 11px; -fx-font-weight: 700; -fx-border-color: #6ee7b7; " +
+                                     "-fx-border-width: 1; -fx-border-radius: 20;");
+                        setGraphic(badge);
+                        setText(null);
+                    }
+                }
+            });
+            statusCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
             
-            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
-            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
-            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
+            // Controller Column
+            TableColumn<BrokerRow, Boolean> controllerCol = new TableColumn<>("Controller");
+            controllerCol.setCellValueFactory(new PropertyValueFactory<>("controller"));
+            controllerCol.setCellFactory(col -> new TableCell<BrokerRow, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item ? "✓ Yes" : "✗ No");
+                    }
+                }
+            });
+            controllerCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            // Partitions Column
+            TableColumn<BrokerRow, Integer> partitionsCol = new TableColumn<>("Partitions");
+            partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
+            partitionsCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            partitionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
             
             TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
             leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
-            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
+            leadersCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
             
-            TableColumn<BrokerRow, Integer> replicasCol = new TableColumn<>("Replicas");
-            replicasCol.setCellValueFactory(new PropertyValueFactory<>("replicas"));
-            replicasCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.16));
+            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
+            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
+            diskUsageCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        VBox container = new VBox(4);
+                        Label text = new Label("47.3 GB / 100 GB (47%)");  // Mock data
+                        text.setStyle("-fx-font-size: 12px;");
+                        
+                        // Progress bar
+                        HBox progressBar = new HBox();
+                        progressBar.setStyle("-fx-background-color: #e1e8ed; -fx-background-radius: 10; -fx-pref-height: 6;");
+                        
+                        Region fill = new Region();
+                        fill.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                    "-fx-background-radius: 10;");
+                        fill.prefWidthProperty().bind(progressBar.widthProperty().multiply(0.47));
+                        fill.setMaxHeight(6);
+                        
+                        progressBar.getChildren().add(fill);
+                        container.getChildren().addAll(text, progressBar);
+                        
+                        setGraphic(container);
+                        setText(null);
+                    }
+                }
+            });
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
             
-            brokersTableView.getColumns().addAll(hostCol, portCol, idCol, diskUsageCol, leadersCol, replicasCol);
-            VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
+            // Actions Column
+            TableColumn<BrokerRow, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<BrokerRow, Void>() {
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actions = new HBox(8);
+                        actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        
+                        Label infoIcon = new Label("ℹ️");
+                        infoIcon.getStyleClass().add("action-icon");
+                        infoIcon.setTooltip(new Tooltip("View Details"));
+                        
+                        Label logsIcon = new Label("📋");
+                        logsIcon.getStyleClass().add("action-icon");
+                        logsIcon.setTooltip(new Tooltip("View Logs"));
+                        
+                        actions.getChildren().addAll(infoIcon, logsIcon);
+                        setGraphic(actions);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
             
-            vbox.getChildren().add(brokersTableView);
-            return vbox;
+            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
+                                                  partitionsCol, leadersCol, diskUsageCol, actionsCol);
+            brokersTableView.setFixedCellSize(60);
+            // Set max height based on number of items (header + rows)
+            brokersTableView.prefHeightProperty().bind(
+                brokersTableView.fixedCellSizeProperty().multiply(javafx.beans.binding.Bindings.size(brokersTableView.getItems()).add(1.5))
+            );
+            
+            tableContainer.getChildren().addAll(tableHeader, brokersTableView);
+            
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
+            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
+            
+            mainContainer.getChildren().addAll(header, vbox);
+            return mainContainer;
+        }
+        
+        private HBox createContentHeader(String title) {
+            HBox header = new HBox(12);
+            header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            header.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+                          "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Title
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            // Connection status badge
+            HBox statusContainer = new HBox(6);
+            statusContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            statusContainer.setStyle("-fx-background-color: linear-gradient(to right, #10b981 0%, #059669 100%); " +
+                                   "-fx-padding: 6 14 6 14; -fx-background-radius: 20;");
+            
+            // Status dot
+            Region statusDot = new Region();
+            statusDot.setStyle("-fx-background-color: white; -fx-min-width: 8px; -fx-min-height: 8px; " +
+                             "-fx-max-width: 8px; -fx-max-height: 8px; -fx-background-radius: 50%;");
+            
+            Label statusText = new Label("Connected");
+            statusText.setStyle("-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: 600;");
+            
+            statusContainer.getChildren().addAll(statusDot, statusText);
+            
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            
+            // Cluster name label
+            Label clusterNameLabel = new Label(cluster.getName());
+            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #5a6c7d; -fx-font-weight: 500;");
+            
+            header.getChildren().addAll(titleLabel, statusContainer, spacer, clusterNameLabel);
+            return header;
+        }
+        
+        private HBox createSimpleHeader(String title) {
+            HBox header = new HBox(15);
+            header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            header.setStyle("-fx-background-color: white; -fx-padding: 20 30 20 30; " +
+                          "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Title label
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            
+            // Cluster name label
+            Label clusterNameLabel = new Label(cluster.getName());
+            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #5a6c7d; -fx-font-weight: 500;");
+            
+            header.getChildren().addAll(titleLabel, spacer, clusterNameLabel);
+            return header;
+        }
+        
+        private VBox createMetricCard(String icon, String label, Label valueLabel) {
+            VBox card = new VBox(10);
+            card.setStyle("-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 12; " +
+                         "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            card.setMinHeight(120);
+            
+            // Icon
+            Label iconLabel = new Label(icon);
+            iconLabel.setStyle("-fx-font-size: 24px;");
+            
+            // Label
+            Label metricLabel = new Label(label);
+            metricLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-weight: 600; " +
+                                "-fx-text-transform: uppercase; -fx-letter-spacing: 0.5;");
+            
+            // Value
+            valueLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: 700; " +
+                              "-fx-text-fill: #667eea;");
+            valueLabel.setMaxWidth(Double.MAX_VALUE);
+            valueLabel.setWrapText(true);
+            
+            card.getChildren().addAll(iconLabel, metricLabel, valueLabel);
+            
+            // Hover effect
+            card.setOnMouseEntered(e -> {
+                card.setStyle("-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 12; " +
+                             "-fx-border-color: #667eea; -fx-border-width: 1; -fx-border-radius: 12; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 8, 0, 0, 4); " +
+                             "-fx-translate-y: -4;");
+            });
+            card.setOnMouseExited(e -> {
+                card.setStyle("-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 12; " +
+                             "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            });
+            
+            return card;
+        }
+
+        private Node createBrokersContent() {
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with cluster name and connection status
+            HBox header = createContentHeader("Brokers");
+            
+            // Content area
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
+            
+            // Initialize labels if not already done
+            if (overviewBrokerCount == null) {
+                overviewBrokerCount = new Label("3");  // Mock data
+            }
+            if (overviewTopicCount == null) {
+                overviewTopicCount = new Label("47");  // Mock data
+            }
+            
+            // Metrics cards - 5 cards in total as per mockup
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards
+            VBox brokersCard = createMetricCard("🖥", "Total Brokers", overviewBrokerCount);
+            VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
+            VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
+            VBox consumerGroupsCard = createMetricCard("👥", "Consumer Groups", new Label("23"));  // Mock data
+            
+            // First row: 3 cards
+            metricsGrid.add(brokersCard, 0, 0);
+            metricsGrid.add(topicsCard, 1, 0);
+            metricsGrid.add(partitionsCard, 2, 0);
+            
+            // Second row: 2 cards
+            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(consumerGroupsCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(33.33);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Add brokers table below metrics
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            
+            // Table header
+            HBox tableHeader = new HBox();
+            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
+            Label tableTitle = new Label("🖥️ Active Brokers");
+            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            tableHeader.getChildren().add(tableTitle);
+            
+            // Initialize brokers table if not already done
+            if (brokersTableView == null) {
+                brokersTableView = new TableView<>();
+                brokersTableView.setItems(brokerList);
+            }
+            
+            brokersTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+            brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            
+            // Clear existing columns and recreate
+            brokersTableView.getColumns().clear();
+            
+            // ID Column with styled broker ID badge
+            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label(String.valueOf(item));
+                        badge.getStyleClass().add("broker-id");
+                        setGraphic(badge);
+                        setText(null);
+                        setAlignment(javafx.geometry.Pos.CENTER);
+                    }
+                }
+            });
+            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
+            
+            TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
+            hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
+            hostCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: bold;");
+                        setWrapText(true);  // Enable text wrapping
+                    }
+                }
+            });
+            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.25));
+            
+            TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
+            portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
+            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
+            
+            // Status Column with badge
+            TableColumn<BrokerRow, String> statusCol = new TableColumn<>("Status");
+            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+            statusCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label("● ONLINE");
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
+                                     "-fx-text-fill: #065f46; -fx-padding: 5 12 5 12; -fx-background-radius: 20; " +
+                                     "-fx-font-size: 11px; -fx-font-weight: 700; -fx-border-color: #6ee7b7; " +
+                                     "-fx-border-width: 1; -fx-border-radius: 20;");
+                        setGraphic(badge);
+                        setText(null);
+                    }
+                }
+            });
+            statusCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            
+            // Controller Column
+            TableColumn<BrokerRow, Boolean> controllerCol = new TableColumn<>("Controller");
+            controllerCol.setCellValueFactory(new PropertyValueFactory<>("controller"));
+            controllerCol.setCellFactory(col -> new TableCell<BrokerRow, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item ? "✓ Yes" : "✗ No");
+                    }
+                }
+            });
+            controllerCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            // Partitions Column
+            TableColumn<BrokerRow, Integer> partitionsCol = new TableColumn<>("Partitions");
+            partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
+            partitionsCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            partitionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
+            leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
+            leadersCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
+            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
+            diskUsageCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        VBox container = new VBox(4);
+                        container.setMaxWidth(Double.MAX_VALUE);
+                        container.setPadding(new Insets(5, 0, 5, 0));
+                        
+                        Label text = new Label("47.3 GB / 100 GB (47%)");  // Mock data
+                        text.setStyle("-fx-font-size: 12px;");
+                        text.setWrapText(true);
+                        text.setMaxWidth(Double.MAX_VALUE);
+                        
+                        // Progress bar
+                        HBox progressBar = new HBox();
+                        progressBar.setStyle("-fx-background-color: #e1e8ed; -fx-background-radius: 10; -fx-pref-height: 6; -fx-max-height: 6;");
+                        progressBar.setMaxWidth(Double.MAX_VALUE);
+                        
+                        Region fill = new Region();
+                        fill.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                    "-fx-background-radius: 10;");
+                        fill.prefWidthProperty().bind(progressBar.widthProperty().multiply(0.47));
+                        fill.setMaxHeight(6);
+                        
+                        progressBar.getChildren().add(fill);
+                        container.getChildren().addAll(text, progressBar);
+                        
+                        setGraphic(container);
+                        setText(null);
+                        setPadding(new Insets(5, 10, 5, 10));
+                    }
+                }
+            });
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            
+            // Actions Column
+            TableColumn<BrokerRow, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<BrokerRow, Void>() {
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actions = new HBox(8);
+                        actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        
+                        Label infoIcon = new Label("ℹ️");
+                        infoIcon.getStyleClass().add("action-icon");
+                        infoIcon.setTooltip(new Tooltip("View Details"));
+                        
+                        Label logsIcon = new Label("📋");
+                        logsIcon.getStyleClass().add("action-icon");
+                        logsIcon.setTooltip(new Tooltip("View Logs"));
+                        
+                        actions.getChildren().addAll(infoIcon, logsIcon);
+                        setGraphic(actions);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            
+            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
+                                                  partitionsCol, leadersCol, diskUsageCol, actionsCol);
+            brokersTableView.setFixedCellSize(60);
+            // Set max height based on number of items (header + rows)
+            brokersTableView.prefHeightProperty().bind(
+                brokersTableView.fixedCellSizeProperty().multiply(javafx.beans.binding.Bindings.size(brokersTableView.getItems()).add(1.5))
+            );
+            
+            tableContainer.getChildren().addAll(tableHeader, brokersTableView);
+            
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
+            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
+            
+            mainContainer.getChildren().addAll(header, vbox);
+            return mainContainer;
         }
 
         private Node createTopicsContent() {
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white;");
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
             
-            // Toolbar with action buttons
-            HBox toolbar = new HBox(8);
-            toolbar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-            toolbar.setStyle("-fx-padding: 8; -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;");
+            // Header with title, actions, and search bar
+            VBox headerContainer = new VBox(15);
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+                                   "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
             
-            Button btnCreateTopic = new Button("➕");
-            btnCreateTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_CREATE)));
-            btnCreateTopic.getStyleClass().add("toolbar-button");
-            btnCreateTopic.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4; -fx-cursor: hand;");
-            btnCreateTopic.setOnAction(e -> handleCreateTopic());
+            // Top row: Title and action buttons
+            HBox topRow = new HBox(12);
+            topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             
-            Button btnDeleteTopic = new Button("🗑");
-            btnDeleteTopic.setTooltip(new Tooltip(I18nUtil.get(I18nKeys.TOPIC_DELETE)));
-            btnDeleteTopic.getStyleClass().add("toolbar-button");
-            btnDeleteTopic.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-min-width: 32; -fx-min-height: 32; -fx-font-size: 14px; -fx-padding: 4; -fx-cursor: hand;");
-            btnDeleteTopic.setOnAction(e -> handleDeleteTopic());
+            Label titleLabel = new Label("Topic Management");
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
             
-            toolbar.getChildren().addAll(btnCreateTopic, btnDeleteTopic);
+            Region spacer1 = new Region();
+            HBox.setHgrow(spacer1, javafx.scene.layout.Priority.ALWAYS);
+            
+            // Action buttons
+            Button btnRefreshHeader = new Button("⟳ Refresh");
+            btnRefreshHeader.setStyle("-fx-background-color: #ffffff; -fx-text-fill: #667eea; " +
+                                    "-fx-border-color: #667eea; -fx-border-width: 2; " +
+                                    "-fx-font-size: 13px; -fx-font-weight: 600; " +
+                                    "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                                    "-fx-cursor: hand;");
+            btnRefreshHeader.setOnAction(e -> refresh());
+            
+            Button btnCreateTopicHeader = new Button("➕ Create Topic");
+            btnCreateTopicHeader.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                        "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                                        "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                                        "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 12, 0, 0, 4);");
+            btnCreateTopicHeader.setOnAction(e -> handleCreateTopic());
+            
+            topRow.getChildren().addAll(titleLabel, spacer1, btnRefreshHeader, btnCreateTopicHeader);
+            
+            // Search bar
+            HBox searchContainer = new HBox(0);
+            searchContainer.setMaxWidth(400);
+            searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                   "-fx-border-radius: 8; -fx-background-radius: 8;");
+            
+            TextField searchField = new TextField();
+            searchField.setPromptText("Search topics...");
+            searchField.setStyle("-fx-background-color: transparent; -fx-border-width: 0; " +
+                               "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
+            searchField.setPrefWidth(360);
+            searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    searchContainer.setStyle("-fx-border-color: #667eea; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8; " +
+                                           "-fx-effect: dropshadow(gaussian, rgba(102,126,234,0.1), 3, 0, 0, 0);");
+                } else {
+                    searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8;");
+                }
+            });
+            
+            Label searchIcon = new Label("🔍");
+            searchIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #8492a6; -fx-padding: 0 12 0 0;");
+            
+            StackPane searchStack = new StackPane();
+            searchStack.getChildren().addAll(searchField, searchIcon);
+            StackPane.setAlignment(searchIcon, javafx.geometry.Pos.CENTER_RIGHT);
+            
+            searchContainer.getChildren().add(searchStack);
+            
+            headerContainer.getChildren().addAll(topRow, searchContainer);
+            
+            // Content area
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
+            
+            // Metrics cards - 4 cards for topics
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards with mock data
+            VBox topicsCard = createMetricCard("📄", "Total Topics", new Label("47"));
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));
+            VBox messagesCard = createMetricCard("📨", "Total Messages", new Label("2.4M"));
+            VBox sizeCard = createMetricCard("💾", "Total Size", new Label("143 GB"));
+            
+            // Add cards to grid - 2x2 layout
+            metricsGrid.add(topicsCard, 0, 0);
+            metricsGrid.add(partitionsCard, 1, 0);
+            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(sizeCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 2; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(50);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Container for table without header row
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
             
             topicsTableView = new TableView<>();
             topicsTableView.setItems(topicList);
-            topicsTableView.setStyle("-fx-background-color: white;");
+            topicsTableView.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+            topicsTableView.setFixedCellSize(60);
+            
+            // Bind table height to item count
+            topicsTableView.prefHeightProperty().bind(
+                topicsTableView.fixedCellSizeProperty()
+                    .multiply(javafx.beans.binding.Bindings.size(topicsTableView.getItems()).add(1.5))
+            );
             
             TableColumn<TopicInfo, String> nameCol = new TableColumn<>("Topic Name");
             nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+            nameCol.setCellFactory(col -> new TableCell<TopicInfo, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: 600; -fx-text-fill: #1a202c;");
+                    }
+                }
+            });
             nameCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
             
             TableColumn<TopicInfo, Integer> partitionsCol = new TableColumn<>("Partitions");
             partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
+            partitionsCol.setCellFactory(col -> new TableCell<TopicInfo, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: 700;");
+                    }
+                }
+            });
             partitionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
             TableColumn<TopicInfo, Integer> replicationCol = new TableColumn<>("Replication");
             replicationCol.setCellValueFactory(new PropertyValueFactory<>("replicationFactor"));
+            replicationCol.setCellFactory(col -> new TableCell<TopicInfo, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: 700;");
+                    }
+                }
+            });
             replicationCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
             
-            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention Time (hours)");
+            TableColumn<TopicInfo, String> retentionCol = new TableColumn<>("Retention (hrs)");
             retentionCol.setCellValueFactory(new PropertyValueFactory<>("retentionTime"));
-            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.35));
+            retentionCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.20));
             
-            topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol, retentionCol);
+            // Actions column with delete button
+            TableColumn<TopicInfo, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<TopicInfo, Void>() {
+                private final Button deleteBtn = new Button("🗑");
+                {
+                    deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                     "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    deleteBtn.setOnMouseEntered(e -> {
+                        deleteBtn.setStyle("-fx-background-color: #fee; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                    });
+                    deleteBtn.setOnMouseExited(e -> {
+                        deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    });
+                    deleteBtn.setOnAction(e -> {
+                        TopicInfo topic = getTableView().getItems().get(getIndex());
+                        if (topic != null) {
+                            handleDeleteTopic();
+                        }
+                    });
+                }
+                
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actionBox = new HBox(5);
+                        actionBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        actionBox.getChildren().add(deleteBtn);
+                        setGraphic(actionBox);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(topicsTableView.widthProperty().multiply(0.15));
+            
+            topicsTableView.getColumns().addAll(nameCol, partitionsCol, replicationCol, retentionCol, actionsCol);
             
             // Double-click to show topic details
             topicsTableView.setOnMouseClicked(event -> {
@@ -917,10 +1579,12 @@ public class MainController implements Initializable {
                 }
             });
             
-            VBox.setVgrow(topicsTableView, javafx.scene.layout.Priority.ALWAYS);
-            vbox.getChildren().addAll(toolbar, topicsTableView);
+            tableContainer.getChildren().add(topicsTableView);
             
-            return vbox;
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
+            
+            mainContainer.getChildren().addAll(headerContainer, vbox);
+            return mainContainer;
         }
         
         /**
@@ -1079,34 +1743,282 @@ public class MainController implements Initializable {
         }
 
         private Node createConsumerGroupsContent() {
-            VBox vbox = new VBox(0);
-            vbox.setStyle("-fx-background-color: white;");
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with title, search bar, and actions
+            VBox headerContainer = new VBox(15);
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 30 20 30; " +
+                                   "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
+            
+            // Top row: Title, spacer, cluster name
+            HBox topRow = new HBox(12);
+            topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            
+            Label titleLabel = new Label("Consumer Groups");
+            titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            
+            Region spacer1 = new Region();
+            HBox.setHgrow(spacer1, javafx.scene.layout.Priority.ALWAYS);
+            
+            Label clusterNameLabel = new Label(cluster.getName());
+            clusterNameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #718096; -fx-font-weight: 600;");
+            
+            topRow.getChildren().addAll(titleLabel, spacer1, clusterNameLabel);
+            
+            // Second row: Search bar and Refresh button
+            HBox searchRow = new HBox(12);
+            searchRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            
+            // Search container
+            HBox searchContainer = new HBox(0);
+            searchContainer.setMaxWidth(400);
+            searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                   "-fx-border-radius: 8; -fx-background-radius: 8;");
+            
+            TextField searchField = new TextField();
+            searchField.setPromptText("Search consumer groups...");
+            searchField.setStyle("-fx-background-color: transparent; -fx-border-width: 0; " +
+                               "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
+            searchField.setPrefWidth(360);
+            searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    searchContainer.setStyle("-fx-border-color: #667eea; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8; " +
+                                           "-fx-effect: dropshadow(gaussian, rgba(102,126,234,0.1), 3, 0, 0, 0);");
+                } else {
+                    searchContainer.setStyle("-fx-border-color: #e1e8ed; -fx-border-width: 2; " +
+                                           "-fx-border-radius: 8; -fx-background-radius: 8;");
+                }
+            });
+            
+            Label searchIcon = new Label("🔍");
+            searchIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #8492a6; -fx-padding: 0 12 0 0;");
+            
+            StackPane searchStack = new StackPane();
+            searchStack.getChildren().addAll(searchField, searchIcon);
+            StackPane.setAlignment(searchIcon, javafx.geometry.Pos.CENTER_RIGHT);
+            
+            searchContainer.getChildren().add(searchStack);
+            
+            // Refresh button
+            Button btnRefresh = new Button("⟳ Refresh");
+            btnRefresh.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                              "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; " +
+                              "-fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; " +
+                              "-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 12, 0, 0, 4);");
+            btnRefresh.setOnAction(e -> refresh());
+            
+            searchRow.getChildren().addAll(searchContainer, btnRefresh);
+            
+            headerContainer.getChildren().addAll(topRow, searchRow);
+            
+            // Content area
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
+            
+            // Metrics cards - 4 cards for consumer groups
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards with mock data
+            VBox totalGroupsCard = createMetricCard("👥", "Total Groups", new Label("23"));
+            VBox activeMembersCard = createMetricCard("✅", "Active Members", new Label("47"));
+            VBox totalLagCard = createMetricCard("⏱", "Total Lag", new Label("2,345"));
+            VBox partitionsAssignedCard = createMetricCard("📊", "Partitions Assigned", new Label("184"));
+            
+            // Add cards to grid - 2x2 layout
+            metricsGrid.add(totalGroupsCard, 0, 0);
+            metricsGrid.add(activeMembersCard, 1, 0);
+            metricsGrid.add(totalLagCard, 0, 1);
+            metricsGrid.add(partitionsAssignedCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 2; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(50);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Container for table
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
             
             consumerGroupTableView = new TableView<>();
             consumerGroupTableView.setItems(consumerGroupList);
-            consumerGroupTableView.setStyle("-fx-background-color: white;");
+            consumerGroupTableView.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+            consumerGroupTableView.setFixedCellSize(60);
             
-            TableColumn<ConsumerGroupRow, String> groupIdCol = new TableColumn<>("Group ID");
+            // Bind table height to item count
+            consumerGroupTableView.prefHeightProperty().bind(
+                consumerGroupTableView.fixedCellSizeProperty()
+                    .multiply(javafx.beans.binding.Bindings.size(consumerGroupTableView.getItems()).add(1.5))
+            );
+            
+            // Group Name Column
+            TableColumn<ConsumerGroupRow, String> groupIdCol = new TableColumn<>("Group Name");
             groupIdCol.setCellValueFactory(new PropertyValueFactory<>("groupId"));
-            groupIdCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.40));
+            groupIdCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: 700; -fx-text-fill: #667eea;");
+                    }
+                }
+            });
+            groupIdCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.25));
             
-            TableColumn<ConsumerGroupRow, String> stateCol = new TableColumn<>("State");
+            // Status Column with colored badges
+            TableColumn<ConsumerGroupRow, String> stateCol = new TableColumn<>("Status");
             stateCol.setCellValueFactory(new PropertyValueFactory<>("state"));
-            stateCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.20));
+            stateCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        Label statusLabel = new Label(item);
+                        String style;
+                        if ("Active".equalsIgnoreCase(item) || "Stable".equalsIgnoreCase(item)) {
+                            style = "-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
+                                   "-fx-text-fill: #065f46; -fx-border-color: #6ee7b7; -fx-border-width: 1; " +
+                                   "-fx-padding: 4 12; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                                   "-fx-font-size: 11px; -fx-font-weight: 700;";
+                        } else if ("Empty".equalsIgnoreCase(item)) {
+                            style = "-fx-background-color: linear-gradient(to right, #fef3c7 0%, #fde68a 100%); " +
+                                   "-fx-text-fill: #92400e; -fx-border-color: #fcd34d; -fx-border-width: 1; " +
+                                   "-fx-padding: 4 12; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                                   "-fx-font-size: 11px; -fx-font-weight: 700;";
+                        } else {
+                            style = "-fx-background-color: linear-gradient(to right, #fecaca 0%, #fca5a5 100%); " +
+                                   "-fx-text-fill: #991b1b; -fx-border-color: #f87171; -fx-border-width: 1; " +
+                                   "-fx-padding: 4 12; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                                   "-fx-font-size: 11px; -fx-font-weight: 700;";
+                        }
+                        statusLabel.setStyle(style);
+                        setGraphic(statusLabel);
+                    }
+                }
+            });
+            stateCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
             
-            TableColumn<ConsumerGroupRow, String> coordinatorCol = new TableColumn<>("Coordinator");
-            coordinatorCol.setCellValueFactory(new PropertyValueFactory<>("coordinator"));
-            coordinatorCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.25));
-            
+            // Members Column
             TableColumn<ConsumerGroupRow, Integer> membersCol = new TableColumn<>("Members");
             membersCol.setCellValueFactory(new PropertyValueFactory<>("memberCount"));
-            membersCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
+            membersCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: 700;");
+                    }
+                }
+            });
+            membersCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.12));
             
-            consumerGroupTableView.getColumns().addAll(groupIdCol, stateCol, coordinatorCol, membersCol);
-            VBox.setVgrow(consumerGroupTableView, javafx.scene.layout.Priority.ALWAYS);
+            // Lag Column
+            TableColumn<ConsumerGroupRow, String> lagCol = new TableColumn<>("Lag");
+            lagCol.setCellValueFactory(new PropertyValueFactory<>("coordinator")); // Reusing coordinator field for mock lag data
+            lagCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        // Mock lag data
+                        setText("124");
+                        setStyle("-fx-font-weight: 600;");
+                    }
+                }
+            });
+            lagCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.10));
             
-            vbox.getChildren().add(consumerGroupTableView);
-            return vbox;
+            // Topics Column
+            TableColumn<ConsumerGroupRow, String> topicsCol = new TableColumn<>("Topics");
+            topicsCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        // Mock topics data
+                        setText("topic1, topic2, topic3");
+                        setStyle("-fx-text-fill: #4a5568; -fx-font-size: 12px;");
+                    }
+                }
+            });
+            topicsCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.23));
+            
+            // Actions column
+            TableColumn<ConsumerGroupRow, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<ConsumerGroupRow, Void>() {
+                private final Button viewBtn = new Button("👁");
+                private final Button deleteBtn = new Button("🗑");
+                {
+                    viewBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                   "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    viewBtn.setOnMouseEntered(e -> {
+                        viewBtn.setStyle("-fx-background-color: #e0e7ff; -fx-border-color: transparent; " +
+                                       "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                    });
+                    viewBtn.setOnMouseExited(e -> {
+                        viewBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                       "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    });
+                    
+                    deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                     "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    deleteBtn.setOnMouseEntered(e -> {
+                        deleteBtn.setStyle("-fx-background-color: #fee; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                    });
+                    deleteBtn.setOnMouseExited(e -> {
+                        deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                    });
+                }
+                
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actionBox = new HBox(5);
+                        actionBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        actionBox.getChildren().addAll(viewBtn, deleteBtn);
+                        setGraphic(actionBox);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(consumerGroupTableView.widthProperty().multiply(0.15));
+            
+            consumerGroupTableView.getColumns().addAll(groupIdCol, stateCol, membersCol, lagCol, topicsCol, actionsCol);
+            
+            tableContainer.getChildren().add(consumerGroupTableView);
+            
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
+            
+            mainContainer.getChildren().addAll(headerContainer, vbox);
+            return mainContainer;
         }
 
         private Node createAclContent() {
