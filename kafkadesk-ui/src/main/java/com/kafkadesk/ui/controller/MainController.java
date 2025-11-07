@@ -1295,7 +1295,7 @@ public class MainController implements Initializable {
             
             // Header with title, actions, and search bar
             VBox headerContainer = new VBox(15);
-            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 45 20 30; " +
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 60 20 30; " +
                                    "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
             
             // Top row: Title and action buttons
@@ -1337,6 +1337,20 @@ public class MainController implements Initializable {
             searchField.setStyle("-fx-background-color: transparent; -fx-border-width: 0; " +
                                "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
             searchField.setPrefWidth(360);
+            
+            // Add search functionality
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue == null || newValue.trim().isEmpty()) {
+                    topicsTableView.setItems(topicList);
+                } else {
+                    String searchText = newValue.toLowerCase().trim();
+                    ObservableList<TopicInfo> filteredList = topicList.filtered(topic -> 
+                        topic.getName().toLowerCase().contains(searchText)
+                    );
+                    topicsTableView.setItems(filteredList);
+                }
+            });
+            
             searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal) {
                     searchContainer.setStyle("-fx-border-color: #667eea; -fx-border-width: 2; " +
@@ -1464,17 +1478,20 @@ public class MainController implements Initializable {
             // Actions column with delete button
             TableColumn<TopicInfo, Void> actionsCol = new TableColumn<>("Actions");
             actionsCol.setCellFactory(col -> new TableCell<TopicInfo, Void>() {
-                private final Button deleteBtn = new Button("🗑");
+                private final Button deleteBtn = new Button("✕");
                 {
                     deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
-                                     "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                                     "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #000000; " +
+                                     "-fx-cursor: hand; -fx-padding: 5;");
                     deleteBtn.setOnMouseEntered(e -> {
                         deleteBtn.setStyle("-fx-background-color: #fee; -fx-border-color: transparent; " +
-                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
+                                         "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #dc2626; " +
+                                         "-fx-cursor: hand; -fx-padding: 5; -fx-background-radius: 6;");
                     });
                     deleteBtn.setOnMouseExited(e -> {
                         deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
-                                         "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 5;");
+                                         "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #000000; " +
+                                         "-fx-cursor: hand; -fx-padding: 5;");
                     });
                     deleteBtn.setOnAction(e -> {
                         // Get the topic from this specific row, not the selection model
@@ -1681,7 +1698,7 @@ public class MainController implements Initializable {
             
             // Header with title, search bar, and actions
             VBox headerContainer = new VBox(15);
-            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 45 20 30; " +
+            headerContainer.setStyle("-fx-background-color: #ffffff; -fx-padding: 20 60 20 30; " +
                                    "-fx-border-color: #f0f3f7; -fx-border-width: 0 0 2 0;");
             
             // Top row: Title and action buttons
@@ -1715,6 +1732,20 @@ public class MainController implements Initializable {
             searchField.setStyle("-fx-background-color: transparent; -fx-border-width: 0; " +
                                "-fx-padding: 10 40 10 15; -fx-font-size: 14px;");
             searchField.setPrefWidth(360);
+            
+            // Add search functionality
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue == null || newValue.trim().isEmpty()) {
+                    consumerGroupTableView.setItems(consumerGroupList);
+                } else {
+                    String searchText = newValue.toLowerCase().trim();
+                    ObservableList<ConsumerGroupRow> filteredList = consumerGroupList.filtered(group -> 
+                        group.getGroupId().toLowerCase().contains(searchText)
+                    );
+                    consumerGroupTableView.setItems(filteredList);
+                }
+            });
+            
             searchField.focusedProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal) {
                     searchContainer.setStyle("-fx-border-color: #667eea; -fx-border-width: 2; " +
