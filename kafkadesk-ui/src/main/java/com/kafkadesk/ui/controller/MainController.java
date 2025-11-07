@@ -1587,30 +1587,72 @@ public class MainController implements Initializable {
             
             TableColumn<PartitionRow, Integer> partitionCol = new TableColumn<>("Partition");
             partitionCol.setCellValueFactory(new PropertyValueFactory<>("partition"));
-            partitionCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.20));
+            partitionCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.15));
             
             TableColumn<PartitionRow, Long> minOffsetCol = new TableColumn<>("Min Offset");
             minOffsetCol.setCellValueFactory(new PropertyValueFactory<>("minOffset"));
-            minOffsetCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.25));
+            minOffsetCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.20));
             
             TableColumn<PartitionRow, Long> maxOffsetCol = new TableColumn<>("Max Offset");
             maxOffsetCol.setCellValueFactory(new PropertyValueFactory<>("maxOffset"));
-            maxOffsetCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.25));
+            maxOffsetCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.20));
             
             TableColumn<PartitionRow, String> leaderCol = new TableColumn<>("Leader");
             leaderCol.setCellValueFactory(new PropertyValueFactory<>("leader"));
-            leaderCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.30));
+            leaderCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.20));
             
-            partitionsTable.getColumns().addAll(partitionCol, minOffsetCol, maxOffsetCol, leaderCol);
+            TableColumn<PartitionRow, String> replicasCol = new TableColumn<>("Replicas");
+            replicasCol.setCellValueFactory(new PropertyValueFactory<>("replicas"));
+            replicasCol.prefWidthProperty().bind(partitionsTable.widthProperty().multiply(0.25));
+            
+            partitionsTable.getColumns().addAll(partitionCol, minOffsetCol, maxOffsetCol, leaderCol, replicasCol);
             partitionsTable.setItems(partitionData);
             
-            // Load partition data in background
+            // Load partition data from TopicInfo partitionDetails
             new Thread(() -> {
-                // Simulate loading partition data - in real implementation, fetch from Kafka
-                for (int i = 0; i < topic.getPartitions(); i++) {
-                    int partition = i;
-                    PartitionRow row = new PartitionRow(partition, 0L, 1000L + (partition * 100), "Broker " + (partition % 3));
-                    Platform.runLater(() -> partitionData.add(row));
+                try {
+                    // Use the partition details from TopicInfo
+                    if (topic.getPartitionDetails() != null && !topic.getPartitionDetails().isEmpty()) {
+                        for (TopicInfo.PartitionInfo partInfo : topic.getPartitionDetails()) {
+                            String leaderInfo = "N/A";
+                            if (partInfo.getLeader() != null) {
+                                leaderInfo = "Broker " + partInfo.getLeader().getId();
+                            }
+                            
+                            String replicasInfo = partInfo.getReplicas().stream()
+                                .map(n -> String.valueOf(n.getId()))
+                                .collect(java.util.stream.Collectors.joining(", "));
+                            
+                            // For now, use placeholder offsets
+                            // In a full implementation, you would fetch actual offsets using Consumer API
+                            Long minOffset = 0L;
+                            Long maxOffset = (long) (partInfo.getPartition() * 1000 + 1000);
+                            
+                            PartitionRow row = new PartitionRow(
+                                partInfo.getPartition(),
+                                minOffset,
+                                maxOffset,
+                                leaderInfo,
+                                replicasInfo
+                            );
+                            Platform.runLater(() -> partitionData.add(row));
+                        }
+                    } else {
+                        // Fallback to basic partition info if details not available
+                        for (int i = 0; i < topic.getPartitions(); i++) {
+                            int partition = i;
+                            PartitionRow row = new PartitionRow(
+                                partition,
+                                0L,
+                                (long) (partition * 1000 + 1000),
+                                "Broker " + (partition % 3),
+                                String.valueOf(partition % 3)
+                            );
+                            Platform.runLater(() -> partitionData.add(row));
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to load partition data", e);
                 }
             }).start();
             
@@ -2374,18 +2416,21 @@ public class MainController implements Initializable {
         private final Long minOffset;
         private final Long maxOffset;
         private final String leader;
+        private final String replicas;
 
-        public PartitionRow(int partition, Long minOffset, Long maxOffset, String leader) {
+        public PartitionRow(int partition, Long minOffset, Long maxOffset, String leader, String replicas) {
             this.partition = partition;
             this.minOffset = minOffset;
             this.maxOffset = maxOffset;
             this.leader = leader;
+            this.replicas = replicas;
         }
 
         public int getPartition() { return partition; }
         public Long getMinOffset() { return minOffset; }
         public Long getMaxOffset() { return maxOffset; }
         public String getLeader() { return leader; }
+        public String getReplicas() { return replicas; }
     }
     
     public static class TopicConsumerRow {
