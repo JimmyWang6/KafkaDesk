@@ -161,10 +161,7 @@ public class MainController implements Initializable {
         treeItemDataMap.put(clusterItem, clusterData);
         clusterItem.setExpanded(false);
         
-        // Add sub-items for cluster functions
-        TreeItem<String> overviewItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_OVERVIEW));
-        treeItemDataMap.put(overviewItem, new TreeItemData(TYPE_OVERVIEW, cluster.getId(), cluster));
-        
+        // Add sub-items for cluster functions (removed Overview, Brokers now shows the combined view)
         TreeItem<String> brokersItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_BROKERS));
         treeItemDataMap.put(brokersItem, new TreeItemData(TYPE_BROKERS, cluster.getId(), cluster));
         
@@ -177,7 +174,7 @@ public class MainController implements Initializable {
         TreeItem<String> aclItem = new TreeItem<>(I18nUtil.get(I18nKeys.TAB_ACL));
         treeItemDataMap.put(aclItem, new TreeItemData(TYPE_ACL, cluster.getId(), cluster));
         
-        clusterItem.getChildren().addAll(overviewItem, brokersItem, topicsItem, consumerGroupsItem, aclItem);
+        clusterItem.getChildren().addAll(brokersItem, topicsItem, consumerGroupsItem, aclItem);
         
         rootItem.getChildren().add(clusterItem);
         clusterTreeItems.put(cluster.getId(), clusterItem);
@@ -1057,8 +1054,268 @@ public class MainController implements Initializable {
         }
 
         private Node createBrokersContent() {
-            // Brokers are now shown in overview, redirect to overview
-            return createOverviewContent();
+            VBox mainContainer = new VBox(0);
+            mainContainer.setStyle("-fx-background-color: #ffffff;");
+            
+            // Header with cluster name and connection status
+            HBox header = createContentHeader("Brokers");
+            
+            // Content area
+            VBox vbox = new VBox(20);
+            vbox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 30;");
+            
+            // Initialize labels if not already done
+            if (overviewBrokerCount == null) {
+                overviewBrokerCount = new Label("3");  // Mock data
+            }
+            if (overviewTopicCount == null) {
+                overviewTopicCount = new Label("47");  // Mock data
+            }
+            
+            // Metrics cards - 5 cards in total as per mockup
+            GridPane metricsGrid = new GridPane();
+            metricsGrid.setHgap(20);
+            metricsGrid.setVgap(20);
+            
+            // Create metric cards
+            VBox brokersCard = createMetricCard("🖥️", "Total Brokers", overviewBrokerCount);
+            VBox topicsCard = createMetricCard("📄", "Total Topics", overviewTopicCount);
+            VBox partitionsCard = createMetricCard("🔀", "Total Partitions", new Label("184"));  // Mock data
+            VBox messagesCard = createMetricCard("⚡", "Messages/sec", new Label("12.4K"));  // Mock data
+            VBox consumerGroupsCard = createMetricCard("👥", "Consumer Groups", new Label("23"));  // Mock data
+            
+            // First row: 3 cards
+            metricsGrid.add(brokersCard, 0, 0);
+            metricsGrid.add(topicsCard, 1, 0);
+            metricsGrid.add(partitionsCard, 2, 0);
+            
+            // Second row: 2 cards
+            metricsGrid.add(messagesCard, 0, 1);
+            metricsGrid.add(consumerGroupsCard, 1, 1);
+            
+            // Make metric cards expand
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints col = new ColumnConstraints();
+                col.setPercentWidth(33.33);
+                col.setHgrow(javafx.scene.layout.Priority.ALWAYS);
+                metricsGrid.getColumnConstraints().add(col);
+            }
+            
+            // Add brokers table below metrics
+            VBox tableContainer = new VBox(0);
+            tableContainer.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                                  "-fx-border-color: #e1e8ed; -fx-border-width: 1; -fx-border-radius: 12; " +
+                                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+            
+            // Table header
+            HBox tableHeader = new HBox();
+            tableHeader.setStyle("-fx-padding: 20 24 20 24; -fx-border-color: #e1e8ed; -fx-border-width: 0 0 1 0;");
+            Label tableTitle = new Label("🖥️ Active Brokers");
+            tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1a202c;");
+            tableHeader.getChildren().add(tableTitle);
+            
+            // Initialize brokers table if not already done
+            if (brokersTableView == null) {
+                brokersTableView = new TableView<>();
+                brokersTableView.setItems(brokerList);
+            }
+            
+            brokersTableView.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+            brokersTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            
+            // Clear existing columns and recreate
+            brokersTableView.getColumns().clear();
+            
+            // ID Column with styled broker ID badge
+            TableColumn<BrokerRow, Integer> idCol = new TableColumn<>("ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label(String.valueOf(item));
+                        badge.getStyleClass().add("broker-id");
+                        setGraphic(badge);
+                        setText(null);
+                        setAlignment(javafx.geometry.Pos.CENTER);
+                    }
+                }
+            });
+            idCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
+            
+            TableColumn<BrokerRow, String> hostCol = new TableColumn<>("Host");
+            hostCol.setCellValueFactory(new PropertyValueFactory<>("host"));
+            hostCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(item);
+                        setStyle("-fx-font-weight: bold;");
+                        setWrapText(true);  // Enable text wrapping
+                    }
+                }
+            });
+            hostCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.25));
+            
+            TableColumn<BrokerRow, Integer> portCol = new TableColumn<>("Port");
+            portCol.setCellValueFactory(new PropertyValueFactory<>("port"));
+            portCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.08));
+            
+            // Status Column with badge
+            TableColumn<BrokerRow, String> statusCol = new TableColumn<>("Status");
+            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+            statusCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        Label badge = new Label("● ONLINE");
+                        badge.setStyle("-fx-background-color: linear-gradient(to right, #d1fae5 0%, #a7f3d0 100%); " +
+                                     "-fx-text-fill: #065f46; -fx-padding: 5 12 5 12; -fx-background-radius: 20; " +
+                                     "-fx-font-size: 11px; -fx-font-weight: 700; -fx-border-color: #6ee7b7; " +
+                                     "-fx-border-width: 1; -fx-border-radius: 20;");
+                        setGraphic(badge);
+                        setText(null);
+                    }
+                }
+            });
+            statusCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            
+            // Controller Column
+            TableColumn<BrokerRow, Boolean> controllerCol = new TableColumn<>("Controller");
+            controllerCol.setCellValueFactory(new PropertyValueFactory<>("controller"));
+            controllerCol.setCellFactory(col -> new TableCell<BrokerRow, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item ? "✓ Yes" : "✗ No");
+                    }
+                }
+            });
+            controllerCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            // Partitions Column
+            TableColumn<BrokerRow, Integer> partitionsCol = new TableColumn<>("Partitions");
+            partitionsCol.setCellValueFactory(new PropertyValueFactory<>("partitions"));
+            partitionsCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            partitionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            TableColumn<BrokerRow, Integer> leadersCol = new TableColumn<>("Leaders");
+            leadersCol.setCellValueFactory(new PropertyValueFactory<>("leaders"));
+            leadersCol.setCellFactory(col -> new TableCell<BrokerRow, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle(null);
+                    } else {
+                        setText(String.valueOf(item));
+                        setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            });
+            leadersCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.10));
+            
+            TableColumn<BrokerRow, String> diskUsageCol = new TableColumn<>("Disk Usage");
+            diskUsageCol.setCellValueFactory(new PropertyValueFactory<>("diskUsage"));
+            diskUsageCol.setCellFactory(col -> new TableCell<BrokerRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        VBox container = new VBox(4);
+                        Label text = new Label("47.3 GB / 100 GB (47%)");  // Mock data
+                        text.setStyle("-fx-font-size: 12px;");
+                        text.setWrapText(true);  // Enable text wrapping
+                        
+                        // Progress bar
+                        HBox progressBar = new HBox();
+                        progressBar.setStyle("-fx-background-color: #e1e8ed; -fx-background-radius: 10; -fx-pref-height: 6;");
+                        
+                        Region fill = new Region();
+                        fill.setStyle("-fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%); " +
+                                    "-fx-background-radius: 10;");
+                        fill.prefWidthProperty().bind(progressBar.widthProperty().multiply(0.47));
+                        fill.setMaxHeight(6);
+                        
+                        progressBar.getChildren().add(fill);
+                        container.getChildren().addAll(text, progressBar);
+                        
+                        setGraphic(container);
+                        setText(null);
+                    }
+                }
+            });
+            diskUsageCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.15));
+            
+            // Actions Column
+            TableColumn<BrokerRow, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setCellFactory(col -> new TableCell<BrokerRow, Void>() {
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox actions = new HBox(8);
+                        actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        
+                        Label infoIcon = new Label("ℹ️");
+                        infoIcon.getStyleClass().add("action-icon");
+                        infoIcon.setTooltip(new Tooltip("View Details"));
+                        
+                        Label logsIcon = new Label("📋");
+                        logsIcon.getStyleClass().add("action-icon");
+                        logsIcon.setTooltip(new Tooltip("View Logs"));
+                        
+                        actions.getChildren().addAll(infoIcon, logsIcon);
+                        setGraphic(actions);
+                    }
+                }
+            });
+            actionsCol.prefWidthProperty().bind(brokersTableView.widthProperty().multiply(0.12));
+            
+            brokersTableView.getColumns().addAll(idCol, hostCol, portCol, statusCol, controllerCol, 
+                                                  partitionsCol, leadersCol, diskUsageCol, actionsCol);
+            VBox.setVgrow(brokersTableView, javafx.scene.layout.Priority.ALWAYS);
+            
+            tableContainer.getChildren().addAll(tableHeader, brokersTableView);
+            
+            vbox.getChildren().addAll(metricsGrid, tableContainer);
+            VBox.setVgrow(vbox, javafx.scene.layout.Priority.ALWAYS);
+            
+            mainContainer.getChildren().addAll(header, vbox);
+            return mainContainer;
         }
 
         private Node createTopicsContent() {
