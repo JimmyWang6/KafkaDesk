@@ -2045,18 +2045,14 @@ public class MainController implements Initializable {
                         
                         int controllerId = controller != null ? controller.id() : -1;
                         
-                        // Get topics to calculate partitions per broker
+                        // Get topics to calculate total partitions
                         List<String> topicNames = TopicService.getInstance().listTopics(cluster.getId());
-                        Map<Integer, Integer> brokerPartitionCount = new HashMap<>();
-                        Map<Integer, Integer> brokerLeaderCount = new HashMap<>();
                         int totalPartitions = 0;
                         
                         for (String topicName : topicNames) {
                             TopicInfo topicInfo = TopicService.getInstance().getTopicInfo(cluster.getId(), topicName);
                             if (topicInfo != null) {
                                 totalPartitions += topicInfo.getPartitions();
-                                // For now, distribute partitions evenly across brokers as we don't have detailed partition info
-                                // In a real implementation, you'd get actual partition assignments from Kafka
                             }
                         }
                         
@@ -2070,8 +2066,12 @@ public class MainController implements Initializable {
                             brokerList.clear();
                             
                             if (nodes != null && !nodes.isEmpty()) {
+                                // Simplified partition distribution - evenly distribute across brokers
+                                // In a real implementation, would fetch actual partition assignments from Kafka
                                 int avgPartitionsPerBroker = nodes.size() > 0 ? finalTotalPartitions / nodes.size() : 0;
-                                int avgLeadersPerBroker = avgPartitionsPerBroker; // Simplified: assume leaders = partitions
+                                // Simplified leader count - assuming even distribution
+                                // Note: In Kafka, each partition has one leader, but distribution varies by cluster state
+                                int avgLeadersPerBroker = avgPartitionsPerBroker;
                                 
                                 for (org.apache.kafka.common.Node node : nodes) {
                                     boolean isController = (node.id() == controllerId);
@@ -2080,7 +2080,7 @@ public class MainController implements Initializable {
                                         node.host(),
                                         node.port(),
                                         node.rack() != null ? node.rack() : "default",
-                                        "N/A",  // Disk usage not available from Kafka API
+                                        "N/A",  // Disk usage not available from Kafka Admin API
                                         avgLeadersPerBroker,
                                         avgPartitionsPerBroker,
                                         isController,
@@ -2088,7 +2088,7 @@ public class MainController implements Initializable {
                                     ));
                                 }
                                 
-                                // Update metrics
+                                // Update metrics with actual data
                                 if (overviewBrokerCount != null) {
                                     overviewBrokerCount.setText(String.valueOf(nodes.size()));
                                 }
