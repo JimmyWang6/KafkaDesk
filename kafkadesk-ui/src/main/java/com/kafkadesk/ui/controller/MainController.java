@@ -738,6 +738,14 @@ public class MainController implements Initializable {
             
             header.getChildren().addAll(titleLabel, connectionBadge);
             
+            // Initialize labels if not already done
+            if (overviewBrokerCount == null) {
+                overviewBrokerCount = new Label("Loading...");
+            }
+            if (overviewTopicCount == null) {
+                overviewTopicCount = new Label("Loading...");
+            }
+            
             // Metrics cards
             GridPane metricsGrid = new GridPane();
             metricsGrid.setHgap(20);
